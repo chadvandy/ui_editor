@@ -21,6 +21,9 @@ function uic:new()
         x = 0,
         y = 0,
     }
+    
+    o.indexes = {}
+    o.data = {}
 
     return o
 end
@@ -146,6 +149,13 @@ function uic:decipher_chunk(format, j, k)
     self.location = k+1
 
     return retval
+end
+
+function uic:add_data(index, value)
+    self.indexes[#self.indexes+1] = index
+    
+    self.data.index = value
+
 end
 
 function uic:decipher(binary_data)
@@ -766,6 +776,28 @@ local function print(text)
 end
 
 function uic:print()
+    -- [[
+        local indexes = self.indexes
+        local data = self.data
+        
+        for i = 1, #indexes do
+            local index = indexes[i]
+            local datum = data[index]
+            
+            local str = index..": "
+            
+            if type(datum) == "string" then            
+                str = str .. datum
+            elseif type(datum) == "table" then
+                -- loop?
+            elseif type(datum) == "function" then
+                -- error!
+            else
+                str = str .. tostring(datum)
+            end
+        end
+    --]]
+
     print("Version: "..self.version)
     print("UID: "..self.uid)
     print("Name: "..self.name)
