@@ -74,14 +74,15 @@ function uic:chunk_to_hex(j, k)
         block[i] = self.bytes[i]
     end
 
+    -- turn the table of numbers (ie. {84, 03, 00, 00}) into a string with spaces between each (ie. "84 03 00 00")
     local str = table.concat(block, " ", j, k)
 
     return str
 end
 
 -- take a chunk of the bytes and turn them into a length number
--- always an unsigned int4, which means it's a hex byte converted into a number followed by an empty 00
--- ie., 56 00 is translated into 86 length
+-- always an unsigned int4, which means it's a hex byte converted into a number followed by an empty 00 (or three empty 00's)
+-- ie., 56 00 is translated into 86 length (as is 56 00 00 00)
 function uic:chunk_to_len(j, k)
 
     -- get the hex string for this section
@@ -96,7 +97,8 @@ function uic:chunk_to_len(j, k)
     return len
 end
 
-
+-- convert a 4-byte hex section into an integer
+-- this part is a little weird, since integers like this are actually read backwards in hex (little-endian). ie., 84 03 00 00 in hex is read as 00 00 03 84, which ends up being 03 84, which is converted into 900
 function uic:chunk_to_int16(j, k)
     local block = {}
     for i = j,k do
@@ -113,6 +115,7 @@ function uic:chunk_to_int16(j, k)
     return str
 end
 
+-- convert a single byte into true or false. 00 for false, 01 for true
 function uic:chunk_to_boolean(j, k)
     local hex = self:chunk_to_hex(j, k)
 
@@ -154,8 +157,7 @@ end
 function uic:add_data(index, value)
     self.indexes[#self.indexes+1] = index
     
-    self.data.index = value
-
+    self.data[index] = value
 end
 
 function uic:decipher(binary_data)
@@ -167,10 +169,10 @@ function uic:decipher(binary_data)
     -- grab the last 3 digits and set it as version
     local v_num = tonumber(string.sub(v, 8, 10))
     local v = v_num
-    self.version = v_num
+    self:add_data("version", v)
 
     -- next 4 bytes are the UI-ID for the component
-    self.uid = self:decipher_chunk("hex", 1, 4)
+    self:add_data("uid", self:decipher_chunk("hex", 1, 4))
 
     -- next 2 bytes are the length for the next string (unsigned int followed by 00), followed by the string itself (the UIC name)
     do
@@ -178,7 +180,7 @@ function uic:decipher(binary_data)
         --print(len)
 
         -- read the name by checking 1,len
-        self.name = self:decipher_chunk("str", 1, len)
+        self:add_data("name", self:decipher_chunk("str", 1, len))
     end
 
     -- next 2 bytes are the length for the next string (b0, undeciphered), followed by the string itself
@@ -198,7 +200,7 @@ function uic:decipher(binary_data)
             --print(b0)
         end
 
-        self.b0 = b0
+        self:add_data("b0", b0)
     end
 
     -- next section is the Events string
@@ -217,7 +219,7 @@ function uic:decipher(binary_data)
             events = self:decipher_chunk("str", 1, len)
         end
 
-        self.events = events
+        self:add_data("events", events)
 
     -- upwards, there is a "num events" integer, which is followed by that many individual strings with individual length indicators
     elseif v_num >= 110 and v_num < 130 then
@@ -230,10 +232,12 @@ function uic:decipher(binary_data)
         local x = self:decipher_chunk("int16", 1, 4)
         local y = self:decipher_chunk("int16", 1, 4)
 
-        self.offsets = {
+        self:add_data("offsets", {x=x,y=y})
+
+        --[[self.offsets = {
             x = x,
             y = y
-        }
+        }]]
     end
 
     -- next section is undeciphered b1, which is only available between 70-89
@@ -243,11 +247,13 @@ function uic:decipher(binary_data)
     end
 
     -- next 12 are undeciphered bytes
-    -- jk first 6 are undeciphered, 7 in visibility, 8-12 are undeciphere
+    -- jk first 6 are undeciphered, 7 in visibility, 8-12 are undeciphered
     do
+        -- first 6, undeciphered
         local hex = self:decipher_chunk("hex", 1, 6)
-        self.b_01 = hex
+        self:add_data("b_01", hex)
         
+        -- 7, visibility
         local visible = self:decipher_chunk("hex", 1, 1)
         if visible == "01" then
             visible = true
@@ -255,9 +261,10 @@ function uic:decipher(binary_data)
             visible = false
         end
 
-        self.visible = visible
+        self:add_data("visible", visible)
 
-        self.b_02 = self:decipher_chunk("hex", 1, 5)
+        -- 8-12, undeciphered!
+        self:add_data("b_02", self:decipher_chunk("hex", 1, 5))
     end
 
     -- next bit is tooltip text; optional, so it might just be 00 00
@@ -270,12 +277,12 @@ function uic:decipher(binary_data)
             -- do nothing
             tooltip_text = "00 00" -- two blank bytes
         else
-            -- TODO this is a weird string; it's a different type of char so it goes char-00-char-00
+            -- this is a weird string; it's a different type of char so it goes char-00-char-00
             -- ie., "Zoom" is "5A 00 6F 00 6F 00 6D 00", instead of just being "5A 6F 6F 6D"
             tooltip_text = self:decipher_chunk("str16", 1, len*2) -- len*2 is to make up for all the blank 00's
         end
 
-        self.tooltip_text = tooltip_text
+        self:add_data("tooltip_text", tooltip_text)
     end
 
     -- next bit is tooltip_id; optional again
@@ -290,7 +297,7 @@ function uic:decipher(binary_data)
             tooltip_id = self:decipher_chunk("str", 1, len)
         end
 
-        self.tooltip_id = tooltip_id
+        self:add_data("tooltip_id", tooltip_id)
     end
 
     -- next bit is docking point, 4 bytes
@@ -301,7 +308,7 @@ function uic:decipher(binary_data)
         hex = string.sub(hex, 1,2)
         
         hex = tonumber(hex, 16)
-        self.docking_point = hex
+        self:add_data("docking_point", hex)
     end
 
     -- next bit is docking offset (x,y)
@@ -309,10 +316,7 @@ function uic:decipher(binary_data)
         local x = self:decipher_chunk("int16", 1, 4)
         local y = self:decipher_chunk("int16", 1, 4)
 
-        self.dock_offsets = {
-            x = x,
-            y = y
-        }
+        self:add_data("dock_offsets", {x=x,y=y})
     end
 
     -- next bit is the component priority (where it's printed on the screen, higher = front, lower = back)
@@ -320,13 +324,13 @@ function uic:decipher(binary_data)
     do
         local hex = self:decipher_chunk("hex", 1, 1)
 
-        self.component_priority = hex
+        self:add_data("component_priority", hex)
     end
 
     -- default state, always is 4-bytes, refers to the UID of the state in question
     -- can be 00 00 00 00 happily, seems like it'll default to the first state if none are set here
     do
-        self.default_state = self:decipher_chunk("hex", 1, 4)
+        self:add_data("default_state", self:decipher_chunk("hex", 1, 4))
     end
 
     -- next are the images
@@ -371,31 +375,35 @@ function uic:decipher(binary_data)
             images[#images+1] = image
         end
 
-        self.images = images
+        self:add_data("images", images)
     end
 
     -- "mask image" next; refers to UID of an image. if none, then there is no mask.
     -- dunno if this even works!
     do
-        self.mask_image = self:decipher_chunk("hex", 1, 4)
+        self:add_data("mask_image", self:decipher_chunk("hex", 1, 4))
     end
 
     -- "b5" next; only available between 70-110
     -- undeciphered, obvo
     do
-        self.b5 = ""
+        local b5 = ""
         if v_num >= 70 and v_num < 110 then
-            self.b5 = self:decipher_chunk("hex", 1, 4)
+            b5 = self:decipher_chunk("hex", 1, 4)
         end
+
+        self:add_data("b5", b5)
     end
 
     -- "b_sth2" next; 126-130
     -- undeciphered, 16 bytes evidently
     do
-        self.b_sth2 = ""
+        local b_sth2 = ""
         if v_num >= 126 and v_num < 130 then
-            self.b_sth2 = self:decipher_chunk("hex", 1, 16)
+            b_sth2 = self:decipher_chunk("hex", 1, 16)
         end
+
+        self:add_data("b_sth2", b_sth2)
     end
 
     -- next up are states! :D
@@ -678,7 +686,7 @@ function uic:decipher(binary_data)
 
                 local state_images = {}
 
-                for j = 1, 1 do
+                for j = 1, num_state_images do
                     local state_image = {}
 
                     -- references the UID of the ComponentImage in the UIC itself; MUST match one!
@@ -750,11 +758,126 @@ function uic:decipher(binary_data)
                             y=y
                         }
 
+                        -- TODO this might be CanResizeWidth/Height
                         -- dock right/bottom; they seem to be bools?
                         state_image.dock = {
                             right = self:decipher_chunk("bool", 1, 1),
                             left = self:decipher_chunk("bool", 1, 1),
                         }
+                    end
+
+                    do -- rotation angle and pivot points
+
+                        -- TODO this is 4 bytes; no idea how it's turned into an angle.
+                        -- rotation is in radians in TW UI, for future reference
+                        state_image.rotation_angle = self:decipher_chunk("hex", 1, 4)
+
+                        -- TODO this again; check what kind of ints they are, later on
+                        state_image.pivot_point = {
+                            x = self:decipher_chunk("hex", 1, 4),
+                            y = self:decipher_chunk("hex", 1, 4),
+                        }
+                    end
+
+                    do -- rotation axis & shader name
+                        -- rot axis is 3 floats
+
+                        if v >= 103 then
+                            state_image.rotation_axis = {
+                                self:decipher_chunk("int16", 1, 4),
+                                self:decipher_chunk("int16", 1, 4),
+                                self:decipher_chunk("int16", 1, 4),
+                            }
+
+                            local shader_name = ""
+
+                            local len = self:decipher_chunk("len", 1, 2)
+
+                            if len == 0 then
+                                shader_name = "00 00"
+                            else
+                                shader_name = self:decipher_chunk("str", 1, len)
+                            end
+                            
+                            state_image.shader_name = shader_name
+                        else
+                            local shader_name = ""
+
+                            local len = self:decipher_chunk("len", 1, 2)
+
+                            if len == 0 then
+                                shader_name = "00 00"
+                            else
+                                shader_name = self:decipher_chunk("str", 1, len)
+                            end
+                            
+                            state_image.shader_name = shader_name
+
+                            state_image.rotation_axis = {
+                                self:decipher_chunk("int16", 1, 4),
+                                self:decipher_chunk("int16", 1, 4),
+                                self:decipher_chunk("int16", 1, 4),
+                            }
+                        end
+                    end
+
+                    -- b4, undeciphered. always 00 00 00 00(?)
+                    do
+                        if v <= 102 then
+                            state_image.b4 = self:decipher_chunk("hex", 1, 4)
+                        end
+                    end
+
+                    -- margin / b5 / shader tech vars
+                    do
+                        if v == 79 then
+                            state_image.b5 = self:decipher_chunk("hex", 1, 8)
+                        elseif v >= 70 and v < 80 then
+                            state_image.b5 = self:decipher_chunk("hex", 1, 9)
+                        elseif v >= 80 and v < 95 then
+                            if v == 92 or v == 93 then
+                                state_image.margin = {
+                                    self:decipher_chunk("hex", 1, 4),
+                                    self:decipher_chunk("hex", 1, 4),
+                                    self:decipher_chunk("hex", 1, 4),
+                                    self:decipher_chunk("hex", 1, 4),
+                                }
+                            else
+                                state_image.margin = {
+                                    self:decipher_chunk("hex", 1, 4),
+                                    self:decipher_chunk("hex", 1, 4),
+                                }
+                            end
+                        else
+                            if v >= 103 then
+                                -- TODO:
+                                --[[			
+                                    if ($v >= 103){
+                                        $this->shadertechnique_vars = my_unpack_array($my, 'f4', fread($h, 4 * 4));
+                                        foreach ($this->shadertechnique_vars as &$a){ $a = round($a * 10000000) / 10000000; }
+                                        unset($a);
+                                    }
+                                ]]
+
+                                state_image.shadertechnique_vars = {
+                                    self:decipher_chunk("hex", 1, 4),
+                                    self:decipher_chunk("hex", 1, 4),
+                                    self:decipher_chunk("hex", 1, 4),
+                                    self:decipher_chunk("hex", 1, 4),
+                                }
+                            end
+
+                            state_image.margin = {
+                                self:decipher_chunk("hex", 1, 4),
+                                self:decipher_chunk("hex", 1, 4),
+                                self:decipher_chunk("hex", 1, 4),
+                                self:decipher_chunk("hex", 1, 4),
+                            }
+
+                            if v >= 125 and v < 130 then
+                                state_image.b5 = self:decipher_chunk("hex", 1, 1)
+                            end
+                        end
                     end
 
                     state_images[#state_images+1] = state_image
@@ -763,42 +886,88 @@ function uic:decipher(binary_data)
                 state.state_images = state_images
             end
 
+            -- mouse stuff
+            --[[		
+                // stateeditordisplaypos (2 ints)
+                $this->b_mouse = tohex(fread($h, 8)); // unknown
+            ]]
+            do
+                state.b_mouse = self:decipher_chunk("hex", 1, 8)
+
+                
+            end
+
             states[#states+1] = state
         end
-        self.states = states
+        self:add_data("states", states)
     end
 end
 
-local old_print = print
-local tab = ""
-local function print(text)
-    old_print(tab..text)
-end
 
 function uic:print()
-    -- [[
-        local indexes = self.indexes
-        local data = self.data
-        
-        for i = 1, #indexes do
-            local index = indexes[i]
-            local datum = data[index]
-            
-            local str = index..": "
-            
-            if type(datum) == "string" then            
-                str = str .. datum
-            elseif type(datum) == "table" then
-                -- loop?
-            elseif type(datum) == "function" then
-                -- error!
-            else
-                str = str .. tostring(datum)
-            end
-        end
-    --]]
+    local indexes = self.indexes
+    local data = self.data
 
-    print("Version: "..self.version)
+    local tab = ""
+
+    local function print_datum(str, datum)
+        if type(datum) == "string" then
+            str = str .. datum
+        elseif type(datum) == "table" then
+            str = str .. "{"
+
+            local old_tab = tab
+
+            -- test if it's an array or a k/v, by testing index [1]
+            -- imperfect, but it works for my needs!
+            if datum[1] ~= nil then
+                -- it's an array; print it all in line
+                for i = 1, #datum do
+                    local val = datum[i]
+                    str = print_datum(str, val)
+                    if i ~= #datum then
+                        str = str .. ", "
+                    end
+                end
+            else
+                tab = tab .. "\t"
+                for k,v in pairs(datum) do
+                    str = str .. "\n"
+    
+                    str = str .. k .. ": "
+    
+                    str = print_datum(str.."\n" ..tab, v)
+                end
+            end
+
+            tab = old_tab
+            str = str .. "}"
+            
+        elseif type(datum) == "number" then
+            str = str .. tostring(datum)
+        elseif type(datum) == "boolean" then
+            str = str .. tostring(datum)
+        else
+            -- error!
+        end
+
+        return str
+    end
+
+    local ret = ""
+   
+    for i = 1, #indexes do
+        local index = indexes[i]
+        local datum = data[index]
+
+        local str = print_datum(index..": ", datum)
+
+        ret = ret .. str .. "\n"
+    end
+
+    print(ret)
+
+    --[[print("Version: "..self.version)
     print("UID: "..self.uid)
     print("Name: "..self.name)
     print("b0: "..self.b0)
@@ -921,7 +1090,7 @@ function uic:print()
         end
         tab = "\t"
     end
-    tab = ""
+    tab = ""]]
 end
 
 local function decipher_file(file_path)
