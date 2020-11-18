@@ -887,14 +887,35 @@ function uic:decipher(binary_data)
             end
 
             -- mouse stuff
-            --[[		
-                // stateeditordisplaypos (2 ints)
-                $this->b_mouse = tohex(fread($h, 8)); // unknown
-            ]]
             do
+                --[[		
+                    // stateeditordisplaypos (2 ints)
+                    $this->b_mouse = tohex(fread($h, 8)); // unknown
+                ]]
                 state.b_mouse = self:decipher_chunk("hex", 1, 8)
 
-                
+                local num_mouse = self:decipher_chunk("len", 1, 4)
+
+                local mouses = {}
+                if num_mouse == 0 then
+                    -- no mouse objects!
+                else
+                    local mouse = {}
+                    
+                    mouse.mouse_state = self:decipher_chunk("hex", 1, 4)
+
+                    mouse.state_uid = self:decipher_chunk("hex", 1, 4)
+
+                    if v>= 122 and v < 130 then
+                        mouse.b_sth = self:decipher_chunk("hex", 1, 16)
+                    end
+
+                    mouse.b0 = self:decipher_chunk("hex", 1, 4)
+
+                    
+
+                    mouses[#mouses+1] = mouse
+                end
             end
 
             states[#states+1] = state
@@ -908,15 +929,14 @@ function uic:print()
     local indexes = self.indexes
     local data = self.data
 
-    local tab = ""
-
     local function print_datum(str, datum)
+        str = str .. " "
+
         if type(datum) == "string" then
             str = str .. datum
         elseif type(datum) == "table" then
             str = str .. "{"
 
-            local old_tab = tab
 
             -- test if it's an array or a k/v, by testing index [1]
             -- imperfect, but it works for my needs!
@@ -926,22 +946,15 @@ function uic:print()
                     local val = datum[i]
                     str = print_datum(str, val)
                     if i ~= #datum then
-                        str = str .. ", "
+                        str = str .. ","
                     end
                 end
             else
-                tab = tab .. "\t"
                 for k,v in pairs(datum) do
-                    str = str .. "\n"
-    
-                    str = str .. k .. ": "
-    
-                    str = print_datum(str.."\n" ..tab, v)
+                    str = print_datum(str .. k .. ":", v)
                 end
             end
-
-            tab = old_tab
-            str = str .. "}"
+            str = str .. "}\n"
             
         elseif type(datum) == "number" then
             str = str .. tostring(datum)
@@ -960,7 +973,7 @@ function uic:print()
         local index = indexes[i]
         local datum = data[index]
 
-        local str = print_datum(index..": ", datum)
+        local str = print_datum(index..":", datum)
 
         ret = ret .. str .. "\n"
     end
