@@ -1,7 +1,7 @@
 -- the actual physical for the UI, within the game.
 -- weird concept, right?
 
-local parser = core:get_static_object("layout_parser")
+local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
 local ui_obj = {
     new_button = nil,
@@ -290,7 +290,7 @@ function ui_obj:create_buttons_holder()
 end
 
 function ui_obj:create_loaded_uic_in_testing_ground()
-    local path = parser.loaded_uic_path
+    local path = ui_editor_lib.loaded_uic_path
 
     local panel = self.panel
     if not panel or not is_uicomponent(panel) or not path then
@@ -314,9 +314,14 @@ end
 
 function ui_obj:create_details_for_loaded_uic()
     local panel = self.panel
-    local loaded_uic = parser.loaded_uic
+    local loaded_uic = ui_editor_lib.loaded_uic
 
     ModLog("bloop 1")
+
+    -- TODO get "headers" working (so you can close/open entire sections, ie. close all states or just one, etc)
+    -- TODO get indentation working as the tiers go on
+    -- TODO figure out the actual look of the text for each thing
+    -- TODO figure out tables
 
     local ok, err = pcall(function()
 
@@ -326,13 +331,83 @@ function ui_obj:create_details_for_loaded_uic()
     local indices = loaded_uic.indexes
     local data = loaded_uic.data
 
+    -- x_margin pushes everything a bit to the right (and makes the width of each row smaller by x_margin)
+    -- increased on every indent (ie. tables, headers) and decreased at the end of that object
+    local x_margin = 0
+
+    local default_h = 0
+
+    -- TODO figure out reducing the margin!
+    local function new_header(key, text)
+        assert(is_string(key) and is_string(text), "Strings must be passed!")
+        local header_uic = UIComponent(list_box:CreateComponent(key, "ui/vandy_lib/expandable_row_header"))
+
+        header_uic:SetCanResizeWidth(true)
+        header_uic:SetCanResizeHeight(false)
+        header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
+        header_uic:SetCanResizeWidth(false)
+
+        if default_h == 0 then default_h = header_uic:Height() end
+
+        header_uic:SetDockingPoint(0)
+        header_uic:SetDockOffset(x_margin, 0)
+            
+        -- local child_count = find_uicomponent(root_header, "child_count")
+        -- child_count:SetVisible(false)
+
+        local dy_title = find_uicomponent(header_uic, "dy_title")
+        dy_title:SetStateText(text)
+
+        x_margin = x_margin + 10
+    end
+
+    -- create the dummy row, the left text, the right text, and the tooltip
+    local function new_text_row(key, type_text, value_text, tooltip_text)
+        local row_uic = UIComponent(list_box:CreateComponent(key, "ui/campaign ui/script_dummy"))
+
+        row_uic:SetCanResizeWidth(true) row_uic:SetCanResizeHeight(true)
+        row_uic:Resize(list_box:Width() * 0.95 - x_margin, default_h)
+        row_uic:SetCanResizeWidth(false) row_uic:SetCanResizeHeight(false)
+        row_uic:SetInteractive(true)
+
+        row_uic:SetDockingPoint(0)
+        row_uic:SetDockOffset(x_margin, 0)
+
+        row_uic:SetTooltipText(tooltip_text, true)
+
+        local left_text_uic = UIComponent(row_uic:CreateComponent("left_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
+        left_text_uic:Resize(row_uic:Width() * 0.3, row_uic:Height() * 0.9)
+        left_text_uic:SetStateText("[[col:white]]"..type_text.."[[/col]]")
+        left_text_uic:SetVisible(true)
+        left_text_uic:SetDockingPoint(4)
+        left_text_uic:SetDockOffset(5, 0)
+        
+        local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
+        right_text_uic:Resize(row_uic:Width() * 0.65, row_uic:Height() * 0.9)
+        right_text_uic:SetStateText("[[col:white]]"..value_text.."[[/col]]")
+        right_text_uic:SetVisible(true)
+        right_text_uic:SetDockingPoint(6)
+        right_text_uic:SetDockOffset(-20, 0)
+    end
+
+    -- first up, create the Root header
+    do
+        new_header("root_header", "Root")
+    end
+
+    -- TODO create headers and sections mo' propaly
+    -- TODO instead of looping through indices, figure out some way better way to loop through all of the deciphered lines in a specific order
+
     for i = 1, #indices do
         local index = indices[i]
         local datum = data[index]
 
-        local new_text = UIComponent(list_box:CreateComponent("text", "ui/vandy_lib/text/la_gioconda/unaligned"))
-        new_text:SetVisible(true)
-        new_text:SetStateText(index .. " " .. tostring(datum))
+        -- change the type_text to actually be localised (ditto with tooltip)
+        local new_text = new_text_row(index, index, tostring(datum.value), "This is my tooltip.")
+
+        -- local new_text = UIComponent(list_box:CreateComponent("text", "ui/vandy_lib/text/la_gioconda/unaligned"))
+        -- new_text:SetVisible(true)
+        -- new_text:SetStateText(index .. " " .. tostring(datum))
     end
 
     list_box:Layout()
@@ -367,7 +442,7 @@ core:add_listener(
         -- TODO make this work for anything else
         local path = "data/ui/templates/button_cycle"
 
-        parser.load_uic_with_path(path)
+        ui_editor_lib.load_uic_with_path(path)
 
         --ui_obj:
     end,
