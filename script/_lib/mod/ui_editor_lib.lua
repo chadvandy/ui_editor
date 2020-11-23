@@ -1,16 +1,44 @@
 local ui_editor_lib = {
     loaded_uic = nil,
     loaded_uic_path = nil,
+
+    display_data = {} -- this is a table solely used for the creation of the display of UI in-game, it's cleared after every use
 }
 
 function ui_editor_lib.init()
-    local path = "script/uic_editor/classes/"
+    local path = "script/uic_editor/"
 
-    ui_editor_lib.parser =      require(path.."layout_parser") -- the manager for deciphering the hex and turning it into more accessible objects
-    ui_editor_lib.ui =          require(path.."ui_panel") -- the in-game UI panel manager
+    ui_editor_lib.parser =              require(path.."layout_parser") -- the manager for deciphering the hex and turning it into more accessible objects
+    ui_editor_lib.ui =                  require(path.."ui_panel") -- the in-game UI panel manager
 
-    ui_editor_lib.uic_class =   require(path.."uic_class") -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
-    ui_editor_lib.uic_field =   require(path.."uic_field") -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
+    path = path .. "classes/"
+    ui_editor_lib.classes = {}
+    local classes = ui_editor_lib.classes
+
+    classes.Component =                 require(path.."Component")              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
+    classes.Field =                     require(path.."Field")                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
+    classes.Container =                 require(path.."Container")              -- the class def for containers, which are just slightly involved tables (for lists of states, images, etc)
+
+    classes.ComponentImage =            require(path.."ComponentImage")         -- ComponentImages, simple stuff, just controls image path / width / height /etc
+    classes.ComponentState =            require(path.."ComponentState")         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
+    classes.ComponentImageMetric =      require(path.."ComponentImageMetric")   -- controls the different fields on an image within a state - visible, tile, etc
+end
+
+-- check if a supplied object is an internal UI class
+function ui_editor_lib.is_ui_class(obj)
+    local str = tostring(obj)
+
+    return str.find("UIED_")
+end
+
+function ui_editor_lib.new_obj(class_name, ...)
+    if ui_editor_lib.classes[class_name] then
+        return ui_editor_lib.classes[class_name].new(...)
+    end
+
+    ModLog("new_obj called, but no class was found with name ["..class_name.."].")
+    
+    return false
 end
 
 function ui_editor_lib.load_uic_with_path(path)
@@ -19,14 +47,16 @@ function ui_editor_lib.load_uic_with_path(path)
         return false
     end
 
+    ModLog("load uic with path: "..path)
+
     local file = assert(io.open(path, "rb+"))
     if not file then
         ModLog("file not found!")
         return false
     end
 
-    local data = ""
-    local nums = {}
+    local data = {}
+    --local nums = {}
     --local location = 1
 
     local block_num = 10
@@ -37,18 +67,24 @@ function ui_editor_lib.load_uic_with_path(path)
         for b in string.gfind(bytes, ".") do
             local byte = string.format("%02X", string.byte(b))
 
-            data = data .. " " .. byte
-            nums[#nums+1] = byte
+            --data = data .. " " .. byte
+            data[#data+1] = byte
         end
     end
 
     file:close()
 
-    local uic = ui_editor_lib.uic_class:new_with_data(data, nums)
+    ModLog("file opened!")
+
+    local ok, err = pcall(function()
+
+    local uic = ui_editor_lib.parser(data)
+
     ui_editor_lib.loaded_uic = uic
     ui_editor_lib.loaded_uic_path = path
 
     ui_editor_lib.ui:load_uic()
+    end) if not ok then ModLog(err) end
 end
 
 core:add_static_object("ui_editor_lib", ui_editor_lib)

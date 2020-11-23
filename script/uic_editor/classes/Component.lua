@@ -1,174 +1,208 @@
-local uic = {}
+local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
-function uic:new()
+local uic_class = {}
+
+function uic_class:new(key)
     local o = {}
-    setmetatable(o, {__index = uic})
+    setmetatable(o, {__index = uic_class})
 
-    o.bytes = {}
-
-    o.location = 1
-
+    o.key = key
+    o.data = {} -- an array (ordered numerically, from 1 up) of tables, each with a .key index and a .value index. each .value is the different Lua object - ie., uic_field
     o.version = 0
-    o.uid = 0
 
-    o.b0 = nil
-    o.b1 = nil
-    o.b_01 = nil
+    o.b_is_root = false
 
-    o.events = nil
-
-    o.offsets = {
-        x = 0,
-        y = 0,
-    }
-    
-    o.indexes = {}
-    o.data = {}
+    o.header_uic = nil
 
     return o
 end
 
--- converts a series of hexadecimal bytes (between j and k) into a string
-function uic:chunk_to_str(j, k)
-    -- adds each hexadecimal byte into a table
-    local block = {}
-    for i = j, k do
-        block[i] = self.bytes[i]
-    end
-
-    -- run through that table and convert the hex into formatted strings (\x56 from 56, for instance)
-    local str = ""
-    for i = j, k do
-        str = str .. "\\x" .. block[i]
-    end
-
-    -- for each pattern of formatted strings (`\x56`), convert it into its char'd form
-    -- tonumber(x,16) changes the number (56) to its place in binary (86) into the ASCII char (V)
-    str = str:gsub("\\x(%x%x)", function(x) return string.char(tonumber(x,16)) end)
-
-    ---- this was within the above function(x) to test the statements
-    -- local first = true
-    -- if first then print(x) print(tonumber(x,16)) print(string.char(tonumber(x,16))) first = false end
-    return str
+function uic_class:get_uic()
+    return self.header_uic
 end
 
-function uic:chunk_to_str16(j, k)
-    local block = {}
-    for i = j,k do
-        block[i] = self.bytes[i]
-    end
-
-    local str = ""
-    for i = j,k,2 do -- the "2" iterates by 2 instead of 1, so it'll skip every unwanted 00
-        str = str .. "\\x" .. block[i]
-    end
-
-    str = str:gsub("\\x(%x%x)", function(x) return string.char(tonumber(x,16)) end)
-
-    return str
+function uic_class:is_root()
+    return self.b_is_root
 end
 
-function uic:chunk_to_hex(j, k)
-    local block = {}
-    for i = j,k do
-        block[i] = self.bytes[i]
+function uic_class:get_version()
+    return self.version
+end
+
+function uic_class:get_key()
+    return self.key or ""
+end
+
+function uic_class:get_data()
+    return self.data
+end
+
+-- open/close the entire class (changes the state of the header_uic, and then hides or shows every child row, gotten by looping through data and getting the obj:get_uic() and going from there)
+function uic_class:set_state(state)
+
+end
+
+function uic_class:set_uic(header_uic)
+    if not is_uicomponent(header_uic) then
+        -- errmsg
+        return false
     end
 
-    -- turn the table of numbers (ie. {84, 03, 00, 00}) into a string with spaces between each (ie. "84 03 00 00")
-    local str = table.concat(block, " ", j, k)
-
-    return str
+    self.header_uic = header_uic
 end
 
--- take a chunk of the bytes and turn them into a length number
--- always an unsigned int4, which means it's a hex byte converted into a number followed by an empty 00 (or three empty 00's)
--- ie., 56 00 is translated into 86 length (as is 56 00 00 00)
-function uic:chunk_to_len(j, k)
-
-    -- get the hex string for this section
-    local len = self:chunk_to_hex(j, k)
-
-    -- cut out the "00"
-    len = string.sub(len, 1, 2)
-
-    -- turn the hex string into the real number (ie. 56 -> 86)
-    len = tonumber(len, 16)
-
-    return len
+function uic_class:set_is_root(b)
+    self.b_is_root = b
 end
 
--- convert a 4-byte hex section into an integer
--- this part is a little weird, since integers like this are actually read backwards in hex (little-endian). ie., 84 03 00 00 in hex is read as 00 00 03 84, which ends up being 03 84, which is converted into 900
-function uic:chunk_to_int16(j, k)
-    local block = {}
-    for i = j,k do
-        block[i] = self.bytes[i]
+function uic_class:add_data(obj)
+    -- TODO confirm that it's a valid obj
+
+    local key = obj:get_key()
+
+    self.data[#self.data+1] = {key=key,value=obj}
+
+    return obj
+end
+
+function uic_class:set_version(verzh)
+    if not is_number(verzh) then
+        -- errmsg
+        return false
     end
 
-    local str = ""
-
-    for i = k,j, -1 do
-        str = str .. block[i]
+    if self.version ~= 0 then
+        -- already set, errmsg
+        return false
     end
 
-    str = tonumber(str, 16)
-    return str
+    self.version = verzh
 end
 
--- convert a single byte into true or false. 00 for false, 01 for true
-function uic:chunk_to_boolean(j, k)
-    local hex = self:chunk_to_hex(j, k)
+function uic_class:get_display_texts()
 
-    local ret = false
-    if hex == "01" then
-        ret = true
+end
+
+function uic_class:display()
+    local list_box = ui_editor_lib.display_data.list_box
+    local x_margin = ui_editor_lib.display_data.x_margin
+    local default_h = ui_editor_lib.display_data.default_h
+
+    if not is_uicomponent(list_box) then
+        -- errmsg
+        return false
     end
 
-    return ret
+    -- TODO figure out how to save all the rows to the header
+    -- create the header_uic for the holder of the UIC
+
+    local header_uic = UIComponent(list_box:CreateComponent(self:get_key(), "ui/vandy_lib/expandable_row_header"))
+    header_uic:SetCanResizeWidth(true)
+    header_uic:SetCanResizeHeight(false)
+    header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
+    header_uic:SetCanResizeWidth(false)
+
+    if not default_h then ui_editor_lib.display_data.default_h = header_uic:Height() end
+
+    header_uic:SetDockingPoint(0)
+    header_uic:SetDockOffset(x_margin, 0)
+
+    -- TODO set a tooltip on the header uic entirely
+
+    local dy_title = find_uicomponent(header_uic, "dy_title")
+    dy_title:SetStateText(self:get_key())
+
+    -- move the x_margin over a bit
+    ui_editor_lib.display_data.x_margin = x_margin + 10
+
+    -- loop through every field in "data" and call its own display() method
+    local data = self:get_data()
+    for i = 1, #data do
+        local d = data[i]
+        -- local d_key = d.key -- needed?
+        local d_obj = d.value
+
+        d_obj:display()
+    end
+
+    -- move the x_margin back to where it began here, after doing the internal loops
+    ui_editor_lib.display_data.x_margin = x_margin
 end
 
-function uic:decipher_chunk(format, j, k)
-    j = j + self.location - 1
-    k = k + self.location - 1
+-- create a new UIC with provided data (a large string with all the hexes) and a hex table
+-- function uic_class:new_with_data(data, hex)
+--     local o = {}
+--     setmetatable(o, {__index = uic_class})
 
-    --print(j)
-    --print(k)
+--     o.bytes = hex
+--     o.data_string = data
 
-    local format_to_func = {
-        str = uic.chunk_to_str,
-        str16 = uic.chunk_to_str16,
-        hex = uic.chunk_to_hex,
-        len = uic.chunk_to_len,
-        int16 = uic.chunk_to_int16,
-        bool = uic.chunk_to_boolean
-    }
+--     o.location = 1
 
-    local func = format_to_func[format]
-    if not func then print("func not found") return end
+--     o.data = {}
+--     o.indexes = {}
 
-    local retval = func(self, j, k)
+--     o.deciphered = false
 
-    -- set location to k+1, for next chunk_to_str call
-    self.location = k+1
+--     o:decipher()
 
-    return retval
-end
+--     return o
+-- end
 
-function uic:add_data(index, value)
-    self.indexes[#self.indexes+1] = index
+-- TODO add parser-deciphered fields into the uic_class
+-- TODO add uic_class:display() or some such, which acts as the ui panel creator for this uicomponent - takes the list_box UIC component, and runs through this UIC object's data
+
+-- function uic_class:decipher_chunk(format, j, k)
+--     j = j + self.location - 1
+--     k = k + self.location - 1
+
+--     --print(j)
+--     --print(k)
+
+--     local format_to_func = {
+--         str = parser.chunk_to_str,
+--         str16 = parser.chunk_to_str16,
+--         hex = parser.chunk_to_hex,
+--         len = parser.chunk_to_len,
+--         int16 = parser.chunk_to_int16,
+--         bool = parser.chunk_to_boolean
+--     }
+
+--     local func = format_to_func[format]
+--     if not func then ModLog("func not found") return end
+
+--     local retval = func(self, j, k)
+
+--     -- set location to k+1, for next decipher_chunk call
+--     self.location = k+1
+
+--     return retval
+-- end
+
+-- -- "data_type" can be "header" or "table" (for now), empty for regular
+-- function uic_class:add_data(index, value, data_type)
+--     self.indexes[#self.indexes+1] = index
     
-    self.data[index] = value
-end
+--     self.data[index] = {
+--         value = value,
+--         data_type = data_type,
+--     }
+-- end
 
-function uic:decipher(binary_data)
-    self.bytes = binary_data
+-- TODO move this entirely to layout_parser
+-- loops through all of the bytes within this UIC, and translates them into the actual data
+function uic_class:decipher()
+    if self.deciphered then
+        -- errmsg
+        return false
+    end
 
     -- first 10 bytes are always the version string - "Version102"
     local v = self:decipher_chunk("str", 1, 10)
 
     -- grab the last 3 digits and set it as version
     local v_num = tonumber(string.sub(v, 8, 10))
-    local v = v_num
+    v = v_num
     self:add_data("version", v)
 
     -- next 4 bytes are the UI-ID for the component
@@ -176,7 +210,7 @@ function uic:decipher(binary_data)
 
     -- next 2 bytes are the length for the next string (unsigned int followed by 00), followed by the string itself (the UIC name)
     do
-        local len = self:decipher_chunk("len", 1, 2) -- 1,2) used so the location goes beyond the 00
+        local len = self:decipher_chunk("len", 1, 2) -- 1,2 used instead of 1,1 so the location goes past the 00
         --print(len)
 
         -- read the name by checking 1,len
@@ -232,7 +266,7 @@ function uic:decipher(binary_data)
         local x = self:decipher_chunk("int16", 1, 4)
         local y = self:decipher_chunk("int16", 1, 4)
 
-        self:add_data("offsets", {x=x,y=y})
+        self:add_data("offsets", {x=x,y=y}, "table")
 
         --[[self.offsets = {
             x = x,
@@ -333,7 +367,7 @@ function uic:decipher(binary_data)
         self:add_data("default_state", self:decipher_chunk("hex", 1, 4))
     end
 
-    -- next are the images
+        -- next are the images
     -- starts with a counter for num-of-images; if it's 0, well, there are none!
     do
         local len = self:decipher_chunk("int16", 1, 4)
@@ -922,219 +956,10 @@ function uic:decipher(binary_data)
         end
         self:add_data("states", states)
     end
+
+    self.deciphered = true
 end
 
+--
 
-function uic:print()
-    local indexes = self.indexes
-    local data = self.data
-
-    local function print_datum(str, datum)
-        str = str .. " "
-
-        if type(datum) == "string" then
-            str = str .. datum
-        elseif type(datum) == "table" then
-            str = str .. "{"
-
-
-            -- test if it's an array or a k/v, by testing index [1]
-            -- imperfect, but it works for my needs!
-            if datum[1] ~= nil then
-                -- it's an array; print it all in line
-                for i = 1, #datum do
-                    local val = datum[i]
-                    str = print_datum(str, val)
-                    if i ~= #datum then
-                        str = str .. ","
-                    end
-                end
-            else
-                for k,v in pairs(datum) do
-                    str = print_datum(str .. k .. ":", v)
-                end
-            end
-            str = str .. "}\n"
-            
-        elseif type(datum) == "number" then
-            str = str .. tostring(datum)
-        elseif type(datum) == "boolean" then
-            str = str .. tostring(datum)
-        else
-            -- error!
-        end
-
-        return str
-    end
-
-    local ret = ""
-   
-    for i = 1, #indexes do
-        local index = indexes[i]
-        local datum = data[index]
-
-        local str = print_datum(index..":", datum)
-
-        ret = ret .. str .. "\n"
-    end
-
-    print(ret)
-
-    --[[print("Version: "..self.version)
-    print("UID: "..self.uid)
-    print("Name: "..self.name)
-    print("b0: "..self.b0)
-    print("events: "..self.events)
-
-    print("Offsets: "..self.offsets.x..", "..self.offsets.y)
-    print("b1: "..self.b1)
-    print("b_01: "..self.b_01)
-    print("visible: "..tostring(self.visible))
-    print("b_02: "..self.b_02)
-    
-    print("tooltip text: "..self.tooltip_text)
-    print("tooltip id: "..self.tooltip_id)
-
-    print("docking point: "..self.docking_point)
-    print("docking offset: "..self.dock_offsets.x .. ", "..self.dock_offsets.y)
-
-    print("component priority: "..self.component_priority)
-    print("default state: "..self.default_state)
-
-    print("num images: "..#self.images)
-    tab = "\t"
-    for i = 1, #self.images do
-        local image = self.images[i]
-        print("image uid: "..image.uid)
-        print("image b_sth:" ..image.b_sth)
-        print("path: "..image.path)
-        print("w: "..image.width)
-        print("h: "..image.height)
-        print("extra: "..image.extra)
-    end
-    tab = ""
-
-    print("b5: "..self.b5)
-    print("b_sth2: "..self.b_sth2)
-
-    print("num states: "..#self.states)
-    tab = "\t"
-    for i = 1, #self.states do
-        local state = self.states[i]
-
-        print("uid: "..state.uid)
-        print("name: "..state.name)
-        print("bounds: "..state.width .. ", "..state.height)
-
-        print("text: "..state.text)
-        print("tooltip: "..state.tooltip_text)
-
-        print("text bounds: "..state.text_bounds.w..", "..state.text_bounds.h)
-        print("text align: "..state.text_align.hor..", "..state.text_align.ver)
-        
-        print("text label: "..state.text_label)
-
-        print("b1: "..state.b1)
-        print("b3: "..state.b3)
-
-        print("localised key: "..state.localised)
-
-        print("tooltip_text: "..state.tooltip_id)
-        print("b4: "..state.b4)
-        print("b5: "..state.b5)
-
-        print("font name: "..state.font_name)
-
-        print("font size: "..state.font_size)
-        print("font lead: "..state.font_leading)
-        print("font track: "..state.font_tracking)
-        print("font colour: "..state.font_colour)
-
-        print("fontcat: "..state.fontcat_name)
-
-        print("text offset: ")
-        for k,v in pairs(state.text_offset) do
-            print("\t"..k ..": "..v)
-        end
-
-        print("b7: "..state.b7)
-
-        print("shader name: "..state.shader_name)
-        print("shader vars: ")
-        for l = 1, #state.shader_vars do
-            print("\t"..state.shader_vars[l])
-        end
-
-        print("num ComponentStateImages: "..#state.state_images)
-
-        tab = tab .. "\t"
-        for l = 1, #state.state_images do
-            local state_image = state.state_images[l]
-
-            print("uid: "..state_image.uid)
-            print("bsth: "..state_image.b_sth)
-            print("offset: ")
-            for k,v in pairs(state_image.offset) do
-                print("\t"..k..": "..v)
-            end
-
-            print("dimensions:")
-            for k,v in pairs(state_image.dimensions) do
-                print("\t"..k..": "..v)
-            end
-
-            print("colour: "..state_image.colour)
-            print("??: "..state_image.str_sth)
-            print("is tiled: "..tostring(state_image.tiled))
-            print("is x-flipped: "..tostring(state_image.x_flipped))
-            print("is y-flipped: "..tostring(state_image.y_flipped))
-
-            print("dock point: "..state_image.docking_point)
-
-            print("dock offset: ")
-            for k,v in pairs(state_image.dock_offset) do
-                print("\t"..k..": "..v)
-            end
-
-            print("dock(?): ")
-            for k,v in pairs(state_image.dock) do
-                print("\t"..k..": "..tostring(v))
-            end
-        end
-        tab = "\t"
-    end
-    tab = ""]]
-end
-
-local function decipher_file(file_path)
-    print("deciphering: "..file_path)
-
-    local file = assert(io.open(file_path, "rb+"))
-
-    local data = {}
-
-    local block_num = 10
-
-    while true do
-        local bytes = file:read(block_num)
-        if not bytes then break end
-
-        for b in string.gfind(bytes, ".") do
-            local byte = string.format("%02X", string.byte(b))
-
-            data[#data+1] = byte
-        end
-    end
-
-    file:close()
-
-    local root = uic:new()
-    root:decipher(data)
-
-    root:print()
-end
-
-decipher_file("ui/bullet_point")
-decipher_file("ui/button_cycle")
-
-return uic
+return uic_class

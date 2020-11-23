@@ -230,7 +230,7 @@ function ui_obj:create_sections()
 
         local list_view = UIComponent(details_screen:CreateComponent("list_view", "ui/vandy_lib/vlist"))
         list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
-        list_view:Resize(nw-20, nh-details_title:Height()-10)
+        list_view:Resize(nw-20, nh-details_title:Height()-40)
         list_view:SetDockingPoint(2)
         list_view:SetDockOffset(10, details_title:Height() + 5)
     
@@ -247,7 +247,7 @@ function ui_obj:create_sections()
         lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
         lbox:SetDockingPoint(0)
         lbox:SetDockOffset(0, 0)
-        lbox:Resize(w,h+100)
+        lbox:Resize(w,h)
     end
 
     do
@@ -314,12 +314,11 @@ end
 
 function ui_obj:create_details_for_loaded_uic()
     local panel = self.panel
-    local loaded_uic = ui_editor_lib.loaded_uic
+    local root_uic = ui_editor_lib.loaded_uic
 
     ModLog("bloop 1")
 
     -- TODO get "headers" working (so you can close/open entire sections, ie. close all states or just one, etc)
-    -- TODO get indentation working as the tiers go on
     -- TODO figure out the actual look of the text for each thing
     -- TODO figure out tables
 
@@ -328,98 +327,32 @@ function ui_obj:create_details_for_loaded_uic()
     local details_screen = find_uicomponent(panel, "details_screen")
     local list_box = find_uicomponent(details_screen, "list_view", "list_clip", "list_box")
 
-    local indices = loaded_uic.indexes
-    local data = loaded_uic.data
+    -- save the list_box and the x_margin to the ui_editor_lib so it can be easily accessed through all the displays
+    ui_editor_lib.display_data.list_box = list_box
+    ui_editor_lib.display_data.x_margin = 0
 
-    -- x_margin pushes everything a bit to the right (and makes the width of each row smaller by x_margin)
-    -- increased on every indent (ie. tables, headers) and decreased at the end of that object
-    local x_margin = 0
+    -- TODO this is a potentially very expensive operation, take a look how it feels with huge files (probably runs like shit (: )
+    -- call the :display() method on root_uic, which creates the header for that component, runs through all its fields, and calls every individual field's "display" method as well!
+    ModLog("beginning")
 
-    local default_h = 0
+    local ok, err = pcall(function()
+    root_uic:display()
+    end) if not ok then ModLog(err) end
 
-    -- TODO figure out reducing the margin!
-    local function new_header(key, text)
-        assert(is_string(key) and is_string(text), "Strings must be passed!")
-        local header_uic = UIComponent(list_box:CreateComponent(key, "ui/vandy_lib/expandable_row_header"))
+    ModLog("end")
 
-        header_uic:SetCanResizeWidth(true)
-        header_uic:SetCanResizeHeight(false)
-        header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
-        header_uic:SetCanResizeWidth(false)
-
-        if default_h == 0 then default_h = header_uic:Height() end
-
-        header_uic:SetDockingPoint(0)
-        header_uic:SetDockOffset(x_margin, 0)
-            
-        -- local child_count = find_uicomponent(root_header, "child_count")
-        -- child_count:SetVisible(false)
-
-        local dy_title = find_uicomponent(header_uic, "dy_title")
-        dy_title:SetStateText(text)
-
-        x_margin = x_margin + 10
-    end
-
-    -- create the dummy row, the left text, the right text, and the tooltip
-    local function new_text_row(key, type_text, value_text, tooltip_text)
-        local row_uic = UIComponent(list_box:CreateComponent(key, "ui/campaign ui/script_dummy"))
-
-        row_uic:SetCanResizeWidth(true) row_uic:SetCanResizeHeight(true)
-        row_uic:Resize(list_box:Width() * 0.95 - x_margin, default_h)
-        row_uic:SetCanResizeWidth(false) row_uic:SetCanResizeHeight(false)
-        row_uic:SetInteractive(true)
-
-        row_uic:SetDockingPoint(0)
-        row_uic:SetDockOffset(x_margin, 0)
-
-        row_uic:SetTooltipText(tooltip_text, true)
-
-        local left_text_uic = UIComponent(row_uic:CreateComponent("left_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
-        left_text_uic:Resize(row_uic:Width() * 0.3, row_uic:Height() * 0.9)
-        left_text_uic:SetStateText("[[col:white]]"..type_text.."[[/col]]")
-        left_text_uic:SetVisible(true)
-        left_text_uic:SetDockingPoint(4)
-        left_text_uic:SetDockOffset(5, 0)
-        
-        local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
-        right_text_uic:Resize(row_uic:Width() * 0.65, row_uic:Height() * 0.9)
-        right_text_uic:SetStateText("[[col:white]]"..value_text.."[[/col]]")
-        right_text_uic:SetVisible(true)
-        right_text_uic:SetDockingPoint(6)
-        right_text_uic:SetDockOffset(-20, 0)
-    end
-
-    -- first up, create the Root header
-    do
-        new_header("root_header", "Root")
-    end
-
-    -- TODO create headers and sections mo' propaly
-    -- TODO instead of looping through indices, figure out some way better way to loop through all of the deciphered lines in a specific order
-
-    for i = 1, #indices do
-        local index = indices[i]
-        local datum = data[index]
-
-        -- change the type_text to actually be localised (ditto with tooltip)
-        local new_text = new_text_row(index, index, tostring(datum.value), "This is my tooltip.")
-
-        -- local new_text = UIComponent(list_box:CreateComponent("text", "ui/vandy_lib/text/la_gioconda/unaligned"))
-        -- new_text:SetVisible(true)
-        -- new_text:SetStateText(index .. " " .. tostring(datum))
-    end
-
+    -- layout the list_box to make sure everything refreshes propa
     list_box:Layout()
-end) if not ok then ModLog(err) end
+    end) if not ok then ModLog(err) end
 
 
-ModLog("bloop end")
+-- ModLog("bloop end")
 end
 
 -- load the currently deciphered UIC
 -- opens the UIC in the testing grounds, and displays all the deciphered details
 function ui_obj:load_uic()
+    ModLog("load_uic() called")
     local panel = self.panel
 
     if not is_uicomponent(panel) then
