@@ -15,13 +15,17 @@ function ui_editor_lib.init()
     ui_editor_lib.classes = {}
     local classes = ui_editor_lib.classes
 
-    classes.Component =                 require(path.."Component")              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
-    classes.Field =                     require(path.."Field")                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
-    classes.Container =                 require(path.."Container")              -- the class def for containers, which are just slightly involved tables (for lists of states, images, etc)
+    classes.Component =                     require(path.."Component")              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
+    classes.Field =                         require(path.."Field")                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
+    classes.Container =                     require(path.."Container")              -- the class def for containers, which are just slightly involved tables (for lists of states, images, etc)
 
-    classes.ComponentImage =            require(path.."ComponentImage")         -- ComponentImages, simple stuff, just controls image path / width / height /etc
-    classes.ComponentState =            require(path.."ComponentState")         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
-    classes.ComponentImageMetric =      require(path.."ComponentImageMetric")   -- controls the different fields on an image within a state - visible, tile, etc
+    classes.ComponentImage =                require(path.."ComponentImage")         -- ComponentImages, simple stuff, just controls image path / width / height /etc
+    classes.ComponentState =                require(path.."ComponentState")         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
+    classes.ComponentImageMetric =          require(path.."ComponentImageMetric")   -- controls the different fields on an image within a state - visible, tile, etc
+    classes.ComponentMouse =                require(path.."ComponentMouse")
+    classes.ComponentProperty =             require(path.."ComponentProperty")
+    classes.ComponentFunction =             require(path.."ComponentFunction")
+    classes.ComponentFunctionAnimation =    require(path.."ComponentFunctionAnimation")
 end
 
 -- check if a supplied object is an internal UI class

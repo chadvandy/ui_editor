@@ -174,7 +174,7 @@ function ui_obj:create_sections()
     testing_grounds:SetState("custom_state_2")
 
     local ow,oh = panel:Dimensions()
-    local w,h = ow*0.75,oh*0.75-20
+    local w,h = ow*0.6,oh*0.6-20
 
     testing_grounds:SetCanResizeWidth(true) testing_grounds:SetCanResizeHeight(true)
     testing_grounds:Resize(w,h) -- matches the resolution of the full screen
@@ -312,6 +312,62 @@ function ui_obj:create_loaded_uic_in_testing_ground()
     test_uic:SetDockOffset(0, 0)
 end
 
+-- function uic_class:display()
+--     local list_box = ui_editor_lib.display_data.list_box
+--     local x_margin = ui_editor_lib.display_data.x_margin
+--     local default_h = ui_editor_lib.display_data.default_h
+
+--     if not is_uicomponent(list_box) then
+--         -- errmsg
+--         return false
+--     end
+
+--     -- TODO figure out how to save all the rows to the header
+--     -- create the header_uic for the holder of the UIC
+
+--     local header_uic = UIComponent(list_box:CreateComponent(self:get_key(), "ui/vandy_lib/expandable_row_header"))
+--     header_uic:SetCanResizeWidth(true)
+--     header_uic:SetCanResizeHeight(false)
+--     header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
+--     header_uic:SetCanResizeWidth(false)
+
+--     if not default_h then ui_editor_lib.display_data.default_h = header_uic:Height() end
+
+--     header_uic:SetDockingPoint(0)
+--     header_uic:SetDockOffset(x_margin, 0)
+
+--     -- TODO set a tooltip on the header uic entirely
+
+--     local dy_title = find_uicomponent(header_uic, "dy_title")
+--     dy_title:SetStateText(self:get_key())
+
+--     -- move the x_margin over a bit
+--     ui_editor_lib.display_data.x_margin = x_margin + 10
+
+--     -- loop through every field in "data" and call its own display() method
+--     local data = self:get_data()
+--     for i = 1, #data do
+--         local d = data[i]
+--         -- local d_key = d.key -- needed?
+--         local d_obj = d.value
+
+--         d_obj:display()
+--     end
+
+--     -- move the x_margin back to where it began here, after doing the internal loops
+--     ui_editor_lib.display_data.x_margin = x_margin
+-- end
+
+function ui_obj:create_details_header_for_obj(obj)
+
+
+end
+
+function ui_obj:create_details_row_for_field(obj)
+
+end
+
+
 function ui_obj:create_details_for_loaded_uic()
     local panel = self.panel
     local root_uic = ui_editor_lib.loaded_uic
@@ -331,9 +387,32 @@ function ui_obj:create_details_for_loaded_uic()
     ui_editor_lib.display_data.list_box = list_box
     ui_editor_lib.display_data.x_margin = 0
 
+    -- TODO rewrite this so it is all through the ui_panel object!
+    -- create_header method, create_field method
+    -- start at root, loop through children and fields, if it's a field do the one, if it's a obj do the other, save fields to their parent header
+
     -- TODO this is a potentially very expensive operation, take a look how it feels with huge files (probably runs like shit (: )
     -- call the :display() method on root_uic, which creates the header for that component, runs through all its fields, and calls every individual field's "display" method as well!
     ModLog("beginning")
+
+    self:create_details_header_for_obj(root_uic)
+
+    local data = root_uic:get_data()
+    for i = 1, #data do
+        local d = data[i]
+        
+    end
+
+--     -- loop through every field in "data" and call its own display() method
+--     local data = self:get_data()
+--     for i = 1, #data do
+--         local d = data[i]
+--         -- local d_key = d.key -- needed?
+--         local d_obj = d.value
+
+--         d_obj:display()
+--     end
+
 
     local ok, err = pcall(function()
     root_uic:display()
@@ -360,7 +439,7 @@ function ui_obj:load_uic()
         return false
     end
 
-    self:create_loaded_uic_in_testing_ground()
+    --self:create_loaded_uic_in_testing_ground()
 
     self:create_details_for_loaded_uic()
 end

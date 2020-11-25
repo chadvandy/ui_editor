@@ -1,7 +1,7 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
 local obj = {
-    __tostring = function() return "UIED_ComponentState" end
+    __tostring = function() return "UIED_ComponentMouse" end
 }
 
 function obj.new()

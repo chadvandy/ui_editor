@@ -48,13 +48,11 @@ function uic_field:get_display_text()
     local value = self:get_value()
     local value_str
     if is_table(value) then
-        -- TODO this doesn't work when fields contain a table of other UIED classes (ie. ComponentImages containing ComponentImage objs)
 
         -- construct the string from the table
         local str = ""
-        for k,v in ipairs(value) do
-            -- check if v is a UI class; if it is, call its :get_display_text() 
-            str = str .. k .. ": ".. tostring(v) .. " "
+        for k,v in pairs(value) do
+            str = str .. tostring(k) .. ": ".. tostring(v) .. " "
         end
         value_str = str
     else
@@ -86,9 +84,6 @@ function uic_field:display()
 
     local key = self:get_key()
     local type_text,tooltip_text,value_text = self:get_display_text()
-
-    ModLog(tostring(x_margin)) ModLog(tostring(default_h))
-    ModLog(type_text) ModLog(tooltip_text) ModLog(value_text)
 
     local row_uic = UIComponent(list_box:CreateComponent(key, "ui/campaign ui/script_dummy"))
 
