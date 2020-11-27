@@ -587,43 +587,43 @@ function parser:decipher_component_mouse()
 
             do
                 local m_ret,hex = self:decipher_chunk("hex", 1, 4)
-                local new_field = ui_editor_lib.classes.Field.new("hex1", m_ret, hex)
+                local new_field = ui_editor_lib.classes.Field:new("hex1", m_ret, hex)
 
                 inner_container[#inner_container+1] = new_field
             end
             
             if v >= 122 and v < 130 then
                 local m_ret,hex = self:decipher_chunk("hex", 1, 16)
-                local new_field = ui_editor_lib.classes.Field.new("hex2", m_ret, hex)
+                local new_field = ui_editor_lib.classes.Field:new("hex2", m_ret, hex)
 
                 inner_container[#inner_container+1] = new_field
             end
 
             do
                 local m_ret,hex = self:decipher_chunk("str", 1, -1)
-                local new_field = ui_editor_lib.classes.Field.new("str1", m_ret, hex)
+                local new_field = ui_editor_lib.classes.Field:new("str1", m_ret, hex)
                 inner_container[#inner_container+1] = new_field
             end
             
             do               
                 local m_ret,hex = self:decipher_chunk("str", 1, -1)
-                local new_field = ui_editor_lib.classes.Field.new("str2", m_ret, hex)
+                local new_field = ui_editor_lib.classes.Field:new("str2", m_ret, hex)
                 inner_container[#inner_container+1] = new_field
             end  
                       
             do
                 local m_ret,hex = self:decipher_chunk("str", 1, -1)
-                local new_field = ui_editor_lib.classes.Field.new("str3", m_ret, hex)
+                local new_field = ui_editor_lib.classes.Field:new("str3", m_ret, hex)
                 inner_container[#inner_container+1] = new_field
             end
 
             -- containers don't take raw hex (only needed for individual lines!)
-            local container = ui_editor_lib.classes.Container.new("sth"..i, inner_container)
+            local container = ui_editor_lib.classes.Container:new("sth"..i, inner_container)
 
             ret[#ret+1] = container
         end
 
-        local container = ui_editor_lib.classes.Container.new("sths", ret)
+        local container = ui_editor_lib.classes.Container:new("sths", ret)
 
         obj:add_data(container)
     end
@@ -730,7 +730,7 @@ end
 function parser:decipher_component_state()
     local v_num = self.root_uic:get_version()
 
-    local obj = ui_editor_lib:new_obj("ComponentState")
+    local obj = ui_editor_lib.new_obj("ComponentState")
 
     local function deciph(key, format, k)
         dec(key, format, k, obj)
@@ -870,7 +870,7 @@ end
 function parser:decipher_component_image()
     ModLog("deciphering component image!")
 
-    local obj = ui_editor_lib.classes.ComponentImage.new()
+    local obj = ui_editor_lib.classes.ComponentImage:new()
 
     local function deciph(key, format, k)
         dec(key, format, k, obj)
@@ -1003,7 +1003,7 @@ function parser:decipher_collection(collected_type, obj_to_add)
     end
 
     -- containers don't take raw hex (only needed for individual lines!)
-    local container = ui_editor_lib.classes.Container.new(key, ret)
+    local container = ui_editor_lib.classes.Container:new(key, ret)
 
     obj_to_add:add_data(container)
 
@@ -1033,12 +1033,12 @@ function parser:dec(key, format, k, obj)
             hex_boi=hex_boi.." "..hex
         end
 
-        new_field = ui_editor_lib.classes.Field.new(key, val, hex_boi)
+        new_field = ui_editor_lib.classes.Field:new(key, val, hex_boi)
         ModLog("chunk deciphered with key ["..key.."], the hex was ["..hex_boi.."]")
     else -- k is not a table, decipher normally
         local ret,hex = self:decipher_chunk(format, j, k)
 
-        new_field = ui_editor_lib.classes.Field.new(key, ret, hex)
+        new_field = ui_editor_lib.classes.Field:new(key, ret, hex)
         ModLog("chunk deciphered with key ["..key.."], the hex was ["..hex.."]")
     end
 

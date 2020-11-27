@@ -31,13 +31,15 @@ end
 -- check if a supplied object is an internal UI class
 function ui_editor_lib.is_ui_class(obj)
     local str = tostring(obj)
+    ModLog("is ui class: "..str)
+    --ModLog(tostring(str.find("UIED_")))
 
-    return str.find("UIED_")
+    return not not string.find(str, "UIED_")
 end
 
 function ui_editor_lib.new_obj(class_name, ...)
     if ui_editor_lib.classes[class_name] then
-        return ui_editor_lib.classes[class_name].new(...)
+        return ui_editor_lib.classes[class_name]:new(...)
     end
 
     ModLog("new_obj called, but no class was found with name ["..class_name.."].")

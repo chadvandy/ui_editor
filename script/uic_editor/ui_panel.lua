@@ -8,6 +8,7 @@ local ui_obj = {
     opened = false,
 
     panel = nil,
+    details_data = {},
 }
 
 function ui_obj:delete_component(uic)
@@ -236,18 +237,23 @@ function ui_obj:create_sections()
     
         local x,y = list_view:Position()
         local w,h = list_view:Bounds()
+        ModLog("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
     
         local lclip = find_uicomponent(list_view, "list_clip")
         lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
         lclip:SetDockingPoint(0)
         lclip:SetDockOffset(0, 0)
         lclip:Resize(w,h)
+
+        ModLog("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
     
         local lbox = find_uicomponent(lclip, "list_box")
         lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
         lbox:SetDockingPoint(0)
         lbox:SetDockOffset(0, 0)
         lbox:Resize(w,h)
+
+        ModLog("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
     end
 
     do
@@ -359,12 +365,168 @@ end
 -- end
 
 function ui_obj:create_details_header_for_obj(obj)
+    local list_box = self.details_data.list_box
+    local x_margin = self.details_data.x_margin
+    local default_h = self.details_data.default_h
+
+    if not is_uicomponent(list_box) then
+        ModLog("display called on obj ["..obj:get_key().."], but the list box don't exist yo")
+        ModLog(tostring(list_box))
+        return false
+    end
+
+    ModLog("hand-crafting details header for obj ["..obj:get_key().."]")
+
+    -- TODO figure out how to save all the rows to the header
 
 
+    -- create the header_uic for the holder of the UIC
+    local header_uic = UIComponent(list_box:CreateComponent(obj:get_key(), "ui/vandy_lib/expandable_row_header"))
+    header_uic:SetCanResizeWidth(true)
+    header_uic:SetCanResizeHeight(false)
+    header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
+    header_uic:SetCanResizeWidth(false)
+
+    if default_h == 0 then self.details_data.default_h = header_uic:Height() end
+
+    -- TODO set a tooltip on the header uic entirely
+    header_uic:SetDockingPoint(0)
+    header_uic:SetDockOffset(x_margin, 0)
+
+
+    local dy_title = find_uicomponent(header_uic, "dy_title")
+    dy_title:SetStateText(obj:get_key())
+
+    -- move the x_margin over a bit
+    self.details_data.x_margin = x_margin + 10
+
+    -- loop through every field in "data" and call its own display() method
+    local data = obj:get_data()
+    for i = 1, #data do
+        local d = data[i]
+        -- local d_key = d.key -- needed?
+        local d_obj 
+
+        if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Container") or string.find(tostring(d), "UI_Field") then
+            ModLog("inner child is a class")
+            d_obj = d
+        else
+            ModLog("inner child is a field")
+            d_obj = d.value
+        end
+
+        ModLog("d: "..tostring(d))
+        ModLog("d_obj: "..tostring(d_obj))
+
+        if is_nil(d_obj) then
+            ModLog("we have a nil d_obj!")
+            ModLog(obj:get_key())
+            ModLog(tostring(d))
+        end
+
+        -- TODO this fails on containers with container children
+        self:display(d_obj)
+    end
+
+    -- move the x_margin back to where it began here, after doing the internal loops
+    self.details_data.x_margin = x_margin
 end
 
-function ui_obj:create_details_row_for_field(obj)
 
+
+function ui_obj:create_details_row_for_field(obj)
+    local list_box = self.details_data.list_box
+    local x_margin = self.details_data.x_margin
+    local default_h = self.details_data.default_h
+    
+    if not is_uicomponent(list_box) then
+        ModLog("display called on field ["..obj:get_key().."], but the list box don't exist yo")
+        ModLog(tostring(list_box))
+        return false
+    end
+    
+    -- TODO get this working betterer for tables
+    local key = obj:get_key()
+    local type_text,tooltip_text,value_text = obj:get_display_text()
+
+    local row_uic = UIComponent(list_box:CreateComponent(key, "ui/campaign ui/script_dummy"))
+
+    ModLog("row uic bounds before: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
+    ModLog("what they should be: ("..math.floor(tostring(list_box:Width() * 0.95 - x_margin))..", "..tostring(default_h)..")")
+
+    row_uic:SetCanResizeWidth(true) row_uic:SetCanResizeHeight(true)
+    row_uic:Resize(math.floor(list_box:Width() * 0.95 - x_margin), default_h)
+    --row_uic:SetCanResizeWidth(false) row_uic:SetCanResizeHeight(false)
+    row_uic:SetInteractive(true)
+
+    ModLog("row uic bounds: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
+
+    row_uic:SetDockingPoint(0)
+    row_uic:SetDockOffset(x_margin, 0)
+
+    row_uic:SetTooltipText(tooltip_text, true)
+
+    local left_text_uic = UIComponent(row_uic:CreateComponent("left_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
+
+    do
+        local ow,oh = row_uic:Width() * 0.3, row_uic:Height() * 0.9
+        local str = "[[col:white]]"..type_text.."[[/col]]"
+
+        left_text_uic:Resize(ow,oh)
+
+        local w,h = left_text_uic:TextDimensionsForText(str)
+        left_text_uic:ResizeTextResizingComponentToInitialSize(w,h)
+
+        left_text_uic:SetStateText(str)
+
+        left_text_uic:Resize(ow,oh)
+        w,h = left_text_uic:TextDimensionsForText(str)
+        left_text_uic:ResizeTextResizingComponentToInitialSize(ow,oh)
+    end
+
+    left_text_uic:SetVisible(true)
+    left_text_uic:SetDockingPoint(4)
+    left_text_uic:SetDockOffset(5, 0)
+
+    left_text_uic:SetTooltipText(tooltip_text, true)
+    
+    local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
+    right_text_uic:SetCanResizeWidth(true) right_text_uic:SetCanResizeHeight(true)
+    do
+        local ow,oh = row_uic:Width() * 0.6, row_uic:Height() * 0.9
+        local str = "[[col:white]]"..value_text.."[[/col]]"
+
+        right_text_uic:Resize(ow,oh)
+
+        local w,h = right_text_uic:TextDimensionsForText(str)
+        right_text_uic:ResizeTextResizingComponentToInitialSize(w,h)
+
+        right_text_uic:SetStateText(str)
+
+        right_text_uic:Resize(ow,oh)
+        w,h = right_text_uic:TextDimensionsForText(str)
+        right_text_uic:ResizeTextResizingComponentToInitialSize(ow,oh)
+    end
+
+    right_text_uic:SetVisible(true)
+    right_text_uic:SetDockingPoint(6)
+    right_text_uic:SetDockOffset(0, 0)
+
+    right_text_uic:SetTooltipText(obj:get_hex(), true)
+end
+
+function ui_obj:display(obj)
+    -- if table, then make header and loop through fields
+    ModLog("ui obj display: "..tostring(obj))
+    if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Container") then
+        ModLog("is ui class")
+        -- the loop is done within create_details_header
+        self:create_details_header_for_obj(obj)
+    else
+        ModLog("ain't ui class")
+        -- it's a field, just create text
+        self:create_details_row_for_field(obj)
+    end
 end
 
 
@@ -382,10 +544,18 @@ function ui_obj:create_details_for_loaded_uic()
 
     local details_screen = find_uicomponent(panel, "details_screen")
     local list_box = find_uicomponent(details_screen, "list_view", "list_clip", "list_box")
+    
+    ModLog(tostring(list_box))
+    ModLog(tostring(is_uicomponent(list_box)))
 
-    -- save the list_box and the x_margin to the ui_editor_lib so it can be easily accessed through all the displays
-    ui_editor_lib.display_data.list_box = list_box
-    ui_editor_lib.display_data.x_margin = 0
+    -- save the list_box and the x_margin to the ui_obj so it can be easily accessed through all the displays
+    -- ModLog(tostring(self.details_data.list_box))
+    -- ModLog(tostring(is_uicomponent(self.details_data.list_box)))
+    self.details_data.list_box = list_box
+    -- ModLog(tostring(self.details_data.list_box))
+    -- ModLog(tostring(is_uicomponent(self.details_data.list_box)))
+    self.details_data.x_margin = 0
+    self.details_data.default_h = 0
 
     -- TODO rewrite this so it is all through the ui_panel object!
     -- create_header method, create_field method
@@ -395,13 +565,12 @@ function ui_obj:create_details_for_loaded_uic()
     -- call the :display() method on root_uic, which creates the header for that component, runs through all its fields, and calls every individual field's "display" method as well!
     ModLog("beginning")
 
-    self:create_details_header_for_obj(root_uic)
+    -- begin the loop!
+    -- ModLog(tostring(root_uic))
+    -- ModLog(tostring(root_uic:get_type()))
+    -- ModLog(tostring(root_uic.type))
+    self:display(root_uic)
 
-    local data = root_uic:get_data()
-    for i = 1, #data do
-        local d = data[i]
-        
-    end
 
 --     -- loop through every field in "data" and call its own display() method
 --     local data = self:get_data()
@@ -414,9 +583,9 @@ function ui_obj:create_details_for_loaded_uic()
 --     end
 
 
-    local ok, err = pcall(function()
-    root_uic:display()
-    end) if not ok then ModLog(err) end
+    -- local ok, err = pcall(function()
+    -- root_uic:display()
+    -- end) if not ok then ModLog(err) end
 
     ModLog("end")
 

@@ -1,10 +1,15 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
-local uic_class = {}
+local obj = {
+    __tostring = function() return "UIED_Component" end
+}
 
-function uic_class:new(key)
+function obj:new(key)
+    ModLog("new uic w/ key "..tostring(key))
     local o = {}
-    setmetatable(o, {__index = uic_class})
+
+    setmetatable(o, self)
+    self.__index = self
 
     o.key = key
     o.data = {} -- an array (ordered numerically, from 1 up) of tables, each with a .key index and a .value index. each .value is the different Lua object - ie., uic_field
@@ -14,58 +19,42 @@ function uic_class:new(key)
 
     o.header_uic = nil
 
+    ModLog(tostring(o))
+    ModLog("end new uic")
+
     return o
 end
 
-function uic_class:get_uic()
-    return self.header_uic
-end
-
-function uic_class:is_root()
-    return self.b_is_root
-end
-
-function uic_class:get_version()
-    return self.version
-end
-
-function uic_class:get_key()
+function obj:get_key()
     return self.key or ""
 end
 
-function uic_class:get_data()
-    return self.data
-end
-
--- open/close the entire class (changes the state of the header_uic, and then hides or shows every child row, gotten by looping through data and getting the obj:get_uic() and going from there)
-function uic_class:set_state(state)
-
-end
-
-function uic_class:set_uic(header_uic)
-    if not is_uicomponent(header_uic) then
-        -- errmsg
-        return false
-    end
-
-    self.header_uic = header_uic
-end
-
-function uic_class:set_is_root(b)
+function obj:set_is_root(b)
     self.b_is_root = b
 end
 
-function uic_class:add_data(obj)
-    -- TODO confirm that it's a valid obj
-
-    local key = obj:get_key()
-
-    self.data[#self.data+1] = {key=key,value=obj}
-
-    return obj
+function obj:__tostring()
+    ModLog("to string'd")
+    return "UIED_Component"
 end
 
-function uic_class:set_version(verzh)
+function obj:get_uic()
+    return self.header_uic
+end
+
+function obj:is_root()
+    return self.b_is_root
+end
+
+function obj:get_data()
+    return self.data
+end
+
+function obj:get_version()
+    return self.version
+end
+
+function obj:set_version(verzh)
     if not is_number(verzh) then
         -- errmsg
         return false
@@ -79,60 +68,84 @@ function uic_class:set_version(verzh)
     self.version = verzh
 end
 
-function uic_class:get_display_texts()
+-- open/close the entire class (changes the state of the header_uic, and then hides or shows every child row, gotten by looping through data and getting the obj:get_uic() and going from there)
+function obj:set_state(state)
 
 end
 
-function uic_class:display()
-    local list_box = ui_editor_lib.display_data.list_box
-    local x_margin = ui_editor_lib.display_data.x_margin
-    local default_h = ui_editor_lib.display_data.default_h
-
-    if not is_uicomponent(list_box) then
+function obj:set_uic(header_uic)
+    if not is_uicomponent(header_uic) then
         -- errmsg
         return false
     end
 
-    -- TODO figure out how to save all the rows to the header
-    -- create the header_uic for the holder of the UIC
-
-    local header_uic = UIComponent(list_box:CreateComponent(self:get_key(), "ui/vandy_lib/expandable_row_header"))
-    header_uic:SetCanResizeWidth(true)
-    header_uic:SetCanResizeHeight(false)
-    header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
-    header_uic:SetCanResizeWidth(false)
-
-    if not default_h then ui_editor_lib.display_data.default_h = header_uic:Height() end
-
-    header_uic:SetDockingPoint(0)
-    header_uic:SetDockOffset(x_margin, 0)
-
-    -- TODO set a tooltip on the header uic entirely
-
-    local dy_title = find_uicomponent(header_uic, "dy_title")
-    dy_title:SetStateText(self:get_key())
-
-    -- move the x_margin over a bit
-    ui_editor_lib.display_data.x_margin = x_margin + 10
-
-    -- loop through every field in "data" and call its own display() method
-    local data = self:get_data()
-    for i = 1, #data do
-        local d = data[i]
-        -- local d_key = d.key -- needed?
-        local d_obj = d.value
-
-        d_obj:display()
-    end
-
-    -- move the x_margin back to where it began here, after doing the internal loops
-    ui_editor_lib.display_data.x_margin = x_margin
+    self.header_uic = header_uic
 end
 
+function obj:add_data(obj)
+    -- TODO confirm that it's a valid obj
+
+    local key = obj:get_key()
+
+    self.data[#self.data+1] = {key=key,value=obj}
+
+    return obj
+end
+
+function obj:get_display_texts()
+
+end
+
+-- function obj:display()
+--     local list_box = ui_editor_lib.display_data.list_box
+--     local x_margin = ui_editor_lib.display_data.x_margin
+--     local default_h = ui_editor_lib.display_data.default_h
+
+--     if not is_uicomponent(list_box) then
+--         -- errmsg
+--         return false
+--     end
+
+--     -- TODO figure out how to save all the rows to the header
+--     -- create the header_uic for the holder of the UIC
+
+--     local header_uic = UIComponent(list_box:CreateComponent(self:get_key(), "ui/vandy_lib/expandable_row_header"))
+--     header_uic:SetCanResizeWidth(true)
+--     header_uic:SetCanResizeHeight(false)
+--     header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
+--     header_uic:SetCanResizeWidth(false)
+
+--     if not default_h then ui_editor_lib.display_data.default_h = header_uic:Height() end
+
+--     header_uic:SetDockingPoint(0)
+--     header_uic:SetDockOffset(x_margin, 0)
+
+--     -- TODO set a tooltip on the header uic entirely
+
+--     local dy_title = find_uicomponent(header_uic, "dy_title")
+--     dy_title:SetStateText(self:get_key())
+
+--     -- move the x_margin over a bit
+--     ui_editor_lib.display_data.x_margin = x_margin + 10
+
+--     -- loop through every field in "data" and call its own display() method
+--     local data = self:get_data()
+--     for i = 1, #data do
+--         local d = data[i]
+--         -- local d_key = d.key -- needed?
+--         local d_obj = d.value
+
+--         d_obj:display()
+--     end
+
+--     -- move the x_margin back to where it began here, after doing the internal loops
+--     ui_editor_lib.display_data.x_margin = x_margin
+-- end
+
 -- create a new UIC with provided data (a large string with all the hexes) and a hex table
--- function uic_class:new_with_data(data, hex)
+-- function obj:new_with_data(data, hex)
 --     local o = {}
---     setmetatable(o, {__index = uic_class})
+--     setmetatable(o, {__index = obj})
 
 --     o.bytes = hex
 --     o.data_string = data
@@ -149,10 +162,10 @@ end
 --     return o
 -- end
 
--- TODO add parser-deciphered fields into the uic_class
--- TODO add uic_class:display() or some such, which acts as the ui panel creator for this uicomponent - takes the list_box UIC component, and runs through this UIC object's data
+-- TODO add parser-deciphered fields into the obj
+-- TODO add obj:display() or some such, which acts as the ui panel creator for this uicomponent - takes the list_box UIC component, and runs through this UIC object's data
 
--- function uic_class:decipher_chunk(format, j, k)
+-- function obj:decipher_chunk(format, j, k)
 --     j = j + self.location - 1
 --     k = k + self.location - 1
 
@@ -180,7 +193,7 @@ end
 -- end
 
 -- -- "data_type" can be "header" or "table" (for now), empty for regular
--- function uic_class:add_data(index, value, data_type)
+-- function obj:add_data(index, value, data_type)
 --     self.indexes[#self.indexes+1] = index
     
 --     self.data[index] = {
@@ -191,7 +204,7 @@ end
 
 -- TODO move this entirely to layout_parser
 -- loops through all of the bytes within this UIC, and translates them into the actual data
-function uic_class:decipher()
+function obj:decipher()
     if self.deciphered then
         -- errmsg
         return false
@@ -962,4 +975,4 @@ end
 
 --
 
-return uic_class
+return obj
