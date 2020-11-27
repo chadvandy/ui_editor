@@ -1,7 +1,8 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
 local obj = {
-    __tostring = function() return "UIED_Component" end
+    __tostring = function() return "UIED_Component" end,
+    type = "Component",
 }
 
 function obj:new(key)
@@ -25,6 +26,7 @@ function obj:new(key)
     return o
 end
 
+-- TODO add the key when the object is created - using the Type+Index method, first, within a collection. Then, whenever add_data is called, check if it's the field "ui-id", then add that, or "name". If ui-id is added and it already has name, don't do anything. This *should* always work.
 function obj:get_key()
     return self.key or ""
 end

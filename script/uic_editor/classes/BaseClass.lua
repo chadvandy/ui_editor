@@ -1,0 +1,2 @@
+-- this file doesn't actually do anything, it's not even loaded by the UI Editor library. It just contains the functions that are copy-pasted into each class type.
+-- TODO I would like this to actually use inheritance, so each of these functions are actually loaded into each type instead of being copy-pasted

@@ -252,7 +252,7 @@ function parser:decipher_component(parent_obj)
     end
 
     -- grab the "UI-ID", which is a unique 4-byte identifier for the UIC layout (all UI-ID's have to be unique within one file, I think globally as well but not sure)
-    deciph("uid", "hex", 4)
+    deciph("ui-id", "hex", 4)
 
     -- grab the name of the UIC. doesn't need to be unique or nuffin
     do
@@ -562,7 +562,7 @@ function parser:decipher_component_mouse()
     local ok, err = pcall(function()
 
     deciph("mouse_state", "hex", 4)
-    deciph("state_uid", "hex", 4)
+    deciph("state_ui-id", "hex", 4)
 
     if v >= 122 and v < 130 then
         deciph("b_sth", "hex", 16)
@@ -655,7 +655,7 @@ function parser:decipher_component_image_metric()
         dec(key, format, k, obj)
     end
 
-    deciph("uid", "hex", 4)
+    deciph("ui-id", "hex", 4)
 
     if v >= 126 and v < 130 then
         deciph("b_sth", "hex", 16)
@@ -736,7 +736,7 @@ function parser:decipher_component_state()
         dec(key, format, k, obj)
     end
 
-    deciph("uid", "hex", 4)
+    deciph("ui-id", "hex", 4)
 
     if v_num >= 126 and v_num < 130 then
         deciph("b_sth", "hex", 16)
@@ -876,9 +876,9 @@ function parser:decipher_component_image()
         dec(key, format, k, obj)
     end
 
-    -- first 4 are the uid
+    -- first 4 are the ui-id
     -- the UI-ID
-    deciph("uid","hex",4)
+    deciph("ui-id","hex",4)
 
     -- image path (can be optional)
     deciph("img_path", "str", -1)
