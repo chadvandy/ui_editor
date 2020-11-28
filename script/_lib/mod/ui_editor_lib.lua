@@ -15,6 +15,8 @@ function ui_editor_lib.init()
     ui_editor_lib.classes = {}
     local classes = ui_editor_lib.classes
 
+    classes.BaseClass =                     require(path.."BaseClass")
+
     classes.Component =                     require(path.."Component")              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
     classes.Field =                         require(path.."Field")                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
     classes.Container =                     require(path.."Container")              -- the class def for containers, which are just slightly involved tables (for lists of states, images, etc)
@@ -28,6 +30,23 @@ function ui_editor_lib.init()
     classes.ComponentFunctionAnimation =    require(path.."ComponentFunctionAnimation")
 end
 
+-- TODO return BaseClass by default?
+function ui_editor_lib.get_class(class_name)
+    if not is_string(class_name) then
+        -- errmsg
+        return nil
+    end
+
+    local ret = ui_editor_lib.classes[class_name]
+
+    if not ret then
+        return nil
+    end
+
+    return ret
+end
+
+-- TODO edit dis
 -- check if a supplied object is an internal UI class
 function ui_editor_lib.is_ui_class(obj)
     local str = tostring(obj)
@@ -37,6 +56,7 @@ function ui_editor_lib.is_ui_class(obj)
     return not not string.find(str, "UIED_")
 end
 
+-- TODO not needed?
 function ui_editor_lib.new_obj(class_name, ...)
     if ui_editor_lib.classes[class_name] then
         return ui_editor_lib.classes[class_name]:new(...)

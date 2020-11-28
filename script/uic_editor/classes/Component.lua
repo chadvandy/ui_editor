@@ -1,5 +1,53 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
+local Component = {
+    type = "UIED_Component",
+
+    version = 0,
+    b_is_root = false,
+    header_uic = nil,
+}
+setmetatable(Component, ui_editor_lib.classes.BaseClass)
+Component.__index = Component
+
+function Component:new(o)
+    o = o or {}
+    if is_string(o) then
+        o = {key=o}
+    end
+    
+    setmetatable(o, self)
+
+    return o
+end
+
+function Component:set_is_root(b)
+    self.b_is_root = b
+end
+
+function Component:is_root()
+    return self.b_is_root
+end
+
+-- TODO check if is root? if not, get root?
+function Component:get_version()
+    return self.version
+end
+
+function Component:set_version(verzh)
+    if not is_number(verzh) then
+        -- errmsg
+        return false
+    end
+
+    if self.version ~= 0 then
+        -- already set, errmsg
+        return false
+    end
+
+    self.version = verzh
+end
+
 local obj = {
     __tostring = function() return "UIED_Component" end,
     type = "Component",
@@ -82,16 +130,6 @@ function obj:set_uic(header_uic)
     end
 
     self.header_uic = header_uic
-end
-
-function obj:add_data(obj)
-    -- TODO confirm that it's a valid obj
-
-    local key = obj:get_key()
-
-    self.data[#self.data+1] = {key=key,value=obj}
-
-    return obj
 end
 
 function obj:get_display_texts()
@@ -977,4 +1015,4 @@ end
 
 --
 
-return obj
+return Component
