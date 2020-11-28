@@ -407,7 +407,7 @@ function ui_obj:create_details_header_for_obj(obj)
         -- local d_key = d.key -- needed?
         local d_obj 
 
-        if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Container") or string.find(tostring(d), "UI_Field") then
+        if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Container") --[[or string.find(tostring(d), "UI_Field")]] then
             ModLog("inner child is a class")
             d_obj = d
         else
