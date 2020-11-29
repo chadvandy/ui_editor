@@ -9,6 +9,9 @@ local ui_obj = {
 
     panel = nil,
     details_data = {},
+
+    row_index = 1,
+    rows_to_objs = {},
 }
 
 function ui_obj:delete_component(uic)
@@ -332,7 +335,13 @@ function ui_obj:create_details_header_for_obj(obj)
     -- TODO figure out how to save all the rows to the header
 
     -- create the header_uic for the holder of the UIC
-    local header_uic = UIComponent(list_box:CreateComponent(obj:get_key(), "ui/vandy_lib/expandable_row_header"))
+    local header_uic = UIComponent(list_box:CreateComponent("ui_header_"..self.row_index, "ui/vandy_lib/expandable_row_header"))
+
+    self.rows_to_objs[tostring(self.row_index)] = obj
+    self.row_index = self.row_index+1
+
+    obj:set_uic(header_uic)
+
     header_uic:SetCanResizeWidth(true)
     header_uic:SetCanResizeHeight(false)
     header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
@@ -428,7 +437,12 @@ function ui_obj:create_details_row_for_field(obj)
     local key = obj:get_key()
     local type_text,tooltip_text,value_text = obj:get_display_text()
 
-    local row_uic = UIComponent(list_box:CreateComponent(key, "ui/campaign ui/script_dummy"))
+    local row_uic = UIComponent(list_box:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
+
+    self.rows_to_objs[tostring(self.row_index)] = obj
+    self.row_index = self.row_index + 1
+
+    obj:set_uic(row_uic)
 
     -- ModLog("row uic bounds before: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
     -- ModLog("what they should be: ("..math.floor(tostring(list_box:Width() * 0.95 - x_margin))..", "..tostring(default_h)..")")
@@ -560,6 +574,24 @@ function ui_obj:load_uic()
 
     self:create_details_for_loaded_uic()
 end
+
+core:add_listener(
+    "header_pressed",
+    "ComponentLClickUp",
+    function(context)
+        local str = context.string
+        return string.find(str, "ui_header_")
+    end,
+    function(context)
+        local str = context.string
+        local ind = string.gsub(str, "ui_header_", "")
+
+        local obj = ui_obj.rows_to_objs[ind]
+
+        obj:switch_state()
+    end,
+    true
+)
 
 core:add_listener(
     "load_button",

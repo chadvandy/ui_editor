@@ -22,6 +22,36 @@ function container:new(key, val)
     return o
 end
 
+function container:set_state(state)
+    local data = self:get_data()
+
+    for i = 1, #data do
+        local inner = data[i]
+        inner:set_state(state)
+    end
+
+    -- set the state of the header (invisible if inner?)
+end
+
+function container:set_uic(uic)
+    if not is_uicomponent(uic) then
+        -- errmsg
+        return false
+    end
+
+    self.uic = uic
+end
+
+function container:get_uic()
+    local uic = self.uic
+    if not is_uicomponent(uic) then
+        -- errmsg
+        return false
+    end
+
+    return uic
+end
+
 function container:get_type()
     return "UI_Container"
 end

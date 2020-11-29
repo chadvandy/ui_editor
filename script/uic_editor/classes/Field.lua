@@ -23,6 +23,7 @@ function uic_field:new(key, value, hex)
     o.key = key
     o.value = value
     o.hex = hex
+    o.uic = nil
 
     return o
 end
@@ -45,6 +46,38 @@ end
 
 function uic_field:get_is_deciphered()
     return self.is_deciphered
+end
+
+function uic_field:get_uic()
+    local uic = self.uic
+    if not is_uicomponent(uic) then
+        -- errmsg
+        return false
+    end
+
+    return self.uic
+end
+
+function uic_field:set_uic(uic)
+    if not is_uicomponent(uic) then
+        -- errmsg
+        return false
+    end
+
+    self.uic = uic
+end
+
+function uic_field:set_state(state)
+    local uic = self:get_uic()
+
+    if is_uicomponent(uic) then
+        if state == "open" then
+            -- set uic to visible!
+            uic:SetVisible(true)
+        else
+            uic:SetVisible(false)
+        end
+    end
 end
 
 -- returns the localised text + tooltip text for this field, using the "key" field

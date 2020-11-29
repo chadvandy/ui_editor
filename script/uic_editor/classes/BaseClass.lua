@@ -19,6 +19,8 @@ function obj:new(o)
     o.key = nil
     o.uic = nil
 
+    o.state = "open"
+
     return o
 end
 
@@ -27,15 +29,47 @@ function obj:get_type()
 end
 
 -- TODO this; save the header UIC to the obj, and loop through all children when opening/closing this obj to set their child UIC visible/invisible
-function obj:set_state()
+function obj:switch_state()
+    local state = self.state
+    local new_state = "closed"
 
+    if state == "closed" then
+        new_state = "open"
+    end
+
+    self:set_state(new_state)
 end
 
-function obj:set_uic()
+function obj:set_state(state)
+    local data = self:get_data()
 
+    for i = 1, #data do
+        local inner = data[i]
+        inner:set_state(state)
+    end
+
+    -- set the state of the header
+    
 end
 
+function obj:set_uic(uic)
+    if not is_uicomponent(uic) then
+        -- errmsg
+        return false
+    end
+    
+    self.uic = uic
+end
 
+function obj:get_uic()
+    local uic = self.uic
+    if not is_uicomponent(uic) then
+        -- errmsg
+        return false
+    end
+
+    return uic
+end
 
 function obj:get_key()
     return self.key or "No Key Found"
