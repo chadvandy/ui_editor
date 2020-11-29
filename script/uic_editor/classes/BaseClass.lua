@@ -1,5 +1,4 @@
 -- this file doesn't actually do anything, it's not even loaded by the UI Editor library. It just contains the functions that are copy-pasted into each class type.
--- TODO I would like this to actually use inheritance, so each of these functions are actually loaded into each type instead of being copy-pasted
 
 local obj = {
     type = "BaseClass",
@@ -45,7 +44,6 @@ function obj:get_data()
     return self.data
 end
 
--- TODO construct the key somehow
 -- when created, assign the key Type+Index, ie. "Component1"
 -- then, assign the key through add_data if the field is "name" or "ui-id"
 -- if ui-id is added but name was already added, keep name.
@@ -54,7 +52,6 @@ function obj:set_key(key, new_key_type)
     local key_type = self.key_type
     local current_key = self:get_key()
 
-    -- TODO resolve dis
     new_key_type = new_key_type or "none"
 
     if key_type == new_key_type or key == self.key then

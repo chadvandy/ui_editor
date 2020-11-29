@@ -16,8 +16,6 @@ setmetatable(ComponentMouseSth, BaseClass)
 ComponentMouseSth.__index = ComponentMouseSth
 ComponentMouseSth.__tostring = BaseClass.__tostring
 
-
-
 function ComponentMouseSth:new(o)
     o = o or {}
     setmetatable(o, self)
@@ -31,8 +29,6 @@ end
 
 function ComponentMouseSth:decipher()
     local v = parser.root_uic:get_version()
-
-    -- local obj = ui_editor_lib.new_obj("ComponentMouseSth")
 
     local function deciph(key, format, k)
         dec(key, format, k, self)

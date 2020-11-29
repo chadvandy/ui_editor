@@ -318,52 +318,6 @@ function ui_obj:create_loaded_uic_in_testing_ground()
     test_uic:SetDockOffset(0, 0)
 end
 
--- function uic_class:display()
---     local list_box = ui_editor_lib.display_data.list_box
---     local x_margin = ui_editor_lib.display_data.x_margin
---     local default_h = ui_editor_lib.display_data.default_h
-
---     if not is_uicomponent(list_box) then
---         -- errmsg
---         return false
---     end
-
---     -- TODO figure out how to save all the rows to the header
---     -- create the header_uic for the holder of the UIC
-
---     local header_uic = UIComponent(list_box:CreateComponent(self:get_key(), "ui/vandy_lib/expandable_row_header"))
---     header_uic:SetCanResizeWidth(true)
---     header_uic:SetCanResizeHeight(false)
---     header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
---     header_uic:SetCanResizeWidth(false)
-
---     if not default_h then ui_editor_lib.display_data.default_h = header_uic:Height() end
-
---     header_uic:SetDockingPoint(0)
---     header_uic:SetDockOffset(x_margin, 0)
-
---     -- TODO set a tooltip on the header uic entirely
-
---     local dy_title = find_uicomponent(header_uic, "dy_title")
---     dy_title:SetStateText(self:get_key())
-
---     -- move the x_margin over a bit
---     ui_editor_lib.display_data.x_margin = x_margin + 10
-
---     -- loop through every field in "data" and call its own display() method
---     local data = self:get_data()
---     for i = 1, #data do
---         local d = data[i]
---         -- local d_key = d.key -- needed?
---         local d_obj = d.value
-
---         d_obj:display()
---     end
-
---     -- move the x_margin back to where it began here, after doing the internal loops
---     ui_editor_lib.display_data.x_margin = x_margin
--- end
-
 function ui_obj:create_details_header_for_obj(obj)
     local list_box = self.details_data.list_box
     local x_margin = self.details_data.x_margin
@@ -448,11 +402,7 @@ function ui_obj:create_details_header_for_obj(obj)
 
         if is_nil(d_obj) or not is_table(d_obj) then
             ModLog("we have a nil d_obj!")
-            -- ModLog(obj:get_key())
-            -- ModLog(tostring(d))
         else
-            -- TODO this fails if d_obj isn't a UIED class
-            -- TODO this fails if obj is a UI_Container and d_obj is a UI_Container (infi loop?)
             self:display(d_obj)
         end
     end
@@ -474,7 +424,7 @@ function ui_obj:create_details_row_for_field(obj)
         return false
     end
     
-    -- TODO get this working betterer for tables
+    -- TODO get this working betterer (prettierer) for tables
     local key = obj:get_key()
     local type_text,tooltip_text,value_text = obj:get_display_text()
 
@@ -545,17 +495,11 @@ function ui_obj:create_details_row_for_field(obj)
 end
 
 
--- TODO TODO TODO TODO TODO TODO this still takes a massive shit on the container-within-container thing
 function ui_obj:display(obj)
-    -- if table, then make header and loop through fields
-    -- ModLog("ui obj display: "..tostring(obj))
+
     if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Container") then
-        -- ModLog("is ui class")
-        -- the loop is done within create_details_header
         self:create_details_header_for_obj(obj)
     elseif string.find(tostring(obj), "UI_Field") then
-        -- ModLog("is ui field")
-        -- it's a field, just create text
         self:create_details_row_for_field(obj)
     else
         ModLog("not a field or a class!")
@@ -582,62 +526,14 @@ function ui_obj:create_details_for_loaded_uic()
     ModLog(tostring(is_uicomponent(list_box)))
 
     -- save the list_box and the x_margin to the ui_obj so it can be easily accessed through all the displays
-    -- ModLog(tostring(self.details_data.list_box))
-    -- ModLog(tostring(is_uicomponent(self.details_data.list_box)))
     self.details_data.list_box = list_box
-    -- ModLog(tostring(self.details_data.list_box))
-    -- ModLog(tostring(is_uicomponent(self.details_data.list_box)))
     self.details_data.x_margin = 0
     self.details_data.default_h = 0
 
-    -- TODO rewrite this so it is all through the ui_panel object!
-    -- create_header method, create_field method
-    -- start at root, loop through children and fields, if it's a field do the one, if it's a obj do the other, save fields to their parent header
-
     -- TODO this is a potentially very expensive operation, take a look how it feels with huge files (probably runs like shit (: )
-    -- call the :display() method on root_uic, which creates the header for that component, runs through all its fields, and calls every individual field's "display" method as well!
     ModLog("beginning")
 
-    -- begin the loop!
-    -- ModLog(tostring(root_uic))
-    -- ModLog(tostring(root_uic:get_type()))
-    -- ModLog(tostring(root_uic.type))
-
-    do
-        local data = root_uic:get_data()
-
-        for i = 1, #data do
-            ModLog("VANDY TESTING")
-            ModLog("root data at ["..tostring(i).."] is: ["..tostring(data[i]).."].")
-            if i >= 65 then
-                local d = data[i]
-                if tostring(d) == "UIED_Component" then
-                    ModLog("Component found, key is: "..d:get_key())
-                else 
-                    -- it's a field
-                    ModLog("Field ["..d:get_key().."] found, value is: "..tostring(d:get_value()))
-                end
-            end
-        end
-    end
-
     self:display(root_uic)
-
-
---     -- loop through every field in "data" and call its own display() method
---     local data = self:get_data()
---     for i = 1, #data do
---         local d = data[i]
---         -- local d_key = d.key -- needed?
---         local d_obj = d.value
-
---         d_obj:display()
---     end
-
-
-    -- local ok, err = pcall(function()
-    -- root_uic:display()
-    -- end) if not ok then ModLog(err) end
 
     ModLog("end")
 
