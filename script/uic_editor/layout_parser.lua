@@ -5,10 +5,6 @@
 -- the layout_parser also is where all the internal versioning is, and if all goes well, is the only file that needs updating each CA patch (when a new UIC version is introduced).
 
 
--- TODO does each class really need to be a different Lua type?
--- TODO ^ yes, but there can be a main "class" that they're all built from. I tried that once before and it failed but I eventually got it working
--- TODO decide if moving decode onto individual Lua types
-
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
 local parser = {
@@ -17,13 +13,15 @@ local parser = {
 
     root_uic = nil,         -- this is the saved UIC object which contains every field and baby class, also cleared on every call
     location = 1,           -- used to jump through the hex bytes
-
-    -- TODO figure out how to do this!
-    current_obj = nil,      -- this is the current object being looped through
 }
 
 -- parsers here (translate raw hex into actual data)
 
+-- little-endian, four-bytes number. 00 00 80 3F -> 1, 00 00 00 40 -> 2, 00 00 80 40 -> 3, no clue what the patter here is.
+-- TODO make this!
+function parser:chunk_to_float(j, k)
+
+end
 -- converts a series of hexadecimal bytes (between j and k) into a string
 -- takes an original 2 bytes *before* the string as the "len" identifier.
 function parser:chunk_to_str(j, k)
@@ -224,731 +222,42 @@ local function dec(key, format, k, obj)
     return parser:dec(key, format, k, obj)
 end
 
--- TODO a different parser function to decipher each type? parser:decipher_uic() and what not?
--- TODO yes ^^^^^^^^^
+-- function parser:decipher_component()
 
-function parser:decipher_component(is_first)
-    local current_uic = nil
-    local v_num = nil
-    local v = nil
+-- end
 
-    if is_first then
-        current_uic = self.root_uic
+-- function parser:decipher_component_mouse_sth()
 
-        -- first up, grab the version!
-        local version_header = dec("header", "str", 10, current_uic)
+-- end
 
-        -- change the string from "Version100" to "100", cutting off the version at the front
-        v_num = tonumber(string.sub(version_header:get_value(), 8, 10))
-        v = v_num
-        current_uic:set_version(v_num)
-    -- elseif tostring(parent_obj) == "UIED_Component" then
-    --     current_uic = ui_editor_lib.new_obj("Component")
+-- function parser:decipher_component_mouse()
 
-    --     v_num = self.root_uic:get_version()
-    --     v = v_num
-    else
-        current_uic = ui_editor_lib.new_obj("Component")
-        v_num = self.root_uic:get_version()
-        v = v_num
-        -- ModLog("decipher_component called but the parent_obj sent ["..tostring(parent_obj).."] isn't a Component!")
-    end
+-- end
 
-    local function deciph(key, format, k)
-        return dec(key, format, k, current_uic)
-    end
+-- function parser:decipher_component_image_metric()
 
-    -- grab the "UI-ID", which is a unique 4-byte identifier for the UIC layout (all UI-ID's have to be unique within one file, I think globally as well but not sure)
-    deciph("ui-id", "hex", 4)
+-- end
 
-    -- grab the name of the UIC. doesn't need to be unique or nuffin
-    do
-        deciph("name", "str", -1)
-    end
 
-    -- first undeciphered chunk! :D
-    do
-        -- unknown string
-        deciph("b0", "str", -1)
-    end
+-- function parser:decipher_component_state()
 
-    -- next up is the Events looong string
+-- end
 
-    -- between v 100-110 there is no "num events" or table; it's just a single long string
-    if v_num >= 100 and v_num < 110 then
-        deciph("events", "str")
-    elseif v_num >= 110 and v_num < 130 then
-        -- TODO dis; this has "num events" length identifier (I believe it's int16, 4-bytes) and is followed by that many strings
-        -- I *think* it also can just have one string with no num events, but I'm not positive
+-- function parser:decipher_component_image()
 
-        -- TODO create ComponentEvent type?
-    end
+-- end
 
-    -- next section is the offsets tables
-    do
-        deciph("offsets", "int16", {x = 4, y = 4})
-    end    
+-- function parser:decipher_component_property()
 
-    -- next section is undeciphered b1, which is only available between 70-89
-    --self.b1 = ""
-    if v_num >= 70 and v_num < 90 then
-        -- TODO dis
-    end
+-- end
 
-        -- next 12 are undeciphered bytes
-    -- jk first 6 are undeciphered, 7 in visibility, 8-12 are undeciphered
-    do
-        -- first 6, undeciphered
-        deciph("b_01", "hex", 6)
-        
-        -- 7, visibility
-        deciph("visible", "bool", 1)
+-- function parser:decipher_component_function_animation()
 
-        -- 8-12, undeciphered!
-        deciph("b_02", "hex", 5)
-    end
+-- end
 
-    -- TODO I believe if one of these exist they both need to; add in error checking for that!
+-- function parser:decipher_component_function()
 
-    -- next bit is optional tooltip text
-    do
-        deciph("tooltip_text", "str16", -1)
-    end
-
-    -- next bit is tooltip_id; optional again
-    do
-        deciph("tooltip_id", "str16", -1) 
-    end
-
-    -- next bit is docking point, a little-endian int16 (so 01 00 00 00 turns into 00 00 00 01 turns into 1)
-    do
-        deciph("docking_point", "int16", 4)
-    end
-
-    -- next bit is docking offset (x,y)
-    do
-        deciph("dock_offsets", "int16", {x=4, y=4})
-    end
-
-    -- next bit is the component priority (where it's printed on the screen, higher = front, lower = back)
-    -- TODO this? it seems like it's just one byte, but it might only be one byte if it's set to 0. find an example of this being filled out!
-    do
-        deciph("component_priority", "hex", 1)
-    end
-
-    -- this is the state that it defaults to (gasp).
-    do
-        deciph("default_state", "hex", 4)
-    end
-
-    -- call another method that starts off determining the length of the following chunk and turns it into a collection of component images onto the component
-    self:decipher_collection("ComponentImage", current_uic)
-
-    -- back to the component!
-
-    -- the UI-ID of the "mask image"; can be empty, ie. 00 00 00 00
-    deciph("mask_image", "hex", 4)
-
-    if v_num >= 70 and v_num < 110 then
-        deciph("b5", "hex", 4)
-    end
-
-    -- some 16-byte hex shit
-    if v_num >= 126 and v_num < 130 then
-        deciph("b_sth2", "hex", 16)
-    end
-
-    -- decipher all da states
-    self:decipher_collection("ComponentState", current_uic)
-
-    if v >= 126 and v < 130 then
-        deciph("b_sth3", "hex", 16)
-    end
-
-    -- next up is Properties!
-    self:decipher_collection("ComponentProperty", current_uic)
-
-    -- unknown TODO
-    deciph("b6", "hex", 4)
-
-    self:decipher_collection("ComponentFunction", current_uic)
-
-    -- TODO move this into the component decipher thingy
-    if v_num >= 100 and v < 130 then
-        local num_child = self:decipher_chunk("int16", 1, 4)
-        ModLog("VANDY NUM CHILDREN: "..tostring(num_child))
-
-        for i = 1, num_child do
-            local bits = self:decipher_chunk("hex", 1, 2)
-            if bits == "00 00" then
-                ModLog("deciphering new component within "..current_uic:get_key())
-                local child = self:decipher_component()
-                ModLog("component deciphered with key ["..child:get_key().."]")
-
-                ModLog("adding them to the current obj, "..current_uic:get_key())
-                current_uic:add_data(child)
-            else
-
-            end
-        end
-    else
-        ModLog("is this ever called?")
-        self:decipher_collection("Component", current_uic)
-    end
-
-    -- if ($v >= 70 && $v < 100){
-    --     for ($i = 0; $i < $this->num_child; ++$i){
-    --         $uic = new UIC();
-    --         $this->child[] = $uic;
-    --         $uic->read($h, $this);
-    --     }
-    -- }
-    -- else if ($v >= 100 && $v < 130){
-    --     for ($i = 0; $i < $this->num_child; ++$i){
-    --         $bits = tohex(fread($h, 2));
-    --         if ($bits === '00 00'){
-    --             $uic = new UIC();
-    --             $this->child[] = $uic;
-    --             $uic->read($h, $this);
-    --         }
-    --         else{
-    --             fseek($h, -2, SEEK_CUR);
-    --             $uic = new UIC_Template();
-    --             $this->child[] = $uic;
-    --             $uic->read($h, $this);
-    --         }
-    --     }
-    -- }
-
-    -- $this->readAfter($h);
-    deciph("after_b0", "hex", 1)
-
-    local type = deciph("after_type", "str", -1):get_value()
-
-    if v >= 70 and v < 80 then
-        if type == "List" then
-        --     $a = array();
-				
-        --     $a[] = 'num_sth = '. tohex($num_sth = fread($h, 4));
-        --     $num_sth = my_unpack_one($this, 'l', $num_sth);
-        --     my_assert($num_sth < 10, $this);
-        --     $b = array();
-        --     for ($i = 0; $i < $num_sth; ++$i){
-        --         $b[] = tohex(fread($h, 4));
-        --     }
-        --     $a[] = $b;
-        --     $a[] = tohex(fread($h, 21));
-            
-        --     $this->after[] = $a;
-        else
-            if v == 79 then
-                deciph("after_b1", "hex", 2)
-
-                -- TODO if there's any children, add another field
-                if false then
-                    --     if ($this->num_child !== 0){
-                    --         $this->after[] = tohex(fread($h, 4));
-                    --     }
-                    deciph("deciph_after_child", "hex", 4)
-                end
-            else
-                deciph("after_b1", "hex", 6)
-            end
-
-            if type then
-                deciph("after_b2", "hex", 1)
-            end
-        end
-
-    elseif v >= 80 and v < 90 then
-        if v >= 80 and v < 85 then
-            deciph("after_b1", "hex", 5)
-        else
-            deciph("after_b1", "hex", 6)
-        end
-    else
-        local has_type = false
-        if type == "List" then -- 451
-            has_type = true
-        elseif type == "HorizontalList" then -- 541
-            has_type = true
-        elseif type == "RadialList" then -- 603
-            has_type = true
-        elseif type == "Table" then -- 615
-            has_type = true
-        else
-
-        end
-
-        if has_type and v >= 100 and v < 110 then -- 645
-            -- do nothing
-        else
-            deciph("after_b1", "str", -1)
-
-            local bit = deciph("after_bit", "hex", 1)
-            bit = bit:get_value()
-
-            if bit == '01' then
-                local int = self:decipher_chunk("int16", 1, 4)
-                for i = 1, int do
-                    deciph("after_bit_"..i, "hex", 4)
-                end
-            end
-
-            if v == 97 and not has_type then
-                local bit2 = deciph("after_2_bit", "hex", 1)
-                bit2 = bit2:get_value()
-
-                if bit2 == '01' then
-                    local len = deciph("after_2_bit_int1", "int16", 4):get_value()
-                    deciph("after_2_bit_int2", "int16", 4)
-
-                    for i = 1,4 do
-                        deciph("after_2_bit_hex"..i, "hex", len)
-                    end
-                end
-                deciph("after_2_bit_hex", "hex", 4)
-            end
-
-            local ok, err = pcall(function()
-
-            local bit = deciph("after_3_bit", "hex", 1):get_value()
-            if bit == '01' then -- 670
-                -- TODO this has to do with models?
-                deciph("after_3_bit_str", "str", -1)
-
-                deciph("after_3_bit_b0", "hex", 74)
-
-                -- num models?
-                local len = deciph("after_3_bit_b1", "int16", 4):get_value()
-
-                for i = 1, len do
-                    deciph("after_3_bit_model"..i.."str1", "str", -1)
-                    deciph("after_3_bit_model"..i.."str2", "str", -1)
-                    deciph("after_3_bit_model"..i.."hex1", "hex", 1)
-
-                    local len = deciph("after_3_bit_anim_num", "int16", 4):get_value()
-                    for j = 1, len do
-                        deciph("after_3_bit_model"..i.."_anim"..j.."str1", "str", -1)
-                        deciph("after_3_bit_model"..i.."_anim"..j.."str2", "str", -1)
-                        deciph("after_3_bit_model"..i.."_anim"..j.."hex", "hex", 4)
-                    end
-                end
-
-                deciph("after_3_bit_b1", "hex", 3)
-            elseif v >= 90 and v < 95 then
-                deciph("after_3_bit_b0", "hex", 2)
-            else
-                deciph("after_3_bit_b0", "hex", 3)
-            end
-
-            if v >= 110 and v < 130 then
-                -- TODO three floats (not ints!)
-                deciph("after_3_bit_f1", "int16", 4)
-                deciph("after_3_bit_f2", "int16", 4)
-                deciph("after_3_bit_f3", "int16", 4)
-            end
-        end) if not ok then ModLog(err) end
-        end
-    end
-
-    -- if parent_obj then
-    --     ModLog("adding UIC ["..current_uic:get_key().."] as child to parent ["..parent_obj:get_key().."].")
-
-    --     parent_obj:add_data(current_uic)
-    -- end
-    
-    -- figure out what this does TODOTODOTODO
-    -- TODO so this checks the number of bytes between the ending of the root component and the ending of the file, I believe
-    -- if ($this->parent === null){
-    --     $this->pos = ftell($h);
-    --     fseek($h, 0, SEEK_END);
-    --     $this->diff = ftell($h) - $this->pos;
-    --     my_assert($this->diff === 0, $this);
-    -- }
-
-    local d = current_uic:get_data()
-
-    ModLog("Component created with name ["..current_uic:get_key().."]. Looping through data:")
-    for i = 1, #d do
-        ModLog("Data at "..tostring(i).." is ["..tostring(d[i]).."].")
-        if tostring(d[i]) == "UIED_Component" then
-            ModLog("Key is: "..d[i]:get_key())
-        end
-    end
-
-    return current_uic
-end
-
-function parser:decipher_component_mouse_sth()
-    local v = self.root_uic:get_version()
-
-    local obj = ui_editor_lib.new_obj("ComponentMouseSth")
-
-    local function deciph(key, format, k)
-        dec(key, format, k, obj)
-    end
-
-    deciph("hex1", "hex", 4)
-
-    if v >= 122 and v < 130 then
-        deciph("hex2", "hex", 16)
-    end
-
-    deciph("str1", "str", -1)
-    deciph("str2", "str", -1)
-    deciph("str3", "str", -1)
-
-    -- idk what this actually does
-    -- TODO decipher this
-
-    -- $this->num_sth = my_unpack_one($this, 'l', fread($h, 4));
-    -- my_assert($this->num_sth < 20, $my);
-    -- for ($i = 0; $i < $this->num_sth; ++$i){
-    --     $a = array();
-    --     $a[] = tohex(fread($h, 4));
-    --     if ($v >= 122 && $v < 130){
-    --         $a[] = tohex(fread($h, 16));
-    --     }
-    --     $a[] = read_string($h, 1, $my);
-    --     $a[] = read_string($h, 1, $my);
-    --     $a[] = read_string($h, 1, $my);
-    --     $this->sth[] = $a;
-    -- }
-
-    return obj
-end
-
-function parser:decipher_component_mouse()
-    local v = self.root_uic:get_version()
-
-    local obj = ui_editor_lib.new_obj("ComponentMouse")
-
-    local function deciph(key, format, k)
-        dec(key, format, k, obj)
-    end
-
-    deciph("mouse_state", "hex", 4)
-    deciph("state_ui-id", "hex", 4)
-
-    if v >= 122 and v < 130 then
-        deciph("b_sth", "hex", 16)
-    end
-
-    deciph("b0", "hex", 8)
-
-    self:decipher_collection("ComponentMouseSth", obj)
-
-    return obj
-end
-
-function parser:decipher_component_image_metric()
-    local v = self.root_uic:get_version()
-
-    local obj = ui_editor_lib.new_obj("ComponentImageMetric")
-
-    local function deciph(key, format, k)
-        dec(key, format, k, obj)
-    end
-
-    deciph("ui-id", "hex", 4)
-
-    if v >= 126 and v < 130 then
-        deciph("b_sth", "hex", 16)
-    end
-
-    deciph("offset", "int16", {x=4,y=4})
-    deciph("dimensions", "int16", {w=4,h=4})
-
-    deciph("colour", "hex", 4)
-
-    -- ui_colour_preset_type_key ?
-    if v>=119 and v<130 then
-        deciph("str_sth", "str")
-    end
-
-    -- bool, whether it's tiled or not
-    deciph("tiled", "bool", 1)
-
-    -- whether the image is flipped on the x/y axes
-    deciph("x_flipped", "bool", 1)
-    deciph("y_flipped", "bool", 1)
-
-    deciph("docking_point", "int16", 4)
-
-    deciph("dock_offset", "int16", {x=4,y=4})
-
-    -- TODO this might be CanResizeWidth/Height
-    -- dock right/bottom; they seem to be bools?
-    deciph("dock", "bool", {right=1,left=1})
-
-    deciph("rotation_angle", "hex", 4)
-    deciph("pivot_point", "int16", {x=4,y=4})
-
-    if v >= 103 then
-        deciph("rotation_axis", "int16", {4,4,4})
-        deciph("shader_name", "str")
-    else
-        deciph("shader_name", "str")
-        deciph("rotation_axis", "int16", {4,4,4})
-    end
-
-    if v <= 102 then
-        deciph("b4", "hex", 4)
-    end
-
-    if v == 79 then
-        deciph("b5", "hex", 8)
-    elseif v >= 70 and v < 80 then
-        deciph("b6", "hex", 9)
-    elseif v >= 80 and v< 95 then
-        if v == 92 or v == 93 then
-            deciph("margin", "hex", {4,4,4,4})
-        else
-            deciph("margin", "hex", {4,4})
-        end
-    else
-        if v >= 103 then
-            deciph("shadertechnique_vars", "hex", {4,4,4,4})
-        end
-        
-        deciph("margin", "hex", {4,4,4,4})
-
-        if v >= 125 and v < 130 then
-            deciph("b5", "hex", 1)
-        end
-    end
-
-    return obj
-end
-
-
-function parser:decipher_component_state()
-    local v_num = self.root_uic:get_version()
-
-    local obj = ui_editor_lib.new_obj("ComponentState")
-
-    local function deciph(key, format, k)
-        dec(key, format, k, obj)
-    end
-
-    deciph("ui-id", "hex", 4)
-
-    if v_num >= 126 and v_num < 130 then
-        deciph("b_sth", "hex", 16)
-    end
-
-    deciph("name", "str", -1)
-
-    deciph("width", "int16", 4)
-    deciph("height", "int16", 4)
-
-    -- localised text
-    deciph("text", "str16", -1)
-    deciph("tooltip_text", "str16", -1)
-
-    -- text bounds
-    deciph("text_width", "int16", 4)
-    deciph("text_height", "int16", 4)
-
-    -- text alignment -- TODO figure out translation, ie. 1 = Top or whatever
-    deciph("text_valign", "int16", 4)
-    deciph("text_halign", "int16", 4)
-
-    -- texthbehavior(?) TODO decode
-    deciph("b1", "hex", 1)
-
-    deciph("text_label", "str16", -1)
-
-    -- they swap order between versions
-    if v_num <= 115 then
-        deciph("b3", "hex", 2)
-        deciph("text_localised", "str16", -1)
-    else        
-        deciph("text_localised", "str16", -1)
-        deciph("b3", "hex", 2)
-    end
-
-    -- TODO this seems wrong, shouldn't they all have tt label?
-    -- tooltip_label + two undeciphered fields
-    if v_num >= 70 and v_num < 90 then
-        deciph("tooltip_label", "str16")
-    elseif v_num >= 90 and v_num < 110 then
-        deciph("tooltip_label", "str16")
-        deciph("b5", "str")
-    elseif v_num >= 110 and v_num < 120 then
-        if v_num <= 115 then
-            deciph("b4", "hex", 4)
-        end
-    elseif v_num == 121 or v_num == 129 then
-        deciph("b5", "str")
-    end
-
-    -- text infos!
-    deciph("font_name", "str")
-    deciph("font_size", "int16", 4)
-    deciph("font_leading", "int16", 4)
-    deciph("font_tracking", "int16", 4)
-    deciph("font_colour", "hex", 4)
-
-    -- font category
-    deciph("fontcat_name", "str")
-
-    -- text offsets!
-    -- first is only two ints - x and y offset; second is four, with left/right/top/bottom offsets
-    if v_num >= 70 and v_num < 80 then
-        deciph("text_offset", "int16", {x=4,y=4})
-    elseif v_num >= 80 and v_num <= 130 then
-        deciph("text_offset", "int16", {l=4,r=4,t=4,b=4})
-    end
-
-    -- undeciphered!
-    if v_num >= 70 and v_num < 80 then
-        deciph("b7", "hex", 7)-- dunno what this did, huh. TODO 7 is weird here.
-    elseif v_num >= 90 and v_num < 130 then
-        -- TODO the second byte sets interactive (00 = uninteractive, etc)
-        deciph("b7", "hex", 4)
-    end
-
-    deciph("shader_name", "str")
-    -- TODO these are actually floats not ints!
-    -- shader variables; int16
-    deciph("shader_vars", "int16", {one=4,two=4,three=4,four=4})
-
-    deciph("text_shader_name", "str")
-    -- TODO these are actually floats not ints!
-    -- shader variables; int16
-    deciph("text_shader_vars", "int16", {one=4,two=4,three=4,four=4})
-
-    self:decipher_collection("ComponentImageMetric", obj)
-
-    -- stuff before the mouse, 8 bytes
-    deciph("b_mouse", "hex", 8)
-
-    self:decipher_collection("ComponentMouse", obj)
-
-    -- TODO there's one more field here, b8
-
-    -- if ($v >= 122 && $v < 130){
-    --     $a = read_string($h, 1, $my);
-    --     if (empty($a)){
-    --         $this->b8 = array($a);
-    --     } else{
-    --         $a = array($a);
-            
-    --         $num_sth = my_unpack_one($this, 'l', fread($h, 4));
-    --         $sth = array();
-    --         for ($i = 0; $i < $num_sth; ++$i){
-    --             $b = array();
-    --             $b[] = read_string($h, 1, $my);
-    --             $b[] = tohex(fread($h, 16));
-    --             $sth[] = $b;
-    --         }
-    --         $a[] = $sth;
-            
-    --         $num_sth = my_unpack_one($this, 'l', fread($h, 4));
-    --         $sth = array();
-    --         for ($i = 0; $i < $num_sth; ++$i){
-    --             $b = array();
-    --             $b[] = read_string($h, 1, $my);
-    --             $b[] = read_string($h, 1, $my);
-    --             $sth[] = $b;
-    --         }
-    --         $a[] = $sth;
-            
-    --         $this->b8 = $a;
-    --     }
-
-    return obj
-end
-
--- starting at location 1, tries to decipher data going onwards to fill out a component image
-function parser:decipher_component_image()
-    ModLog("deciphering component image!")
-
-    local obj = ui_editor_lib.classes.ComponentImage:new()
-
-    local function deciph(key, format, k)
-        dec(key, format, k, obj)
-    end
-
-    -- first 4 are the ui-id
-    -- the UI-ID
-    deciph("ui-id","hex",4)
-
-    -- image path (can be optional)
-    deciph("img_path", "str", -1)
-
-    -- get the width + height
-    deciph("w", "int16", 4)
-    deciph("h", "int16", 4)
-
-    -- TODO decode
-    deciph("unknown_bool", "hex", 1)
-
-    return obj
-end
-
--- properties are just a k/v table, with a key mapped to a value, both strings
-function parser:decipher_component_property()
-    local v = self.root_uic:get_version()
-
-    local obj = ui_editor_lib.new_obj("ComponentProperty")
-
-    local function deciph(key, format, k)
-        dec(key, format, k, obj)
-    end
-
-    -- TODO rename
-    deciph("str1", "str", -1)
-    deciph("str2", "str", -1)
-
-    return obj
-end
-
--- TODO do this later :)
-function parser:decipher_component_function_animation()
-    local v = self.root_uic:get_version()
-
-    local obj = ui_editor_lib.new_obj("ComponentFunctionAnimation")
-
-    local function deciph(key, format, k)
-        dec(key, format, k, obj)
-    end
-
-    if v >= 110 and v < 130 then
-
-    end
-end
-
-function parser:decipher_component_function()
-    local v = self.root_uic:get_version()
-
-    local obj = ui_editor_lib.new_obj("ComponentFunction")
-
-    local function deciph(key, format, k)
-        dec(key, format, k, obj)
-    end
-
-    deciph("name", "str", -1)
-
-    deciph("b0", "hex", 2)
-
-    self:decipher_collection("ComponentFunctionAnimation", obj)
-
-    if v >= 91 and v <= 93 then
-        deciph("b1", "hex", 2)
-    elseif v >= 95 and v < 97 then
-        deciph("b1", "hex", 2)
-    elseif v >= 97 and v < 100 then
-        deciph("str_sth", "str")
-    elseif v >= 110 and v < 130 then
-        deciph("str_sth", "str")
-        deciph("b1", "str")
-    end
-
-    return obj
-end
+-- end
 
 function parser:decipher_collection(collected_type, obj_to_add)
     if not is_string(collected_type) then
@@ -968,19 +277,19 @@ function parser:decipher_collection(collected_type, obj_to_add)
 
     ModLog("\ndeciphering "..collected_type)
 
-    local type_to_func = {
-        Component =                 parser.decipher_component,
-        ComponentImage =            parser.decipher_component_image,
-        ComponentState =            parser.decipher_component_state,
-        ComponentImageMetric =      parser.decipher_component_image_metric,
-        ComponentMouse =            parser.decipher_component_mouse,
-        ComponentProperty =         parser.decipher_component_property,
-        ComponentFunction =         parser.decipher_component_function,
-        ComponentFunctionAnimation = parser.decipher_component_function_animation,
-        ComponentMouseSth =         parser.decipher_component_mouse_sth,
-    }
+    -- local type_to_func = {
+    --     Component =                 parser.decipher_component,
+    --     ComponentImage =            parser.decipher_component_image,
+    --     ComponentState =            parser.decipher_component_state,
+    --     ComponentImageMetric =      parser.decipher_component_image_metric,
+    --     ComponentMouse =            parser.decipher_component_mouse,
+    --     ComponentProperty =         parser.decipher_component_property,
+    --     ComponentFunction =         parser.decipher_component_function,
+    --     ComponentFunctionAnimation = parser.decipher_component_function_animation,
+    --     ComponentMouseSth =         parser.decipher_component_mouse_sth,
+    -- }
 
-    local func = type_to_func[collected_type]
+    -- local func = type_to_func[collected_type]
 
     -- every collection starts with an int16 (four bytes) to inform how much of that thing is within
     local len,hex = self:decipher_chunk("int16", 1, 4)
@@ -995,9 +304,12 @@ function parser:decipher_collection(collected_type, obj_to_add)
     local ret = {}
 
     for i = 1, len do
-        local val,new_hex,end_k = func(self)
+        local new_type = ui_editor_lib.new_obj(collected_type)
+        local val = new_type:decipher()
 
-        -- set the key as, example, "ComponentMouse1"
+        --local val,new_hex,end_k = func(self)
+
+        -- set the key as, example, "ComponentMouse1" (if there's no ui-id or name set!)
         val:set_key(collected_type..tostring(i), "index")
         ModLog("created "..collected_type.." with key "..val:get_key())
 
@@ -1006,8 +318,10 @@ function parser:decipher_collection(collected_type, obj_to_add)
     end
 
     -- containers don't take raw hex (only needed for individual lines!)
-    local container = ui_editor_lib.classes.Container:new(key, ret)
+    local container = ui_editor_lib.new_obj("Container", key, ret)
+    --ui_editor_lib.classes.Container:new(key, ret)
 
+    -- TODO do this within the :decipher() method on each type? ie. `self:add_data(obj:decipher_collection("ComponentImage"))` less shit to pass around.
     obj_to_add:add_data(container)
 
     return container--,hex
@@ -1052,20 +366,20 @@ end
 -- this means the entire layout file is turned into a "root_uic" Lua object, which has methods to get all states, all children, all the children's states, etc., etc., as well as methods for display and getting specific fields
 -- each Lua object holds other important data, such as the raw hex associated with that field
 -- this function needs to be updated with any new UIC version created
-function parser:decipher()
-    if is_nil(self.data) then
-        -- errmsg
-        return false
-    end
+-- function parser:decipher()
+--     if is_nil(self.data) then
+--         -- errmsg
+--         return false
+--     end
 
-    ModLog("decipher name: "..self.name)
+--     ModLog("decipher name: "..self.name)
 
-    local root_uic = self.root_uic
+--     local root_uic = self.root_uic
 
-    self:decipher_component(true)
+--     self:decipher_component(true)
 
-    return root_uic
-end
+--     return root_uic
+-- end
 
 setmetatable(parser, {
     __index = parser,
@@ -1087,7 +401,7 @@ setmetatable(parser, {
         self.location =   1
 
         -- go right into deciphering! (returns the root_uic created!)
-        return self:decipher()
+        return root_uic:decipher()
     end
 })
 

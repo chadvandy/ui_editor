@@ -1,6 +1,12 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 local BaseClass = ui_editor_lib.get_class("BaseClass")
 
+local parser = ui_editor_lib.parser
+local function dec(key, format, k, obj)
+    ModLog("decoding field with key ["..key.."] and format ["..format.."]")
+    return parser:dec(key, format, k, obj)
+end
+
 local ComponentState = {
     type = "ComponentState",
 }
@@ -23,75 +29,146 @@ function ComponentState:new(o)
     return o
 end
 
--- function obj:get_key()
---     return tostring(self.key)
--- end
+function ComponentState:decipher()
+    local v_num = parser.root_uic:get_version()
 
--- function obj:add_data(new_field)
---     -- TODO type check if it's a Field
---     local key = new_field:get_key()
+    -- local obj = ui_editor_lib.new_obj("ComponentState")
 
---     self.data[#self.data+1] = {key=key,value=new_field}
+    local function deciph(key, format, k)
+        dec(key, format, k, self)
+    end
 
---     return new_field
--- end
+    deciph("ui-id", "hex", 4)
 
--- function obj:add_data_table(fields)
---     for i = 1, #fields do
---         self:add_data(fields[i])
---     end
--- end
+    if v_num >= 126 and v_num < 130 then
+        deciph("b_sth", "hex", 16)
+    end
 
--- function obj:get_data()
---     return self.data
--- end
+    deciph("name", "str", -1)
 
--- function obj:display()
---     -- first thing to do here is create the new expandable_row_header
---     local list_box = ui_editor_lib.display_data.list_box
---     local x_margin = ui_editor_lib.display_data.x_margin
---     local default_h = ui_editor_lib.display_data.default_h
+    deciph("width", "int16", 4)
+    deciph("height", "int16", 4)
 
---     if not is_uicomponent(list_box) then
---         -- errmsg
---         return false
---     end
+    -- localised text
+    deciph("text", "str16", -1)
+    deciph("tooltip_text", "str16", -1)
 
---     -- TODO figure out how to save all the rows to the header
---     -- create the header_uic for the holder of the UIC
+    -- text bounds
+    deciph("text_width", "int16", 4)
+    deciph("text_height", "int16", 4)
 
---     local header_uic = UIComponent(list_box:CreateComponent(self:get_key(), "ui/vandy_lib/expandable_row_header"))
---     header_uic:SetCanResizeWidth(true)
---     header_uic:SetCanResizeHeight(false)
---     header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
---     header_uic:SetCanResizeWidth(false)
+    -- text alignment -- TODO figure out translation, ie. 1 = Top or whatever
+    deciph("text_valign", "int16", 4)
+    deciph("text_halign", "int16", 4)
 
---     if not default_h then ui_editor_lib.display_data.default_h = header_uic:Height() end
+    -- texthbehavior(?) TODO decode
+    deciph("b1", "hex", 1)
 
---     header_uic:SetDockingPoint(0)
---     header_uic:SetDockOffset(x_margin, 0)
+    deciph("text_label", "str16", -1)
 
---     -- TODO set a tooltip on the header uic entirely
+    -- they swap order between versions
+    if v_num <= 115 then
+        deciph("b3", "hex", 2)
+        deciph("text_localised", "str16", -1)
+    else        
+        deciph("text_localised", "str16", -1)
+        deciph("b3", "hex", 2)
+    end
 
---     local dy_title = find_uicomponent(header_uic, "dy_title")
---     dy_title:SetStateText(self:get_key())
+    -- TODO this seems wrong, shouldn't they all have tt label?
+    -- tooltip_label + two undeciphered fields
+    if v_num >= 70 and v_num < 90 then
+        deciph("tooltip_label", "str16")
+    elseif v_num >= 90 and v_num < 110 then
+        deciph("tooltip_label", "str16")
+        deciph("b5", "str")
+    elseif v_num >= 110 and v_num < 120 then
+        if v_num <= 115 then
+            deciph("b4", "hex", 4)
+        end
+    elseif v_num == 121 or v_num == 129 then
+        deciph("b5", "str")
+    end
 
---     -- move the x_margin over a bit
---     ui_editor_lib.display_data.x_margin = x_margin + 10
+    -- text infos!
+    deciph("font_name", "str")
+    deciph("font_size", "int16", 4)
+    deciph("font_leading", "int16", 4)
+    deciph("font_tracking", "int16", 4)
+    deciph("font_colour", "hex", 4)
 
---     -- loop through every field in "data" and call its own display() method
---     local data = self:get_data()
---     for i = 1, #data do
---         local d = data[i]
---         -- local d_key = d.key -- needed?
---         local d_obj = d.value
+    -- font category
+    deciph("fontcat_name", "str")
 
---         d_obj:display()
---     end
+    -- text offsets!
+    -- first is only two ints - x and y offset; second is four, with left/right/top/bottom offsets
+    if v_num >= 70 and v_num < 80 then
+        deciph("text_offset", "int16", {x=4,y=4})
+    elseif v_num >= 80 and v_num <= 130 then
+        deciph("text_offset", "int16", {l=4,r=4,t=4,b=4})
+    end
 
---     -- move the x_margin back to where it began here, after doing the internal loops
---     ui_editor_lib.display_data.x_margin = x_margin
--- end
+    -- undeciphered!
+    if v_num >= 70 and v_num < 80 then
+        deciph("b7", "hex", 7)-- dunno what this did, huh. TODO 7 is weird here.
+    elseif v_num >= 90 and v_num < 130 then
+        -- TODO the second byte sets interactive (00 = uninteractive, etc)
+        deciph("b7", "hex", 4)
+    end
+
+    deciph("shader_name", "str")
+    -- TODO these are actually floats not ints!
+    -- shader variables; int16
+    deciph("shader_vars", "int16", {one=4,two=4,three=4,four=4})
+
+    deciph("text_shader_name", "str")
+    -- TODO these are actually floats not ints!
+    -- shader variables; int16
+    deciph("text_shader_vars", "int16", {one=4,two=4,three=4,four=4})
+
+    parser:decipher_collection("ComponentImageMetric", self)
+
+    -- stuff before the mouse, 8 bytes
+    deciph("b_mouse", "hex", 8)
+
+    parser:decipher_collection("ComponentMouse", self)
+
+    -- TODO there's one more field here, b8
+
+    -- if ($v >= 122 && $v < 130){
+    --     $a = read_string($h, 1, $my);
+    --     if (empty($a)){
+    --         $this->b8 = array($a);
+    --     } else{
+    --         $a = array($a);
+            
+    --         $num_sth = my_unpack_one($this, 'l', fread($h, 4));
+    --         $sth = array();
+    --         for ($i = 0; $i < $num_sth; ++$i){
+    --             $b = array();
+    --             $b[] = read_string($h, 1, $my);
+    --             $b[] = tohex(fread($h, 16));
+    --             $sth[] = $b;
+    --         }
+    --         $a[] = $sth;
+            
+    --         $num_sth = my_unpack_one($this, 'l', fread($h, 4));
+    --         $sth = array();
+    --         for ($i = 0; $i < $num_sth; ++$i){
+    --             $b = array();
+    --             $b[] = read_string($h, 1, $my);
+    --             $b[] = read_string($h, 1, $my);
+    --             $sth[] = $b;
+    --         }
+    --         $a[] = $sth;
+            
+    --         $this->b8 = $a;
+    --     }
+
+    return self
+end
+
+
 
 
 return ComponentState

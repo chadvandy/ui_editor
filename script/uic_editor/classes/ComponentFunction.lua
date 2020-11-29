@@ -1,6 +1,12 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 local BaseClass = ui_editor_lib.get_class("BaseClass")
 
+local parser = ui_editor_lib.parser
+local function dec(key, format, k, obj)
+    ModLog("decoding field with key ["..key.."] and format ["..format.."]")
+    return parser:dec(key, format, k, obj)
+end
+
 local ComponentFunction = {
     type = "ComponentFunction",
 }
@@ -19,6 +25,35 @@ function ComponentFunction:new(o)
     o.key = nil
 
     return o
+end
+
+function ComponentFunction:decipher()
+    local v = parser.root_uic:get_version()
+
+    -- local obj = ui_editor_lib.new_obj("ComponentFunction")
+
+    local function deciph(key, format, k)
+        dec(key, format, k, self)
+    end
+
+    deciph("name", "str", -1)
+
+    deciph("b0", "hex", 2)
+
+    parser:decipher_collection("ComponentFunctionAnimation", self)
+
+    if v >= 91 and v <= 93 then
+        deciph("b1", "hex", 2)
+    elseif v >= 95 and v < 97 then
+        deciph("b1", "hex", 2)
+    elseif v >= 97 and v < 100 then
+        deciph("str_sth", "str")
+    elseif v >= 110 and v < 130 then
+        deciph("str_sth", "str")
+        deciph("b1", "str")
+    end
+
+    return self
 end
 
 -- function obj:get_key()

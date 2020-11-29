@@ -192,7 +192,7 @@ function ui_obj:create_sections()
         details_screen:SetState("custom_state_2")
 
         local nw = ow-w-20
-        local nh = h
+        local nh = oh-110
 
         details_screen:SetCanResizeWidth(true) details_screen:SetCanResizeHeight(true)
         details_screen:Resize(nw,nh)
@@ -231,7 +231,7 @@ function ui_obj:create_sections()
 
         local list_view = UIComponent(details_screen:CreateComponent("list_view", "ui/vandy_lib/vlist"))
         list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
-        list_view:Resize(nw-20, nh-details_title:Height()-40)
+        list_view:Resize(nw-20, nh-details_title:Height()-50)
         list_view:SetDockingPoint(2)
         list_view:SetDockOffset(10, details_title:Height() + 5)
     
@@ -251,7 +251,7 @@ function ui_obj:create_sections()
         lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
         lbox:SetDockingPoint(0)
         lbox:SetDockOffset(0, 0)
-        lbox:Resize(w,h)
+        lbox:Resize(w-30,h)
 
         ModLog("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
     end
@@ -260,7 +260,7 @@ function ui_obj:create_sections()
         local buttons_holder = UIComponent(panel:CreateComponent("buttons_holder", "ui/vandy_lib/custom_image_tiled"))
         buttons_holder:SetState("custom_state_2")
 
-        local nw = ow-20
+        local nw = w-20
         local nh = oh-h-150
 
         buttons_holder:SetCanResizeWidth(true) buttons_holder:SetCanResizeHeight(true)
@@ -270,8 +270,8 @@ function ui_obj:create_sections()
         buttons_holder:SetImagePath("ui/skins/default/parchment_texture.png", 1)
         buttons_holder:SetVisible(true)
     
-        buttons_holder:SetDockingPoint(8)
-        buttons_holder:SetDockOffset(0, -85)
+        buttons_holder:SetDockingPoint(7)
+        buttons_holder:SetDockOffset(10, -85)
 
         self:create_buttons_holder()
     end
@@ -392,6 +392,18 @@ function ui_obj:create_details_header_for_obj(obj)
 
     local dy_title = find_uicomponent(header_uic, "dy_title")
     dy_title:SetStateText(obj:get_type() .. ": " .. obj:get_key())
+
+    local child_count = find_uicomponent(header_uic, "child_count")
+    if obj:get_type() == "UI_Container" then
+        local str = tostring(#obj.data)
+        if not str or str == "" then
+            child_count:SetVisible(false)
+        else
+            child_count:SetStateText(tostring(#obj.data))
+        end
+    else
+        child_count:SetVisible(false)
+    end
 
     -- move the x_margin over a bit
     self.details_data.x_margin = x_margin + 10

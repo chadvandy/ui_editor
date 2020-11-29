@@ -57,7 +57,6 @@ function ui_editor_lib.is_ui_class(obj)
     return not not string.find(str, "UIED_")
 end
 
--- TODO not needed?
 function ui_editor_lib.new_obj(class_name, ...)
     if ui_editor_lib.classes[class_name] then
         return ui_editor_lib.classes[class_name]:new(...)

@@ -4,6 +4,12 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 local BaseClass = ui_editor_lib.get_class("BaseClass")
 
+local parser = ui_editor_lib.parser
+local function dec(key, format, k, obj)
+    ModLog("decoding field with key ["..key.."] and format ["..format.."]")
+    return parser:dec(key, format, k, obj)
+end
+
 local ComponentMouse = {
     type = "ComponentMouse",
 }
@@ -24,6 +30,27 @@ function ComponentMouse:new(o)
     o.key = nil
 
     return o
+end
+
+function ComponentMouse:decipher()
+    local v = parser.root_uic:get_version()
+
+    local function deciph(key, format, k)
+        dec(key, format, k, self)
+    end
+
+    deciph("mouse_state", "hex", 4)
+    deciph("state_ui-id", "hex", 4)
+
+    if v >= 122 and v < 130 then
+        deciph("b_sth", "hex", 16)
+    end
+
+    deciph("b0", "hex", 8)
+
+    parser:decipher_collection("ComponentMouseSth", self)
+
+    return self
 end
 
 -- function obj:get_key()
