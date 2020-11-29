@@ -42,16 +42,23 @@ end
 
 function obj:set_state(state)
     self.state = state
-    
+
     local data = self:get_data()
 
     for i = 1, #data do
         local inner = data[i]
         inner:set_state(state)
     end
-
-    -- set the state of the header
-    
+  
+    -- set the state of the header (invisible if inner?)
+    local uic = self.uic
+    if is_uicomponent(uic) then
+        if state == "open" then
+            uic:SetState("selected")
+        else
+            uic:SetState("active")
+        end
+    end
 end
 
 function obj:set_uic(uic)

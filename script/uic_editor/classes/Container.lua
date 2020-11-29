@@ -19,10 +19,26 @@ function container:new(key, val)
     o.key = key
     o.data = val
 
+    o.state = "open"
+
     return o
 end
 
+-- TODO if container:set_state() is called from container:switch_state(), then hide children headers. else, don't hide them
+function container:switch_state()
+    local state = self.state
+    local new_state = "closed"
+
+    if state == "closed" then
+        new_state = "open"
+    end
+
+    self:set_state(new_state)
+end
+
 function container:set_state(state)
+    self.state = state
+    
     local data = self:get_data()
 
     for i = 1, #data do
@@ -31,6 +47,14 @@ function container:set_state(state)
     end
 
     -- set the state of the header (invisible if inner?)
+    local uic = self.uic
+    if is_uicomponent(uic) then
+        if state == "open" then
+            uic:SetState("selected")
+        else
+            uic:SetState("active")
+        end
+    end
 end
 
 function container:set_uic(uic)

@@ -22,6 +22,9 @@ local parser = {
 function parser:chunk_to_float(j, k)
 
 end
+
+
+
 -- converts a series of hexadecimal bytes (between j and k) into a string
 -- takes an original 2 bytes *before* the string as the "len" identifier.
 function parser:chunk_to_str(j, k)
