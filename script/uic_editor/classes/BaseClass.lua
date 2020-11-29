@@ -15,10 +15,10 @@ function obj:new(o)
     o = o or {}
     setmetatable(o, self)
 
-    o.data = {}
-    o.key = nil
-    o.uic = nil
+    o.data = o.data or {}
+    o.key = o.key or nil
 
+    o.uic = nil
     o.state = "open"
 
     return o

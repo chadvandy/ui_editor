@@ -16,8 +16,8 @@ setmetatable(ComponentImage, BaseClass)
 ComponentImage.__index = ComponentImage
 ComponentImage.__tostring = BaseClass.__tostring
 
-function ComponentImage:new()
-    local o = BaseClass:new()
+function ComponentImage:new(o)
+    o = BaseClass:new(o)
     setmetatable(o, self)
 
     return o

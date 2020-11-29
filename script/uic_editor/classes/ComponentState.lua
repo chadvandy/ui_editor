@@ -18,8 +18,8 @@ ComponentState.__tostring = BaseClass.__tostring
 
 
 
-function ComponentState:new()
-    local o = BaseClass:new()
+function ComponentState:new(o)
+    o = BaseClass:new(o)
     setmetatable(o, self)
 
     return o

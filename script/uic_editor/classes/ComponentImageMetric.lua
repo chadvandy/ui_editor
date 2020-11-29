@@ -18,8 +18,8 @@ ComponentImageMetric.__index = ComponentImageMetric
 ComponentImageMetric.__tostring = BaseClass.__tostring
 
 
-function ComponentImageMetric:new()
-    local o = BaseClass:new()
+function ComponentImageMetric:new(o)
+    o = BaseClass:new(o)
     setmetatable(o, self)
 
 

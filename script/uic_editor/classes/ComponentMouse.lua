@@ -19,8 +19,8 @@ setmetatable(ComponentMouse, BaseClass)
 ComponentMouse.__index = ComponentMouse
 ComponentMouse.__tostring = BaseClass.__tostring
 
-function ComponentMouse:new()
-    local o = BaseClass:new()
+function ComponentMouse:new(o)
+    o = BaseClass:new(o)
     setmetatable(o, self)
 
     return o

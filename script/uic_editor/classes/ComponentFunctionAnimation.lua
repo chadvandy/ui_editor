@@ -16,8 +16,8 @@ setmetatable(ComponentFunctionAnimation, BaseClass)
 ComponentFunctionAnimation.__index = ComponentFunctionAnimation
 ComponentFunctionAnimation.__tostring = BaseClass.__tostring
 
-function ComponentFunctionAnimation:new()
-    local o = BaseClass:new()
+function ComponentFunctionAnimation:new(o)
+    o = BaseClass:new(o)
     setmetatable(o, self)
 
     return o

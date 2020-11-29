@@ -109,6 +109,12 @@ function ui_editor_lib.load_uic_with_path(path)
     ui_editor_lib.loaded_uic = uic
     ui_editor_lib.loaded_uic_path = path
 
+    -- make a "copy" of the UIC
+    ui_editor_lib.copied_uic = ui_editor_lib.new_obj("Component", uic)
+
+    -- TODO testing the name and the like
+    ModLog("Copied ui: "..ui_editor_lib.copied_uic:get_key())
+
     ui_editor_lib.ui:load_uic()
     end) if not ok then ModLog(err) end
 end

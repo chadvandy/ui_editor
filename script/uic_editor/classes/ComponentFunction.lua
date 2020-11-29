@@ -16,8 +16,8 @@ setmetatable(ComponentFunction, BaseClass)
 ComponentFunction.__index = ComponentFunction
 ComponentFunction.__tostring = BaseClass.__tostring
 
-function ComponentFunction:new()
-    local o = BaseClass:new()
+function ComponentFunction:new(o)
+    o = BaseClass:new(o)
 
     setmetatable(o, self)
 

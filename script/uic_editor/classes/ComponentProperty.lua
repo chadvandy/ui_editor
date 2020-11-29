@@ -16,8 +16,8 @@ setmetatable(ComponentProperty, BaseClass)
 ComponentProperty.__index = ComponentProperty
 ComponentProperty.__tostring = BaseClass.__tostring
 
-function ComponentProperty:new()
-    local o = BaseClass:new()
+function ComponentProperty:new(o)
+    o = BaseClass:new(o)
     setmetatable(o, self)
 
     return o
