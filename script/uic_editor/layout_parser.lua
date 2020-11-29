@@ -33,9 +33,11 @@ function parser:chunk_to_str(j, k)
     if k == -1 then
         -- first two bytes are the length identifier
         local len = self:chunk_to_int8(j, j+1)
+        ModLog("len is: "..len)
 
         -- if the len is 0, then just return a string of "" (for optional strings)
         if len == 0 then ModLog(tostring(j)) ModLog(tostring(j+1)) return "\"\"", self:chunk_to_hex(j, j+1), j+1 end
+
 
         -- set k to the proper spot
         k = len + self.location -1
@@ -225,12 +227,12 @@ end
 -- TODO a different parser function to decipher each type? parser:decipher_uic() and what not?
 -- TODO yes ^^^^^^^^^
 
-function parser:decipher_component(parent_obj)
+function parser:decipher_component(is_first)
     local current_uic = nil
     local v_num = nil
     local v = nil
 
-    if not parent_obj then
+    if is_first then
         current_uic = self.root_uic
 
         -- first up, grab the version!
@@ -240,11 +242,16 @@ function parser:decipher_component(parent_obj)
         v_num = tonumber(string.sub(version_header:get_value(), 8, 10))
         v = v_num
         current_uic:set_version(v_num)
+    -- elseif tostring(parent_obj) == "UIED_Component" then
+    --     current_uic = ui_editor_lib.new_obj("Component")
+
+    --     v_num = self.root_uic:get_version()
+    --     v = v_num
     else
         current_uic = ui_editor_lib.new_obj("Component")
-
         v_num = self.root_uic:get_version()
         v = v_num
+        -- ModLog("decipher_component called but the parent_obj sent ["..tostring(parent_obj).."] isn't a Component!")
     end
 
     local function deciph(key, format, k)
@@ -273,6 +280,8 @@ function parser:decipher_component(parent_obj)
     elseif v_num >= 110 and v_num < 130 then
         -- TODO dis; this has "num events" length identifier (I believe it's int16, 4-bytes) and is followed by that many strings
         -- I *think* it also can just have one string with no num events, but I'm not positive
+
+        -- TODO create ComponentEvent type?
     end
 
     -- next section is the offsets tables
@@ -367,16 +376,23 @@ function parser:decipher_component(parent_obj)
     -- TODO move this into the component decipher thingy
     if v_num >= 100 and v < 130 then
         local num_child = self:decipher_chunk("int16", 1, 4)
+        ModLog("VANDY NUM CHILDREN: "..tostring(num_child))
 
         for i = 1, num_child do
             local bits = self:decipher_chunk("hex", 1, 2)
             if bits == "00 00" then
-                self:decipher_component(current_uic)
+                ModLog("deciphering new component within "..current_uic:get_key())
+                local child = self:decipher_component()
+                ModLog("component deciphered with key ["..child:get_key().."]")
+
+                ModLog("adding them to the current obj, "..current_uic:get_key())
+                current_uic:add_data(child)
             else
 
             end
         end
     else
+        ModLog("is this ever called?")
         self:decipher_collection("Component", current_uic)
     end
 
@@ -408,7 +424,6 @@ function parser:decipher_component(parent_obj)
     deciph("after_b0", "hex", 1)
 
     local type = deciph("after_type", "str", -1):get_value()
-
 
     if v >= 70 and v < 80 then
         if type == "List" then
@@ -495,6 +510,8 @@ function parser:decipher_component(parent_obj)
                 deciph("after_2_bit_hex", "hex", 4)
             end
 
+            local ok, err = pcall(function()
+
             local bit = deciph("after_3_bit", "hex", 1):get_value()
             if bit == '01' then -- 670
                 -- TODO this has to do with models?
@@ -531,12 +548,15 @@ function parser:decipher_component(parent_obj)
                 deciph("after_3_bit_f2", "int16", 4)
                 deciph("after_3_bit_f3", "int16", 4)
             end
+        end) if not ok then ModLog(err) end
         end
     end
 
-    if parent_obj then
-        parent_obj:add_data(current_uic)
-    end
+    -- if parent_obj then
+    --     ModLog("adding UIC ["..current_uic:get_key().."] as child to parent ["..parent_obj:get_key().."].")
+
+    --     parent_obj:add_data(current_uic)
+    -- end
     
     -- figure out what this does TODOTODOTODO
     -- TODO so this checks the number of bytes between the ending of the root component and the ending of the file, I believe
@@ -547,87 +567,40 @@ function parser:decipher_component(parent_obj)
     --     my_assert($this->diff === 0, $this);
     -- }
 
+    local d = current_uic:get_data()
+
+    ModLog("Component created with name ["..current_uic:get_key().."]. Looping through data:")
+    for i = 1, #d do
+        ModLog("Data at "..tostring(i).." is ["..tostring(d[i]).."].")
+        if tostring(d[i]) == "UIED_Component" then
+            ModLog("Key is: "..d[i]:get_key())
+        end
+    end
+
     return current_uic
 end
 
-function parser:decipher_component_mouse()
+function parser:decipher_component_mouse_sth()
     local v = self.root_uic:get_version()
 
-    local obj = ui_editor_lib.new_obj("ComponentMouse")
+    local obj = ui_editor_lib.new_obj("ComponentMouseSth")
 
     local function deciph(key, format, k)
         dec(key, format, k, obj)
     end
 
-    local ok, err = pcall(function()
-
-    deciph("mouse_state", "hex", 4)
-    deciph("state_ui-id", "hex", 4)
+    deciph("hex1", "hex", 4)
 
     if v >= 122 and v < 130 then
-        deciph("b_sth", "hex", 16)
+        deciph("hex2", "hex", 16)
     end
 
-    deciph("b0", "hex", 8)
+    deciph("str1", "str", -1)
+    deciph("str2", "str", -1)
+    deciph("str3", "str", -1)
 
     -- idk what this actually does
     -- TODO decipher this
-    do
-        -- this is the number of things to loop through, each is an array of 1 hex and 3 strings
-        local num_sth = self:decipher_chunk("int16", 1, 4)
-
-        local ret = {}
-
-        -- ModLog("in mouse, num sth: "..num_sth)
-
-        -- TODO resolve this SPAGOOT
-        for i = 1, num_sth do
-            -- ModLog("in loop, "..i)
-            local inner_container = {}
-
-            do
-                local m_ret,hex = self:decipher_chunk("hex", 1, 4)
-                local new_field = ui_editor_lib.classes.Field:new("hex1", m_ret, hex)
-
-                inner_container[#inner_container+1] = new_field
-            end
-            
-            if v >= 122 and v < 130 then
-                local m_ret,hex = self:decipher_chunk("hex", 1, 16)
-                local new_field = ui_editor_lib.classes.Field:new("hex2", m_ret, hex)
-
-                inner_container[#inner_container+1] = new_field
-            end
-
-            do
-                local m_ret,hex = self:decipher_chunk("str", 1, -1)
-                local new_field = ui_editor_lib.classes.Field:new("str1", m_ret, hex)
-                inner_container[#inner_container+1] = new_field
-            end
-            
-            do               
-                local m_ret,hex = self:decipher_chunk("str", 1, -1)
-                local new_field = ui_editor_lib.classes.Field:new("str2", m_ret, hex)
-                inner_container[#inner_container+1] = new_field
-            end  
-                      
-            do
-                local m_ret,hex = self:decipher_chunk("str", 1, -1)
-                local new_field = ui_editor_lib.classes.Field:new("str3", m_ret, hex)
-                inner_container[#inner_container+1] = new_field
-            end
-
-            -- containers don't take raw hex (only needed for individual lines!)
-            local container = ui_editor_lib.classes.Container:new("sth"..i, inner_container)
-
-            ret[#ret+1] = container
-        end
-
-        local container = ui_editor_lib.classes.Container:new("sths", ret)
-
-        obj:add_data(container)
-    end
-end) if not ok then ModLog(err) end
 
     -- $this->num_sth = my_unpack_one($this, 'l', fread($h, 4));
     -- my_assert($this->num_sth < 20, $my);
@@ -642,6 +615,29 @@ end) if not ok then ModLog(err) end
     --     $a[] = read_string($h, 1, $my);
     --     $this->sth[] = $a;
     -- }
+
+    return obj
+end
+
+function parser:decipher_component_mouse()
+    local v = self.root_uic:get_version()
+
+    local obj = ui_editor_lib.new_obj("ComponentMouse")
+
+    local function deciph(key, format, k)
+        dec(key, format, k, obj)
+    end
+
+    deciph("mouse_state", "hex", 4)
+    deciph("state_ui-id", "hex", 4)
+
+    if v >= 122 and v < 130 then
+        deciph("b_sth", "hex", 16)
+    end
+
+    deciph("b0", "hex", 8)
+
+    self:decipher_collection("ComponentMouseSth", obj)
 
     return obj
 end
@@ -950,6 +946,8 @@ function parser:decipher_component_function()
         deciph("str_sth", "str")
         deciph("b1", "str")
     end
+
+    return obj
 end
 
 function parser:decipher_collection(collected_type, obj_to_add)
@@ -979,6 +977,7 @@ function parser:decipher_collection(collected_type, obj_to_add)
         ComponentProperty =         parser.decipher_component_property,
         ComponentFunction =         parser.decipher_component_function,
         ComponentFunctionAnimation = parser.decipher_component_function_animation,
+        ComponentMouseSth =         parser.decipher_component_mouse_sth,
     }
 
     local func = type_to_func[collected_type]
@@ -997,6 +996,10 @@ function parser:decipher_collection(collected_type, obj_to_add)
 
     for i = 1, len do
         local val,new_hex,end_k = func(self)
+
+        -- set the key as, example, "ComponentMouse1"
+        val:set_key(collected_type..tostring(i), "index")
+        ModLog("created "..collected_type.." with key "..val:get_key())
 
         ret[#ret+1] = val
         -- hex = hex .. new_hex
@@ -1059,7 +1062,7 @@ function parser:decipher()
 
     local root_uic = self.root_uic
 
-    self:decipher_component()
+    self:decipher_component(true)
 
     return root_uic
 end
@@ -1076,7 +1079,7 @@ setmetatable(parser, {
 
         -- TODO verify the hex table first?
 
-        local root_uic = ui_editor_lib.classes.Component:new("root_uic")
+        local root_uic = ui_editor_lib.classes.Component:new()
         root_uic:set_is_root(true)
 
         self.data =       hex_table

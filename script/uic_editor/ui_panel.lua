@@ -375,10 +375,7 @@ function ui_obj:create_details_header_for_obj(obj)
         return false
     end
 
-    ModLog("hand-crafting details header for obj ["..obj:get_key().."]")
-
     -- TODO figure out how to save all the rows to the header
-
 
     -- create the header_uic for the holder of the UIC
     local header_uic = UIComponent(list_box:CreateComponent(obj:get_key(), "ui/vandy_lib/expandable_row_header"))
@@ -402,30 +399,50 @@ function ui_obj:create_details_header_for_obj(obj)
 
     -- loop through every field in "data" and call its own display() method
     local data = obj:get_data()
+
+    ModLog("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
+
     for i = 1, #data do
+        ModLog("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
         local d = data[i]
         -- local d_key = d.key -- needed?
-        local d_obj 
+        local d_obj
 
-        if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Container") --[[or string.find(tostring(d), "UI_Field")]] then
-            ModLog("inner child is a class")
+        -- ModLog("Testing obj: "..tostring(d))
+        -- ModLog("")
+
+        if obj:get_key() == "dy_txt" then
+            ModLog("VANDY LOOK HERE")
+            ModLog(i.."'s key: " .. d:get_key())
+            if tostring(d) == "UI_Field" then
+                ModLog(i.."'s val: " .. tostring(d:get_value()))
+            end
+        end
+
+        if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Container") or string.find(tostring(d), "UI_Field") then
+            -- ModLog("inner child is a class")
             d_obj = d
+        elseif type(d) == "table" then
+            ModLog("inner child is a table")
+            if not is_nil(d.value) then
+                d_obj = d.value
+            else
+                ModLog("inner child table doesn't ")
+            end
         else
-            ModLog("inner child is a field")
-            d_obj = d.value
+            ModLog("inner child is not a field or a class, Y")
+            -- TODO resolve what to do if it's just a raw value?
         end
 
-        ModLog("d: "..tostring(d))
-        ModLog("d_obj: "..tostring(d_obj))
-
-        if is_nil(d_obj) then
+        if is_nil(d_obj) or not is_table(d_obj) then
             ModLog("we have a nil d_obj!")
-            ModLog(obj:get_key())
-            ModLog(tostring(d))
+            -- ModLog(obj:get_key())
+            -- ModLog(tostring(d))
+        else
+            -- TODO this fails if d_obj isn't a UIED class
+            -- TODO this fails if obj is a UI_Container and d_obj is a UI_Container (infi loop?)
+            self:display(d_obj)
         end
-
-        -- TODO this fails on containers with container children
-        self:display(d_obj)
     end
 
     -- move the x_margin back to where it began here, after doing the internal loops
@@ -451,15 +468,15 @@ function ui_obj:create_details_row_for_field(obj)
 
     local row_uic = UIComponent(list_box:CreateComponent(key, "ui/campaign ui/script_dummy"))
 
-    ModLog("row uic bounds before: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
-    ModLog("what they should be: ("..math.floor(tostring(list_box:Width() * 0.95 - x_margin))..", "..tostring(default_h)..")")
+    -- ModLog("row uic bounds before: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
+    -- ModLog("what they should be: ("..math.floor(tostring(list_box:Width() * 0.95 - x_margin))..", "..tostring(default_h)..")")
 
     row_uic:SetCanResizeWidth(true) row_uic:SetCanResizeHeight(true)
     row_uic:Resize(math.floor(list_box:Width() * 0.95 - x_margin), default_h)
     --row_uic:SetCanResizeWidth(false) row_uic:SetCanResizeHeight(false)
     row_uic:SetInteractive(true)
 
-    ModLog("row uic bounds: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
+    -- ModLog("row uic bounds: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
 
     row_uic:SetDockingPoint(0)
     row_uic:SetDockOffset(x_margin, 0)
@@ -515,17 +532,21 @@ function ui_obj:create_details_row_for_field(obj)
     right_text_uic:SetTooltipText(obj:get_hex(), true)
 end
 
+
+-- TODO TODO TODO TODO TODO TODO this still takes a massive shit on the container-within-container thing
 function ui_obj:display(obj)
     -- if table, then make header and loop through fields
-    ModLog("ui obj display: "..tostring(obj))
+    -- ModLog("ui obj display: "..tostring(obj))
     if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Container") then
-        ModLog("is ui class")
+        -- ModLog("is ui class")
         -- the loop is done within create_details_header
         self:create_details_header_for_obj(obj)
-    else
-        ModLog("ain't ui class")
+    elseif string.find(tostring(obj), "UI_Field") then
+        -- ModLog("is ui field")
         -- it's a field, just create text
         self:create_details_row_for_field(obj)
+    else
+        ModLog("not a field or a class!")
     end
 end
 
@@ -569,6 +590,25 @@ function ui_obj:create_details_for_loaded_uic()
     -- ModLog(tostring(root_uic))
     -- ModLog(tostring(root_uic:get_type()))
     -- ModLog(tostring(root_uic.type))
+
+    do
+        local data = root_uic:get_data()
+
+        for i = 1, #data do
+            ModLog("VANDY TESTING")
+            ModLog("root data at ["..tostring(i).."] is: ["..tostring(data[i]).."].")
+            if i >= 65 then
+                local d = data[i]
+                if tostring(d) == "UIED_Component" then
+                    ModLog("Component found, key is: "..d:get_key())
+                else 
+                    -- it's a field
+                    ModLog("Field ["..d:get_key().."] found, value is: "..tostring(d:get_value()))
+                end
+            end
+        end
+    end
+
     self:display(root_uic)
 
 
@@ -608,7 +648,7 @@ function ui_obj:load_uic()
         return false
     end
 
-    --self:create_loaded_uic_in_testing_ground()
+    self:create_loaded_uic_in_testing_ground()
 
     self:create_details_for_loaded_uic()
 end

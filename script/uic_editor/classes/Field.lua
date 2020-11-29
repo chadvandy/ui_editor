@@ -8,6 +8,8 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
 local uic_field = {}
+-- setmetatable(uic_field, uic_field)
+uic_field.__index = uic_field
 
 function uic_field:__tostring()
     return "UI_Field" -- TODO this shouldn't be "UIED" should it?
@@ -16,13 +18,18 @@ end
 function uic_field:new(key, value, hex)
     local o = {}
     setmetatable(o, self)
-    self.__index = self
+    ModLog("Testing new UIC Field: "..tostring(o))
+    -- self.__index = self
 
     o.key = key
     o.value = value
     o.hex = hex
 
     return o
+end
+
+function uic_field:get_type()
+    return "UI_Field"
 end
 
 function uic_field:get_key()

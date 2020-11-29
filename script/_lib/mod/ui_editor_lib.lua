@@ -25,6 +25,7 @@ function ui_editor_lib.init()
     classes.ComponentState =                require(path.."ComponentState")         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
     classes.ComponentImageMetric =          require(path.."ComponentImageMetric")   -- controls the different fields on an image within a state - visible, tile, etc
     classes.ComponentMouse =                require(path.."ComponentMouse")
+    classes.ComponentMouseSth =             require(path.."ComponentMouseSth")
     classes.ComponentProperty =             require(path.."ComponentProperty")
     classes.ComponentFunction =             require(path.."ComponentFunction")
     classes.ComponentFunctionAnimation =    require(path.."ComponentFunctionAnimation")

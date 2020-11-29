@@ -3,7 +3,9 @@
 
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
-local container = {}
+local container = {
+    type = "UI_Container",
+}
 
 function container:__tostring()
     return "UI_Container" -- TODO should this have the "UIED_" prepend?
@@ -20,6 +22,15 @@ function container:new(key, val)
     return o
 end
 
+function container:get_type()
+    return "UI_Container"
+end
+
+-- disable :set_key() on container
+function container:set_key()
+    return
+end
+
 function container:get_key()
     return self.key
 end
@@ -30,9 +41,9 @@ end
 
 function container:add_data(new_field)
     -- TODO type check if it's a Field
-    local key = new_field:get_key()
+    -- local key = new_field:get_key()
 
-    self.data[#self.data+1] = {key=key,value=new_field}
+    self.data[#self.data+1] = new_field
 
     return new_field
 end

@@ -1,22 +1,26 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
+local BaseClass = ui_editor_lib.get_class("BaseClass")
 
 local Component = {
-    type = "UIED_Component",
-
-    version = 0,
-    b_is_root = false,
-    header_uic = nil,
+    type = "Component",
 }
-setmetatable(Component, ui_editor_lib.classes.BaseClass)
+
+setmetatable(Component, BaseClass)
+
 Component.__index = Component
+Component.__tostring = BaseClass.__tostring
 
 function Component:new(o)
     o = o or {}
-    if is_string(o) then
-        o = {key=o}
-    end
     
     setmetatable(o, self)
+
+    o.data = {}
+    o.key = nil
+
+    o.version = 0
+    o.header_uic = nil
+    o.b_is_root = false
 
     return o
 end

@@ -1,10 +1,18 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
+local BaseClass = ui_editor_lib.get_class("BaseClass")
 
-local obj = {
-    __tostring = function() return "UIED_ComponentImage" end
+local ComponentImage = {
+    type = "ComponentImage",
 }
 
-function obj:new(o)
+setmetatable(ComponentImage, BaseClass)
+
+ComponentImage.__index = ComponentImage
+ComponentImage.__tostring = BaseClass.__tostring
+
+
+
+function ComponentImage:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
@@ -15,28 +23,28 @@ function obj:new(o)
     return o
 end
 
-function obj:get_key()
-    return tostring(self.key)
-end
+-- function obj:get_key()
+--     return tostring(self.key)
+-- end
 
-function obj:add_data(new_field)
-    -- TODO type check if it's a Field
-    local key = new_field:get_key()
+-- function obj:add_data(new_field)
+--     -- TODO type check if it's a Field
+--     local key = new_field:get_key()
 
-    self.data[#self.data+1] = {key=key,value=new_field}
+--     self.data[#self.data+1] = {key=key,value=new_field}
 
-    return new_field
-end
+--     return new_field
+-- end
 
-function obj:add_data_table(fields)
-    for i = 1, #fields do
-        self:add_data(fields[i])
-    end
-end
+-- function obj:add_data_table(fields)
+--     for i = 1, #fields do
+--         self:add_data(fields[i])
+--     end
+-- end
 
-function obj:get_data()
-    return self.data
-end
+-- function obj:get_data()
+--     return self.data
+-- end
 
 -- function obj:display()
 --     -- first thing to do here is create the new expandable_row_header
@@ -86,4 +94,4 @@ end
 -- end
 
 
-return obj
+return ComponentImage
