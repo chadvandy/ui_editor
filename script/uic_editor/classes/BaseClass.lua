@@ -41,6 +41,8 @@ function obj:switch_state()
 end
 
 function obj:set_state(state)
+    self.state = state
+    
     local data = self:get_data()
 
     for i = 1, #data do
