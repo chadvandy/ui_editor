@@ -16,16 +16,16 @@ setmetatable(Component, BaseClass)
 Component.__index = Component
 Component.__tostring = BaseClass.__tostring
 
-function Component:new(o)
-    o = o or {}
+function Component:new()
+    local o = BaseClass:new()
     
     setmetatable(o, self)
 
-    o.data = {}
-    o.key = nil
+    -- o.data = {}
+    -- o.key = nil
+    -- o.uic = nil
 
     o.version = 0
-    o.header_uic = nil
     o.b_is_root = false
 
     return o

@@ -11,12 +11,13 @@ obj.__index = obj
 obj.__tostring = function(self) return self:get_type() end
 
 
--- TODO call BaseClass:new() through all Class:new() calls. Should help clear out any necessary field (like data/key)
 function obj:new(o)
     o = o or {}
     setmetatable(o, self)
 
     o.data = {}
+    o.key = nil
+    o.uic = nil
 
     return o
 end

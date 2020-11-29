@@ -18,13 +18,9 @@ ComponentState.__tostring = BaseClass.__tostring
 
 
 
-function ComponentState:new(o)
-    o = o or {}
+function ComponentState:new()
+    local o = BaseClass:new()
     setmetatable(o, self)
-    self.__index = self
-
-    o.data = {}
-    o.key = nil
 
     return o
 end

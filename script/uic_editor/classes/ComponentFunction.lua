@@ -16,13 +16,10 @@ setmetatable(ComponentFunction, BaseClass)
 ComponentFunction.__index = ComponentFunction
 ComponentFunction.__tostring = BaseClass.__tostring
 
-function ComponentFunction:new(o)
-    o = o or {}
-    setmetatable(o, self)
-    self.__index = self
+function ComponentFunction:new()
+    local o = BaseClass:new()
 
-    o.data = {}
-    o.key = nil
+    setmetatable(o, self)
 
     return o
 end
