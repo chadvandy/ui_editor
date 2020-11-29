@@ -11,6 +11,8 @@ obj.__index = obj
 -- TODO better tostring?
 obj.__tostring = function(self) return self:get_type() end
 
+
+-- TODO call BaseClass:new() through all Class:new() calls. Should help clear out any necessary field (like data/key)
 function obj:new(o)
     o = o or {}
     setmetatable(o, self)
@@ -24,10 +26,16 @@ function obj:get_type()
     return "UIED_" .. self.type
 end
 
--- -- TODO this
--- function obj:__tostring()
---     return self.type
--- end
+-- TODO this; save the header UIC to the obj, and loop through all children when opening/closing this obj to set their child UIC visible/invisible
+function obj:set_state()
+
+end
+
+function obj:set_uic()
+
+end
+
+
 
 function obj:get_key()
     return self.key or "No Key Found"

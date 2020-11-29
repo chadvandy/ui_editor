@@ -1070,12 +1070,12 @@ end
 setmetatable(parser, {
     __index = parser,
     __call = function(self, hex_table) -- called by using `parser(hex_table)`, where hex_table is an array with each hex byte set as a string in order ("t" here is a reference to the "parser" table itself)
-        ModLog("yay")
-        ModLog(self.name)
+        -- ModLog("yay")
+        -- ModLog(self.name)
 
-        self.name = "new name"
+        -- self.name = "new name"
 
-        ModLog(self.name)
+        -- ModLog(self.name)
 
         -- TODO verify the hex table first?
 
