@@ -40,15 +40,39 @@ local function get_signed_long(bytes)
     print(str)
 end
 
-local bytes = {"84", "03", "00", "00"}
+local function get_float(bytes)
+    print(return_string_from_bytes(bytes))
 
-get_signed_long(bytes)
+    local str = ""
 
-do
-    local bytes = {"01", "00", "00", "00"}
+    -- little-endian!
+    for i = #bytes,1, -1 do
+        str = str .. bytes[i]
+    end
 
-    get_signed_long(bytes)
+    print(str)
+    print(string.format("%f", tonumber(str, 16)))
+    print(str)
+    local m,n = math.frexp(tonumber(str, 16))
+    print(m) print(n)
 end
+
+local bytes = {"00", "00", "00", "40"}
+
+get_float(bytes)
+
+
+-- local bytes = {"84", "03", "00", "00"}
+
+-- get_signed_long(bytes)
+
+-- do
+--     local bytes = {"01", "00", "00", "00"}
+
+--     get_signed_long(bytes)
+-- end
+
+
 
 --[[local str = "84030000"
 print(str)
