@@ -390,9 +390,8 @@ function ui_obj:create_details_header_for_obj(obj)
     header_uic:SetDockingPoint(0)
     header_uic:SetDockOffset(x_margin, 0)
 
-
     local dy_title = find_uicomponent(header_uic, "dy_title")
-    dy_title:SetStateText(obj:get_key())
+    dy_title:SetStateText(obj:get_type() .. ": " .. obj:get_key())
 
     -- move the x_margin over a bit
     self.details_data.x_margin = x_margin + 10
@@ -400,10 +399,10 @@ function ui_obj:create_details_header_for_obj(obj)
     -- loop through every field in "data" and call its own display() method
     local data = obj:get_data()
 
-    ModLog("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
+    -- ModLog("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
 
     for i = 1, #data do
-        ModLog("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
+        -- ModLog("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
         local d = data[i]
         -- local d_key = d.key -- needed?
         local d_obj
@@ -412,24 +411,25 @@ function ui_obj:create_details_header_for_obj(obj)
         -- ModLog("")
 
         if obj:get_key() == "dy_txt" then
-            ModLog("VANDY LOOK HERE")
-            ModLog(i.."'s key: " .. d:get_key())
+            -- ModLog("VANDY LOOK HERE")
+            -- ModLog(i.."'s key: " .. d:get_key())
             if tostring(d) == "UI_Field" then
-                ModLog(i.."'s val: " .. tostring(d:get_value()))
+                -- ModLog(i.."'s val: " .. tostring(d:get_value()))
             end
         end
 
         if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Container") or string.find(tostring(d), "UI_Field") then
             -- ModLog("inner child is a class")
             d_obj = d
-        elseif type(d) == "table" then
-            ModLog("inner child is a table")
-            if not is_nil(d.value) then
-                d_obj = d.value
-            else
-                ModLog("inner child table doesn't ")
-            end
+        -- elseif type(d) == "table" then
+        --     ModLog("inner child is a table")
+        --     if not is_nil(d.value) then
+        --         d_obj = d.value
+        --     else
+        --         ModLog("inner child table doesn't ")
+        --     end
         else
+            -- TODO errmsg
             ModLog("inner child is not a field or a class, Y")
             -- TODO resolve what to do if it's just a raw value?
         end
