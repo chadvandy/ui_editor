@@ -435,6 +435,7 @@ function ui_obj:create_details_row_for_field(obj)
     
     -- TODO get this working betterer (prettierer) for tables
     local key = obj:get_key()
+
     local type_text,tooltip_text,value_text = obj:get_display_text()
 
     local row_uic = UIComponent(list_box:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
@@ -444,15 +445,10 @@ function ui_obj:create_details_row_for_field(obj)
 
     obj:set_uic(row_uic)
 
-    -- ModLog("row uic bounds before: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
-    -- ModLog("what they should be: ("..math.floor(tostring(list_box:Width() * 0.95 - x_margin))..", "..tostring(default_h)..")")
-
     row_uic:SetCanResizeWidth(true) row_uic:SetCanResizeHeight(true)
     row_uic:Resize(math.floor(list_box:Width() * 0.95 - x_margin), default_h)
     --row_uic:SetCanResizeWidth(false) row_uic:SetCanResizeHeight(false)
     row_uic:SetInteractive(true)
-
-    -- ModLog("row uic bounds: ("..tostring(row_uic:Width()..", "..tostring(row_uic:Height())..")"))
 
     row_uic:SetDockingPoint(0)
     row_uic:SetDockOffset(x_margin, 0)
@@ -482,30 +478,34 @@ function ui_obj:create_details_row_for_field(obj)
     left_text_uic:SetDockOffset(5, 0)
 
     left_text_uic:SetTooltipText(tooltip_text, true)
-    
-    local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
-    right_text_uic:SetCanResizeWidth(true) right_text_uic:SetCanResizeHeight(true)
-    do
-        local ow,oh = row_uic:Width() * 0.6, row_uic:Height() * 0.9
-        local str = "[[col:white]]"..value_text.."[[/col]]"
 
-        right_text_uic:Resize(ow,oh)
+    if false --[[key == "img_path"]] then
+        -- local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", ""))
+    else        
+        local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
+        right_text_uic:SetCanResizeWidth(true) right_text_uic:SetCanResizeHeight(true)
+        do
+            local ow,oh = row_uic:Width() * 0.6, row_uic:Height() * 0.9
+            local str = "[[col:white]]"..value_text.."[[/col]]"
 
-        local w,h = right_text_uic:TextDimensionsForText(str)
-        right_text_uic:ResizeTextResizingComponentToInitialSize(w,h)
+            right_text_uic:Resize(ow,oh)
 
-        right_text_uic:SetStateText(str)
+            local w,h = right_text_uic:TextDimensionsForText(str)
+            right_text_uic:ResizeTextResizingComponentToInitialSize(w,h)
 
-        right_text_uic:Resize(ow,oh)
-        w,h = right_text_uic:TextDimensionsForText(str)
-        right_text_uic:ResizeTextResizingComponentToInitialSize(ow,oh)
+            right_text_uic:SetStateText(str)
+
+            right_text_uic:Resize(ow,oh)
+            w,h = right_text_uic:TextDimensionsForText(str)
+            right_text_uic:ResizeTextResizingComponentToInitialSize(ow,oh)
+        end
+
+        right_text_uic:SetVisible(true)
+        right_text_uic:SetDockingPoint(6)
+        right_text_uic:SetDockOffset(0, 0)
+
+        right_text_uic:SetTooltipText(obj:get_hex(), true)
     end
-
-    right_text_uic:SetVisible(true)
-    right_text_uic:SetDockingPoint(6)
-    right_text_uic:SetDockOffset(0, 0)
-
-    right_text_uic:SetTooltipText(obj:get_hex(), true)
 end
 
 
