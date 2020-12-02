@@ -198,12 +198,12 @@ function Component:decipher()
 
     -- TODO move this into decipher_collection
     if v_num >= 100 and v < 130 then
-        local num_child = parser:decipher_chunk("int16", 1, 4)
+        local num_child = deciph("num_children", "int16", 4):get_value() --parser:decipher_chunk("int16", 1, 4)
         ModLog("VANDY NUM CHILDREN: "..tostring(num_child))
 
         -- TODO templates and UIC's are really the same thing, don't treat them differently like this
         for i = 1, num_child do
-            local bits = parser:decipher_chunk("hex", 1, 2)
+            local bits = deciph("bits", "hex", 2):get_value() --parser:decipher_chunk("hex", 1, 2)
             if bits == "00 00" then
                 ModLog("deciphering new component within "..self:get_key())
 

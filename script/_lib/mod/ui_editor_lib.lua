@@ -67,6 +67,56 @@ function ui_editor_lib.new_obj(class_name, ...)
     return false
 end
 
+function ui_editor_lib.print_copied_uic()
+    ModLog("print copied UIC")
+    local ok, err = pcall(function()
+    local uic = ui_editor_lib.copied_uic
+
+    -- loop through aaaaaall fields and print their hex
+
+    local hex_str = ""
+    local bin_str = ""
+
+    local function iter(d)
+        local data = d:get_data()
+
+        for i = 1, #data do
+            local datum = data[i]
+
+            if tostring(datum) == "UI_Field" then
+                hex_str = hex_str .. datum:get_hex()
+            else
+                iter(datum)
+            end
+        end
+    end
+
+    iter(uic)
+
+    ModLog(hex_str)
+
+    -- loops through every single hex byte (ie. everything with two hexa values, %x%x), then converts that byte into the relevant "char"
+    for byte in hex_str:gmatch("%x%x") do
+        -- print(byte)
+
+        local bin_byte = string.char(tonumber(byte, 16))
+
+        -- print(bin_byte)
+
+        bin_str = bin_str .. bin_byte
+    end
+
+    ModLog(bin_str)
+
+    local new_file = io.open("data/UI/templates/TEST", "w+b")
+    new_file:write(bin_str)
+    new_file:close()
+
+    ui_editor_lib.ui:create_loaded_uic_in_testing_ground(true)
+
+end) if not ok then ModLog(err) end
+end
+
 function ui_editor_lib.load_uic_with_path(path)
     if not is_string(path) then
         -- errmsg

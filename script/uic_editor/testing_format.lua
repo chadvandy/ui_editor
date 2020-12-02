@@ -1,15 +1,3 @@
-function string.fromhex(str)
-    return (str:gsub('..', function (cc)
-        return string.char(tonumber(cc, 16))
-    end))
-end
-
-function string.tohex(str)
-    return (str:gsub('.', function (c)
-        return string.format('%02X', string.byte(c))
-    end))
-end
-
 --[[
     types to decode: 
 ]]
@@ -57,9 +45,10 @@ local function get_float(bytes)
     print(m) print(n)
 end
 
-local bytes = {"00", "00", "00", "40"}
+-- local bytes = {"00", "00", "00", "40"}
 
-get_float(bytes)
+-- get_float(bytes)
+
 
 
 -- local bytes = {"84", "03", "00", "00"}
@@ -72,6 +61,52 @@ get_float(bytes)
 --     get_signed_long(bytes)
 -- end
 
+
+
+-- local str = "Version100"
+
+-- print(str_to_hex(str))
+
+-- local file = io.open("ui/button_cycle")
+-- local block_num = 10
+-- while true do
+--     local bytes = file:read(block_num)
+--     if not bytes then break end
+
+--     for b in string.gfind(bytes, ".") do
+--         print(b)
+--         print(string.byte(b))
+--         local byte = string.format("%02X", string.byte(b))
+--         --print(byte)
+--         --data = data .. " " .. byte
+--         --data[#data+1] = byte
+--     end
+-- end
+
+-- local b = "g"
+-- print(b)
+-- b = string.byte(b)
+-- print(b)
+-- b = string.char(b)
+-- print(b)
+
+function string.fromhex(str)
+    return (str:gsub('..', function (cc)
+        return string.char(tonumber(cc, 16))
+    end))
+end
+
+function string.tohex(str)
+    return (str:gsub('.', function (c)
+        return string.format('%02X', string.byte(c))
+    end))
+end
+-- local b = "6F"
+-- print(b)
+-- b = string.char(tonumber(b))
+-- print(b)
+-- b = string.char(tonumber(b, 16))
+-- print(b)
 
 
 --[[local str = "84030000"

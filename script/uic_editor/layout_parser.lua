@@ -15,7 +15,95 @@ local parser = {
     location = 1,           -- used to jump through the hex bytes
 }
 
--- parsers here (translate raw hex into actual data)
+function parser:str16_to_chunk(str)
+    -- first, grab the length
+    local hex_str = ""
+
+    local len = str:len()
+
+    ModLog("Length of str: "..len)
+    local hex_len = string.format("%02X", len) ..  "00"
+
+    ModLog("Hex len of str: "..hex_len)
+
+    hex_str = hex_len
+
+        -- loop through each char in the string
+        for i = 1, len do
+            local c = str:sub(i, i)
+            -- print(c)
+            ModLog(c)
+    
+            -- string.byte converts the character (ie. "r") to the binary data, and then string.format turns the binary byte into a hexadecimal value
+            -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
+            c = string.format("%02X", string.byte(c)) .. "00"
+    
+            -- the "00" is added padding for str16's
+    
+            hex_str = hex_str .. c
+        end
+    
+        -- loops through every single hex byte (ie. everything with two hexa values, %x%x), then converts that byte into the relevant "char"
+        -- for byte in hex_str:gmatch("%x%x") do
+        --     -- print(byte)
+    
+        --     local bin_byte = string.char(tonumber(byte, 16))
+    
+        --     -- print(bin_byte)
+    
+        --     bin_str = bin_str .. bin_byte
+        -- end
+    
+        -- ModLog(bin_str)
+    
+        return hex_str
+end
+
+
+-- parsers here (translate raw hex into actual data, and vice versa)
+function parser:str_to_chunk(str)
+    -- TODO errmsg if not a string or whatever?
+
+    -- first, grab the length
+    local hex_str = ""
+
+    local len = str:len()
+
+    ModLog("Length of str: "..len)
+    local hex_len = string.format("%02X", len) ..  "00"
+
+    ModLog("Hex len of str: "..hex_len)
+
+    hex_str = hex_len
+
+    -- loop through each char in the string
+    for i = 1, len do
+        local c = str:sub(i, i)
+        -- print(c)
+        ModLog(c)
+
+        -- string.byte converts the character (ie. "r") to the binary data, and then string.format turns the binary byte into a hexadecimal value
+        -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
+        c = string.format("%02X", string.byte(c))
+
+        hex_str = hex_str .. c
+    end
+
+    -- loops through every single hex byte (ie. everything with two hexa values, %x%x), then converts that byte into the relevant "char"
+    -- for byte in hex_str:gmatch("%x%x") do
+    --     -- print(byte)
+
+    --     local bin_byte = string.char(tonumber(byte, 16))
+
+    --     -- print(bin_byte)
+
+    --     bin_str = bin_str .. bin_byte
+    -- end
+
+    -- ModLog(bin_str)
+
+    return hex_str
+end
 
 -- little-endian, four-bytes number. 00 00 80 3F -> 1, 00 00 00 40 -> 2, 00 00 80 40 -> 3, no clue what the patter here is.
 -- TODO make this!
@@ -27,6 +115,8 @@ end
 -- takes an original 2 bytes *before* the string as the "len" identifier.
 function parser:chunk_to_str(j, k)
     ModLog("chunk to str "..tostring(j) .. " & "..tostring(k))
+
+    local start_j = j
 
     -- only perform this stuff if there's a -1 k provided
     if k == -1 then
@@ -43,7 +133,8 @@ function parser:chunk_to_str(j, k)
         ModLog(tostring(j)) ModLog(tostring(k))
 
         -- move j and k up by 2 (for the length above)
-        j = j + 2 k = k + 2
+        j = j + 2
+        k = k + 2
         ModLog(tostring(j)) ModLog(tostring(k))
     end
 
@@ -62,7 +153,7 @@ function parser:chunk_to_str(j, k)
     -- for each pattern of formatted strings (`\x56`), convert it into its char'd form
     -- tonumber(x,16) changes the number (56) to its place in binary (86) into the ASCII char (V)
     local ret = str:gsub("\\x(%x%x)", function(x) return string.char(tonumber(x,16)) end)
-    local hex = self:chunk_to_hex(j, k) -- start at the BEGINNING of "len", end at the end of the string
+    local hex = self:chunk_to_hex(start_j, k) -- start at the BEGINNING of "len", end at the end of the string
 
     return ret,hex,k
 end
@@ -70,6 +161,8 @@ end
 -- converts a length of text into a string-16 (which is, in hex, a string with empty 00 bytes between each character)
 function parser:chunk_to_str16(j, k)
     -- first two bytes are the length identifier (tells the game how long the incoming string is)
+
+    local start_j = j
     if k == -1 then
         local len = self:chunk_to_int8(j, j+1)
 
@@ -97,7 +190,7 @@ function parser:chunk_to_str16(j, k)
     end
 
     local ret = str:gsub("\\x(%x%x)", function(x) return string.char(tonumber(x,16)) end)
-    local hex = self:chunk_to_hex(j, k)
+    local hex = self:chunk_to_hex(start_j, k)
 
     return ret,hex,k
 end
@@ -293,7 +386,7 @@ function parser:decipher_collection(collected_type, obj_to_add)
     -- local func = type_to_func[collected_type]
 
     -- every collection starts with an int16 (four bytes) to inform how much of that thing is within
-    local len,hex = self:decipher_chunk("int16", 1, 4)
+    local len,hex = dec(collected_type.."len","int16", 4, obj_to_add):get_value()--self:decipher_chunk("int16", 1, 4)
 
     ModLog("len of "..collected_type.." is "..len)
 
@@ -315,7 +408,7 @@ function parser:decipher_collection(collected_type, obj_to_add)
         ModLog("created "..collected_type.." with key "..val:get_key())
 
         ret[#ret+1] = val
-        -- hex = hex .. new_hex
+        --hex = hex .. new_hex
     end
 
     -- containers don't take raw hex (only needed for individual lines!)
@@ -346,7 +439,7 @@ function parser:dec(key, format, k, obj)
         local hex_boi = ""
         for i_key,v in pairs(k) do
             -- "v" is the end location here
-            local ret,hex = parser:decipher_chunk(format, j, v)
+            local ret,hex = self:decipher_chunk(format, j, v)
             val[i_key]=ret
             hex_boi=hex_boi.." "..hex
         end
@@ -359,6 +452,8 @@ function parser:dec(key, format, k, obj)
         new_field = ui_editor_lib.classes.Field:new(key, ret, hex)
         ModLog("chunk deciphered with key ["..key.."], the hex was ["..hex.."]")
     end
+
+    new_field:set_native_type(format)
 
     return obj:add_data(new_field)
 end

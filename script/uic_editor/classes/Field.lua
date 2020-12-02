@@ -5,6 +5,7 @@
 -- TODO make this comparable to BaseClass - use data as a table instead of value as a changable type; use an array 
 
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
+local parser = ui_editor_lib.parser
 
 local uic_field = {}
 -- setmetatable(uic_field, uic_field)
@@ -17,7 +18,7 @@ end
 function uic_field:new(key, value, hex)
     local o = {}
     setmetatable(o, self)
-    ModLog("Testing new UIC Field: "..tostring(o))
+    -- ModLog("Testing new UIC Field: "..tostring(o))
     -- self.__index = self
 
     o.key = key
@@ -25,7 +26,63 @@ function uic_field:new(key, value, hex)
     o.hex = hex
     o.uic = nil
 
+    o.native_type = "" -- native type is the actual data type being used - int16, str, etc
+
     return o
+end
+
+-- TODO this attempts a change of a value; returns true, or a string displaying some sort of error.
+function uic_field:test_change(val)
+    -- TODO test val against native type; ie., if it's a string, or if it's too long of an integer, etc etc
+
+    return true
+end
+
+function string.fromhex(str)
+    return (str:gsub('..', function (cc)
+        return string.char(tonumber(cc, 16))
+    end))
+end
+
+function string.tohex(str)
+    return (str:gsub('.', function (c)
+        return string.format('%02X', string.byte(c))
+    end))
+end
+
+-- TODO this should only work for copied_uic?
+function uic_field:change_val(new_val)
+    if self:test_change(new_val) == true then
+        -- TODO assume it's a string for right now, lul
+        local new_hex = parser:str16_to_chunk(new_val)
+        ModLog("New hex: "..new_hex)
+
+        -- local new_file = io.open("data/ui/templates/TEST", "w+b")
+        -- new_file:write(self.hex)
+
+        self.value = new_val
+        self.hex = new_hex
+
+        
+
+        ui_editor_lib.print_copied_uic()
+
+        -- new_file:write(self.hex)
+
+        -- new_file:close()
+    end
+end
+
+function uic_field:get_native_type()
+    return self.native_type
+end
+
+-- TODO this also needs to work for things like "state_ui-id", so it references a non-native type. New field? o.special_type or whatever? o.reference?
+function uic_field:set_native_type(new_type)
+    -- TODO errcheck
+        -- check if it fits in one of the previous types
+
+    self.native_type = new_type
 end
 
 function uic_field:get_type()

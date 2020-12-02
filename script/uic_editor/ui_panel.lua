@@ -298,8 +298,12 @@ function ui_obj:create_buttons_holder()
     load_button:SetInteractive(true)
 end
 
-function ui_obj:create_loaded_uic_in_testing_ground()
+function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
     local path = ui_editor_lib.loaded_uic_path
+
+    if is_copied then
+        path = "data/UI/templates/TEST"
+    end
 
     local panel = self.panel
     if not panel or not is_uicomponent(panel) or not path then
@@ -479,7 +483,44 @@ function ui_obj:create_details_row_for_field(obj)
 
     left_text_uic:SetTooltipText(tooltip_text, true)
 
-    if false --[[key == "img_path"]] then
+    -- change the str
+    if --[[obj:get_native_type() == "str" and]] obj:get_key() == "text" then
+        local right_text_uic = UIComponent(row_uic:CreateComponent("textbox", "ui/common ui/text_box"))
+        local ok_button = UIComponent(right_text_uic:CreateComponent("check_name", "ui/templates/square_medium_button"))
+
+        right_text_uic:SetVisible(true)
+        right_text_uic:SetDockingPoint(5)
+        right_text_uic:SetDockOffset(10, 0)
+
+        right_text_uic:SetTooltipText(obj:get_hex(), true)
+
+        right_text_uic:SetInteractive(true)
+        right_text_uic:Resize(row_uic:Width() * 0.5, row_uic:Height() * 0.85)
+
+        right_text_uic:SetStateText(value_text)
+
+        ok_button:SetDockingPoint(6)
+        ok_button:SetDockOffset(20, 0)
+
+        ok_button:Resize(right_text_uic:Height() * 0.6, right_text_uic:Height() * 0.6)
+
+        core:add_listener(
+            "button_clicked",
+            "ComponentLClickUp",
+            function(context)
+                return UIComponent(context.component) == ok_button
+            end,
+            function(context)
+                local state_text = right_text_uic:GetStateText()
+                ModLog("Checking text: "..tostring(state_text))
+
+                -- TODO edit the related field in COPY
+                local ok, err = pcall(obj:change_val(state_text))
+                if not ok then ModLog(err) end
+            end,
+            true
+        )
+        
         -- local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", ""))
     else        
         local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
@@ -523,7 +564,9 @@ end
 
 function ui_obj:create_details_for_loaded_uic()
     local panel = self.panel
-    local root_uic = ui_editor_lib.loaded_uic
+
+    -- TODO this uses the copied uic, so shit is easier to get; is this what I should do?
+    local root_uic = ui_editor_lib.copied_uic
 
     ModLog("bloop 1")
 
