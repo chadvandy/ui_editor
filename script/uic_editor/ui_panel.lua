@@ -296,6 +296,54 @@ function ui_obj:create_buttons_holder()
     load_button:SetDockingPoint(5)
     load_button:SetDockOffset(0,0)
     load_button:SetInteractive(true)
+    load_button:SetTooltipText("Load UIC Details", true)
+
+    local save_button = core:get_or_create_component("ui_editor_save_button", "ui/templates/square_medium_button", buttons_holder)
+    save_button:SetVisible(true)
+    save_button:SetDockingPoint(5)
+    save_button:SetDockOffset(65,0)
+    save_button:SetInteractive(true)
+    save_button:SetTooltipText("Save UIC as Copy", true)
+
+    local test_button = core:get_or_create_component("ui_editor_test_button", "ui/templates/square_medium_button", buttons_holder)
+    test_button:SetVisible(true)
+    test_button:SetDockingPoint(5)
+    test_button:SetDockOffset(-65, 0)
+    test_button:SetInteractive(true)
+    test_button:SetTooltipText("Display UIC", true)
+
+    local path_name_input = core:get_or_create_component("path_name_input","ui/common ui/text_box", buttons_holder)
+
+    path_name_input:SetVisible(true)
+    path_name_input:SetDockingPoint(5)
+    path_name_input:SetDockOffset(0, 50)
+
+    path_name_input:SetTooltipText("Path to loaded UIC (from where Warhammer2.exe is located)", true)
+
+    path_name_input:SetInteractive(true)
+    
+    path_name_input:SetCanResizeWidth(true)
+    path_name_input:Resize(test_button:Width() * 8, path_name_input:Height())
+    --path_name_input:SetCanResizeWidth(false)
+
+    path_name_input:SetStateText("")
+end
+
+function ui_obj:get_path()
+    local panel = self.panel
+    local path_name_input = find_uicomponent(panel, "buttons_holder", "path_name_input")
+
+    if not is_uicomponent(path_name_input) then
+        -- errmsg
+        return false
+    end
+
+    local path = path_name_input:GetStateText()
+
+    -- TODO verify that the path is valid - there's a file there and what not
+
+
+    return path
 end
 
 function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
@@ -582,6 +630,9 @@ function ui_obj:create_details_for_loaded_uic()
     ModLog(tostring(list_box))
     ModLog(tostring(is_uicomponent(list_box)))
 
+    -- destroy chil'un of list_box (clear previous shit)
+    list_box:DestroyChildren()
+
     -- save the list_box and the x_margin to the ui_obj so it can be easily accessed through all the displays
     self.details_data.list_box = list_box
     self.details_data.x_margin = 0
@@ -613,7 +664,7 @@ function ui_obj:load_uic()
         return false
     end
 
-    self:create_loaded_uic_in_testing_ground()
+    --self:create_loaded_uic_in_testing_ground()
 
     self:create_details_for_loaded_uic()
 end
@@ -636,6 +687,31 @@ core:add_listener(
     true
 )
 
+
+core:add_listener(
+    "save_button",
+    "ComponentLClickUp",
+    function(context)
+        return context.string == "ui_editor_save_button"
+    end,
+    function(context)
+        ui_obj:create_loaded_uic_in_testing_ground(true)
+    end,
+    true
+)
+
+core:add_listener(
+    "test_button",
+    "ComponentLClickUp",
+    function(context)
+        return context.string == "ui_editor_test_button"
+    end,
+    function(context)
+        ui_editor_lib.print_copied_uic()
+    end,
+    true
+)
+
 core:add_listener(
     "load_button",
     "ComponentLClickUp",
@@ -644,7 +720,7 @@ core:add_listener(
     end,
     function(context)
         -- TODO make this work for anything else
-        local path = "data/ui/templates/button_cycle"
+        local path = ui_obj:get_path()
 
         ui_editor_lib.load_uic_with_path(path)
 

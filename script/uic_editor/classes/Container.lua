@@ -80,6 +80,14 @@ function container:get_type()
     return "UI_Container"
 end
 
+function container:get_hex()
+    -- local data = self.data
+    local len = #self.data
+
+    
+
+end
+
 -- disable :set_key() on container
 function container:set_key()
     return

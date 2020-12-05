@@ -32,7 +32,7 @@ function ComponentImageMetric:decipher()
     -- local obj = ui_editor_lib.new_obj("ComponentImageMetric")
 
     local function deciph(key, format, k)
-        dec(key, format, k, self)
+        return dec(key, format, k, self)
     end
 
     deciph("ui-id", "hex", 4)

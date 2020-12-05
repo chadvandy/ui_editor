@@ -65,7 +65,7 @@ function uic_field:change_val(new_val)
 
         
 
-        ui_editor_lib.print_copied_uic()
+        -- ui_editor_lib.print_copied_uic()
 
         -- new_file:write(self.hex)
 

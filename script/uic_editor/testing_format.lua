@@ -101,6 +101,9 @@ function string.tohex(str)
         return string.format('%02X', string.byte(c))
     end))
 end
+
+local b = "84 03 00 00"
+print(b:fromhex())
 -- local b = "6F"
 -- print(b)
 -- b = string.char(tonumber(b))

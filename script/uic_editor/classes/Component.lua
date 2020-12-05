@@ -101,10 +101,8 @@ function Component:decipher()
     if v_num >= 100 and v_num < 110 then
         deciph("events", "str")
     elseif v_num >= 110 and v_num < 130 then
-        -- TODO dis; this has "num events" length identifier (I believe it's int16, 4-bytes) and is followed by that many strings
-        -- I *think* it also can just have one string with no num events, but I'm not positive
-
-        -- TODO create ComponentEvent type?
+        -- TODO guaranteed to have a num_events of 1 in v 113; add an optional end arg to decipher_collection with "num_items"?
+        parser:decipher_collection("ComponentEvent", self)
     end
 
     -- next section is the offsets tables
@@ -215,6 +213,12 @@ function Component:decipher()
                 ModLog("adding them to the current obj, "..self:get_key())
                 self:add_data(child)
             else
+                parser.location = parser.location -2
+
+                -- TODO this shouldn't be separate
+                local template = ui_editor_lib.new_obj("ComponentTemplate")
+                template:decipher()
+
 
             end
         end
@@ -248,6 +252,9 @@ function Component:decipher()
     -- }
 
     -- $this->readAfter($h);
+
+    -- I believe this is a check to tell if there's a LayoutEngine
+    -- TODO
     deciph("after_b0", "hex", 1)
 
     local type = deciph("after_type", "str", -1):get_value()
@@ -296,17 +303,25 @@ function Component:decipher()
         end
     else
         local has_type = false
-        if type == "List" then -- 451
-            has_type = true
-        elseif type == "HorizontalList" then -- 541
-            has_type = true
-        elseif type == "RadialList" then -- 603
-            has_type = true
-        elseif type == "Table" then -- 615
-            has_type = true
-        else
+        if type == "List" or type == "HorizontalList" then
+            local new_type = ui_editor_lib.new_obj("ComponentLayoutEngine")
+            local val = new_type:decipher(type)
 
+            has_type = true
         end
+
+        -- TODO RadialList / Table
+
+        -- if type == "List" then -- 451
+        --     has_type = true
+        -- elseif type == "HorizontalList" then -- 541
+        --     has_type = true
+        -- elseif type == "RadialList" then -- 603
+        --     has_type = true
+        -- elseif type == "Table" then -- 615
+        --     has_type = true
+        -- else
+        -- end
 
         if has_type and v >= 100 and v < 110 then -- 645
             -- do nothing

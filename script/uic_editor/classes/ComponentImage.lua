@@ -27,7 +27,7 @@ function ComponentImage:decipher()
     -- local obj = ui_editor_lib.classes.ComponentImage:new()
 
     local function deciph(key, format, k)
-        dec(key, format, k, self)
+        return dec(key, format, k, self)
     end
 
     -- first 4 are the ui-id

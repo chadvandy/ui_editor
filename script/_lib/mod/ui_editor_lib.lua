@@ -29,6 +29,14 @@ function ui_editor_lib.init()
     classes.ComponentProperty =             require(path.."ComponentProperty")
     classes.ComponentFunction =             require(path.."ComponentFunction")
     classes.ComponentFunctionAnimation =    require(path.."ComponentFunctionAnimation")
+    classes.ComponentFunctionAnimationTrigger = require(path.."ComponentFunctionAnimationTrigger")
+    classes.ComponentEvent =                require(path.."ComponentEvent")
+    classes.ComponentEventProperty =        require(path.."ComponentEventProperty")
+
+    classes.ComponentLayoutEngine = require(path.."ComponentLayoutEngine")
+
+    classes.ComponentTemplate = require(path.."ComponentTemplate")
+    classes.ComponentTemplateChild = require(path.."ComponentTemplateChild")
 end
 
 -- TODO return BaseClass by default?

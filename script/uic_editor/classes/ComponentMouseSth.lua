@@ -27,7 +27,7 @@ function ComponentMouseSth:decipher()
     local v = parser.root_uic:get_version()
 
     local function deciph(key, format, k)
-        dec(key, format, k, self)
+        return dec(key, format, k, self)
     end
 
     deciph("hex1", "hex", 4)

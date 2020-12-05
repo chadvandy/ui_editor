@@ -59,7 +59,6 @@ function parser:str16_to_chunk(str)
         return hex_str
 end
 
-
 -- parsers here (translate raw hex into actual data, and vice versa)
 function parser:str_to_chunk(str)
     -- TODO errmsg if not a string or whatever?
@@ -105,10 +104,16 @@ function parser:str_to_chunk(str)
     return hex_str
 end
 
+function parser:int16_to_chunk(int)
+
+
+end
+
 -- little-endian, four-bytes number. 00 00 80 3F -> 1, 00 00 00 40 -> 2, 00 00 80 40 -> 3, no clue what the patter here is.
 -- TODO make this!
 function parser:chunk_to_float(j, k)
-
+    -- for now, just do int16, fuck it
+    return self:chunk_to_int16(j, k)
 end
 
 -- converts a series of hexadecimal bytes (between j and k) into a string
@@ -237,6 +242,7 @@ function parser:chunk_to_int8(j, k)
     return ret,hex,k
 end
 
+
 -- convert a 4-byte hex section into an integer
 -- this part is a little weird, since integers like this are actually read backwards in hex (little-endian). ie., 84 03 00 00 in hex is read as 00 00 03 84, which ends up being 03 84, which is converted into 900
 function parser:chunk_to_int16(j, k)
@@ -290,6 +296,7 @@ function parser:decipher_chunk(format, j, k)
         -- number types!
         int8 = parser.chunk_to_int8,
         int16 = parser.chunk_to_int16,
+        float = parser.chunk_to_float,
 
         -- boolean (with a pseudonym)
         bool = parser.chunk_to_boolean,
@@ -386,7 +393,7 @@ function parser:decipher_collection(collected_type, obj_to_add)
     -- local func = type_to_func[collected_type]
 
     -- every collection starts with an int16 (four bytes) to inform how much of that thing is within
-    local len,hex = dec(collected_type.."len","int16", 4, obj_to_add):get_value()--self:decipher_chunk("int16", 1, 4)
+    local len,hex = dec(collected_type.."len","int16", 4, obj_to_add):get_value()
 
     ModLog("len of "..collected_type.." is "..len)
 
