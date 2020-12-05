@@ -18,7 +18,7 @@ end
 function uic_field:new(key, value, hex)
     local o = {}
     setmetatable(o, self)
-    -- ModLog("Testing new UIC Field: "..tostring(o))
+    -- ui_editor_lib.log("Testing new UIC Field: "..tostring(o))
     -- self.__index = self
 
     o.key = key
@@ -50,12 +50,53 @@ function string.tohex(str)
     end))
 end
 
+function uic_field:filter_fields(key_filter, value_filter)
+    ModLog("filter field: "..self:get_key())
+    local uic = self.uic
+    if not is_uicomponent(uic) then
+        ModLog("no uic wtf")
+        return false
+    end
+
+    if key_filter ~= "" then
+        local key_uic = find_uicomponent(uic, "key")
+
+        if not is_uicomponent(key_uic) then
+            ModLog("no key uic wtf")
+            return false
+        end
+
+        local key = key_uic:GetStateText()
+        if string.find(key, key_filter) then
+            uic:SetVisible(true)
+        else
+            uic:SetVisible(false)
+        end
+    end
+
+    if value_filter ~= "" then
+        local value_uic = find_uicomponent(uic, "value")
+
+        if not is_uicomponent(value_uic) then
+            ModLog("no value uic wtf")
+            return false
+        end
+
+        local value = value_uic:GetStateText()
+        if string.find(value, value_filter) then
+            uic:SetVisible(true)
+        else
+            uic:SetVisible(false)
+        end
+    end
+end
+
 -- TODO this should only work for copied_uic?
 function uic_field:change_val(new_val)
     if self:test_change(new_val) == true then
         -- TODO assume it's a string for right now, lul
         local new_hex = parser:str16_to_chunk(new_val)
-        ModLog("New hex: "..new_hex)
+        ui_editor_lib.log("New hex: "..new_hex)
 
         -- local new_file = io.open("data/ui/templates/TEST", "w+b")
         -- new_file:write(self.hex)

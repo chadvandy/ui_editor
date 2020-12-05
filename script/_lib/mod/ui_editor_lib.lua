@@ -2,8 +2,65 @@ local ui_editor_lib = {
     loaded_uic = nil,
     loaded_uic_path = nil,
 
+    log_file = "a_vandy_lib.txt",
+    logging = {},
+    is_checking = false,
+
     display_data = {} -- this is a table solely used for the creation of the display of UI in-game, it's cleared after every use
 }
+
+function ui_editor_lib.log(text)
+    text = tostring(text) or ""
+
+
+
+    ui_editor_lib.logging[#ui_editor_lib.logging+1] = text
+
+    ui_editor_lib.check_logging()
+end
+
+function ui_editor_lib.print_log()
+    local log_file_path = ui_editor_lib.log_file
+    local logging = ui_editor_lib.logging
+
+    local str = table.concat(logging, "\n")
+
+    local log_file = io.open(log_file_path, "a+")
+    log_file:write(str)
+    log_file:close()
+
+    ui_editor_lib.logging = {}
+    ui_editor_lib.is_checking = false
+
+    core:remove_listener("lib_check_logging")
+end
+
+-- only print the log if A) logging has 1000 lines or B) it's been 5s since the last call to logging
+function ui_editor_lib.check_logging()
+    if ui_editor_lib.is_checking then
+        if #ui_editor_lib.logging >= 1000 then
+            ui_editor_lib.print_log()
+        else
+            -- do nothing?
+        end
+    else
+        core:add_listener(
+            "lib_check_logging",
+            "RealTimeTrigger",
+            function(context)
+                return context.string == "lib_check_logging"
+            end,
+            function(context)
+                ui_editor_lib.print_log()
+            end,
+            false
+        )
+
+        real_timer.register_singleshot("lib_check_logging", 5000)
+
+        ui_editor_lib.is_checking = true
+    end
+end
 
 function ui_editor_lib.init()
     local path = "script/uic_editor/"
@@ -59,8 +116,8 @@ end
 -- check if a supplied object is an internal UI class
 function ui_editor_lib.is_ui_class(obj)
     local str = tostring(obj)
-    ModLog("is ui class: "..str)
-    --ModLog(tostring(str.find("UIED_")))
+    ui_editor_lib.log("is ui class: "..str)
+    --ui_editor_lib.log(tostring(str.find("UIED_")))
 
     return not not string.find(str, "UIED_")
 end
@@ -70,13 +127,13 @@ function ui_editor_lib.new_obj(class_name, ...)
         return ui_editor_lib.classes[class_name]:new(...)
     end
 
-    ModLog("new_obj called, but no class was found with name ["..class_name.."].")
+    ui_editor_lib.log("new_obj called, but no class was found with name ["..class_name.."].")
     
     return false
 end
 
 function ui_editor_lib.print_copied_uic()
-    ModLog("print copied UIC")
+    ui_editor_lib.log("print copied UIC")
     local ok, err = pcall(function()
     local uic = ui_editor_lib.copied_uic
 
@@ -101,7 +158,7 @@ function ui_editor_lib.print_copied_uic()
 
     iter(uic)
 
-    ModLog(hex_str)
+    ui_editor_lib.log(hex_str)
 
     -- loops through every single hex byte (ie. everything with two hexa values, %x%x), then converts that byte into the relevant "char"
     for byte in hex_str:gmatch("%x%x") do
@@ -114,7 +171,7 @@ function ui_editor_lib.print_copied_uic()
         bin_str = bin_str .. bin_byte
     end
 
-    ModLog(bin_str)
+    ui_editor_lib.log(bin_str)
 
     local new_file = io.open("data/UI/templates/TEST", "w+b")
     new_file:write(bin_str)
@@ -122,7 +179,7 @@ function ui_editor_lib.print_copied_uic()
 
     ui_editor_lib.ui:create_loaded_uic_in_testing_ground(true)
 
-end) if not ok then ModLog(err) end
+end) if not ok then ui_editor_lib.log(err) end
 end
 
 function ui_editor_lib.load_uic_with_path(path)
@@ -131,11 +188,11 @@ function ui_editor_lib.load_uic_with_path(path)
         return false
     end
 
-    ModLog("load uic with path: "..path)
+    ui_editor_lib.log("load uic with path: "..path)
 
     local file = assert(io.open(path, "rb+"))
     if not file then
-        ModLog("file not found!")
+        ui_editor_lib.log("file not found!")
         return false
     end
 
@@ -158,7 +215,7 @@ function ui_editor_lib.load_uic_with_path(path)
 
     file:close()
 
-    ModLog("file opened!")
+    ui_editor_lib.log("file opened!")
 
     local ok, err = pcall(function()
 
@@ -171,10 +228,10 @@ function ui_editor_lib.load_uic_with_path(path)
     ui_editor_lib.copied_uic = ui_editor_lib.new_obj("Component", uic)
 
     -- TODO testing the name and the like
-    ModLog("Copied ui: "..ui_editor_lib.copied_uic:get_key())
+    ui_editor_lib.log("Copied ui: "..ui_editor_lib.copied_uic:get_key())
 
     ui_editor_lib.ui:load_uic()
-    end) if not ok then ModLog(err) end
+    end) if not ok then ui_editor_lib.log(err) end
 end
 
 core:add_static_object("ui_editor_lib", ui_editor_lib)

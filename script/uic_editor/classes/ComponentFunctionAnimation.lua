@@ -3,7 +3,7 @@ local BaseClass = ui_editor_lib.get_class("BaseClass")
 
 local parser = ui_editor_lib.parser
 local function dec(key, format, k, obj)
-    ModLog("decoding field with key ["..key.."] and format ["..format.."]")
+    ui_editor_lib.log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -65,7 +65,7 @@ function ComponentFunctionAnimation:decipher()
 
     -- TODO this sux
     local len = parser:decipher_chunk("int8", 1, 2)
-    ModLog("LEN1: "..len)
+    ui_editor_lib.log("LEN1: "..len)
 
     parser.location = parser.location - 2
 
@@ -83,7 +83,7 @@ function ComponentFunctionAnimation:decipher()
             deciph("b_str", "str")
 
             local len = parser:decipher_chunk("int8", 1, 2)
-            ModLog("LEN2: "..len)
+            ui_editor_lib.log("LEN2: "..len)
 
             parser.location = parser.location -2
 
@@ -103,7 +103,7 @@ function ComponentFunctionAnimation:decipher()
     -- end
 
     -- local len2 = parser:decipher_chunk("hex", 1, 2)
-    -- ModLog("LEN2: "..len2)
+    -- ui_editor_lib.log("LEN2: "..len2)
     -- if len2 == "FF FF" or len2 == "00 00" then
         
     -- else

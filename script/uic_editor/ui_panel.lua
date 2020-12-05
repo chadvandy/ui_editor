@@ -12,6 +12,9 @@ local ui_obj = {
 
     row_index = 1,
     rows_to_objs = {},
+
+    key_to_uics = {},
+    value_to_uics = {},
 }
 
 function ui_obj:delete_component(uic)
@@ -41,15 +44,20 @@ end
 function ui_obj:init()
     local new_button
     if __game_mode == __lib_type_campaign or __game_mode == __lib_type_battle then
+        ui_editor_lib.log("bloop")
         local button_group = find_uicomponent(core:get_ui_root(), "menu_bar", "buttongroup")
         new_button = UIComponent(button_group:CreateComponent("button_ui_editor", "ui/templates/round_small_button"))
 
         new_button:SetTooltipText("UI Editor", true)
+
+        ui_editor_lib.log("bloop 2")
         --new_button:SetImagePath()
 
         new_button:PropagatePriority(button_group:Priority())
 
         button_group:Layout()
+
+        ui_editor_lib.log("bloop 5")
     elseif __game_mode == __lib_type_frontend then
         local button_group = find_uicomponent(core:get_ui_root(), "sp_frame", "menu_bar")
 
@@ -59,7 +67,7 @@ function ui_obj:init()
         button_group:Layout()
     end
 
-    if not new_button then return end
+    if not is_uicomponent(new_button) then ui_editor_lib.log("NO NEW BUTTON") return end
 
     self.button = new_button
 
@@ -112,7 +120,7 @@ function ui_obj:create_panel()
 
     panel:SetVisible(true)
 
-    ModLog("test 1")
+    ui_editor_lib.log("test 1")
 
     self.panel = panel
 
@@ -122,21 +130,21 @@ function ui_obj:create_panel()
     panel:SetCanResizeWidth(true) panel:SetCanResizeHeight(true)
 
     
-    ModLog("test 2")
+    ui_editor_lib.log("test 2")
 
     local sw,sh = core:get_screen_resolution()
     panel:Resize(sw*0.95, sh*0.95)
 
     panel:SetCanResizeWidth(false) panel:SetCanResizeHeight(false)
 
-    ModLog("test 3")
+    ui_editor_lib.log("test 3")
 
     -- edit the name
     local title_plaque = find_uicomponent(panel, "title_plaque")
     local title = find_uicomponent(title_plaque, "title")
     title:SetStateText("UI Editor")
 
-    ModLog("test 4")
+    ui_editor_lib.log("test 4")
 
     -- hide stuff from the gfx window
     local comps = {
@@ -148,7 +156,7 @@ function ui_obj:create_panel()
         find_uicomponent(panel, "dropdown_quality"),
     }
 
-    ModLog("test 5")
+    ui_editor_lib.log("test 5")
 
     self:delete_component(comps)
 
@@ -158,7 +166,7 @@ function ui_obj:create_panel()
     close_button_uic:SetImagePath(img_path)
     close_button_uic:SetTooltipText("Close panel", true)
 
-    ModLog("test 6")
+    ui_editor_lib.log("test 6")
 
     -- move to bottom center
     close_button_uic:SetDockingPoint(8)
@@ -232,15 +240,100 @@ function ui_obj:create_sections()
 
         end
 
+        local filter_holder = UIComponent(details_screen:CreateComponent("filter_holder", "ui/campaign ui/script_dummy"))
+        filter_holder:SetCanResizeWidth(true)
+        filter_holder:SetCanResizeHeight(true)
+
+        filter_holder:SetDockingPoint(2)
+        filter_holder:SetDockOffset(0, details_title:Height() + 5)
+
+        filter_holder:Resize(details_title:Width(), details_title:Height() * 2.5)
+
+        filter_holder:SetCanResizeWidth(false)
+        filter_holder:SetCanResizeHeight(false)
+
+        do
+            local key_filter_text = UIComponent(filter_holder:CreateComponent("key_filter_text", "ui/vandy_lib/text/la_gioconda/center"))
+            key_filter_text:SetVisible(true)
+
+            key_filter_text:SetDockingPoint(4)
+            key_filter_text:SetDockOffset(10, -30)
+            key_filter_text:Resize(filter_holder:Width() * 0.3, key_filter_text:Height())
+
+            do
+                local mw,mh = key_filter_text:TextDimensionsForText("[[col:fe_white]]Filter by Key[[/col]]")
+            
+                key_filter_text:ResizeTextResizingComponentToInitialSize(mw, mh)
+                key_filter_text:SetStateText("[[col:fe_white]]Filter by Key[[/col]]")
+            
+                key_filter_text:SetTooltipText("Filter by Key, wtf else do you want me to say", true)
+                key_filter_text:SetInteractive(false)
+            end
+            
+            local value_filter_text = UIComponent(filter_holder:CreateComponent("value_filter_text", "ui/vandy_lib/text/la_gioconda/center"))
+            value_filter_text:SetVisible(true)
+
+            value_filter_text:SetDockingPoint(4)
+            value_filter_text:SetDockOffset(10, 30)
+            value_filter_text:Resize(filter_holder:Width() * 0.3, value_filter_text:Height())
+
+            do
+                local mw,mh = value_filter_text:TextDimensionsForText("[[col:fe_white]]Filter by Value[[/col]]")
+            
+                value_filter_text:ResizeTextResizingComponentToInitialSize(mw, mh)
+                value_filter_text:SetStateText("[[col:fe_white]]Filter by Value[[/col]]")
+            
+                value_filter_text:SetTooltipText("Filter by Value, do it, I dare you", true)
+                value_filter_text:SetInteractive(false)
+            end
+
+            local key_filter = UIComponent(filter_holder:CreateComponent("key_filter_input", "ui/common ui/text_box"))
+
+            key_filter:SetVisible(true)
+            key_filter:SetDockingPoint(5)
+            key_filter:SetDockOffset(20, -30)
+        
+            key_filter:SetTooltipText("The filter for the key, wtf", true)
+        
+            key_filter:SetInteractive(true)
+            
+            key_filter:SetCanResizeWidth(true)
+            key_filter:Resize(filter_holder:Width() * 0.5, key_filter:Height())
+        
+            key_filter:SetStateText("")
+            
+            local value_filter = UIComponent(filter_holder:CreateComponent("value_filter_input", "ui/common ui/text_box"))
+
+            value_filter:SetVisible(true)
+            value_filter:SetDockingPoint(5)
+            value_filter:SetDockOffset(20, 30)
+        
+            value_filter:SetTooltipText("Hiiiiiii filter the value", true)
+        
+            value_filter:SetInteractive(true)
+            
+            value_filter:SetCanResizeWidth(true)
+            value_filter:Resize(filter_holder:Width() * 0.5, key_filter:Height())
+        
+            value_filter:SetStateText("")
+
+            local do_filter = UIComponent(filter_holder:CreateComponent("do_filter", "ui/templates/square_medium_button"))
+            do_filter:SetTooltipText("Do the filter", true)
+            do_filter:SetVisible(true)
+
+            do_filter:SetDockingPoint(6)
+            do_filter:SetDockOffset(-20, 0)
+        end
+
         local list_view = UIComponent(details_screen:CreateComponent("list_view", "ui/vandy_lib/vlist"))
         list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
-        list_view:Resize(nw-20, nh-details_title:Height()-50)
+        list_view:Resize(nw-20, nh-details_title:Height()-filter_holder:Height()-50)
         list_view:SetDockingPoint(2)
-        list_view:SetDockOffset(10, details_title:Height() + 5)
+        list_view:SetDockOffset(10, details_title:Height() + filter_holder:Height() + 5)
     
         local x,y = list_view:Position()
         local w,h = list_view:Bounds()
-        ModLog("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
+        ui_editor_lib.log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
     
         local lclip = find_uicomponent(list_view, "list_clip")
         lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
@@ -248,7 +341,7 @@ function ui_obj:create_sections()
         lclip:SetDockOffset(0, 0)
         lclip:Resize(w,h)
 
-        ModLog("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
+        ui_editor_lib.log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
     
         local lbox = find_uicomponent(lclip, "list_box")
         lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
@@ -256,7 +349,7 @@ function ui_obj:create_sections()
         lbox:SetDockOffset(0, 0)
         lbox:Resize(w-30,h)
 
-        ModLog("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
+        ui_editor_lib.log("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
     end
 
     do
@@ -278,6 +371,64 @@ function ui_obj:create_sections()
 
         self:create_buttons_holder()
     end
+end
+
+function ui_obj:do_filter()
+    ModLog("Doing the filter")
+    local panel = self.panel
+    local filter_holder = find_uicomponent(panel, "details_screen", "filter_holder")
+
+    if not is_uicomponent(filter_holder) then
+        ModLog("Wtf no filter holder.")
+        return false
+    end
+
+    local key_filter_input = find_uicomponent(filter_holder, "key_filter_input")
+    local value_filter_input = find_uicomponent(filter_holder, "value_filter_input")
+
+    local key_filter = key_filter_input:GetStateText()
+    local value_filter = value_filter_input:GetStateText()
+
+    if key_filter ~= "" then
+        for key,uics in pairs(self.key_to_uics) do
+            if string.find(key, key_filter) then
+                -- for i = 1, #uics do
+                --     local uic = uics[i]
+                --     uic:SetVisible(true)
+                -- end
+            else
+                for i = 1, #uics do
+                    local uic = uics[i]
+                    uic:SetVisible(false)
+                end
+            end
+        end
+    end
+
+    if value_filter ~= "" then
+        for value,uics in pairs(self.value_to_uics) do
+            if string.find(value, value_filter) then
+                for i = 1, #uics do
+                    local uic = uics[i]
+                    uic:SetVisible(true)
+                end
+            else
+                for i = 1, #uics do
+                    local uic = uics[i]
+                    uic:SetVisible(false)
+                end
+            end
+        end
+    end
+
+    -- ModLog("Key: "..key_filter)
+    -- ModLog("Val: "..value_filter)
+
+    -- local root_uic = ui_editor_lib.copied_uic
+
+    -- local ok, err = pcall(function()
+    -- root_uic:filter_fields(key_filter, value_filter)
+    -- end) if not ok then ModLog(err) end
 end
 
 -- create the various buttons of the bottom bar
@@ -355,7 +506,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
 
     local panel = self.panel
     if not panel or not is_uicomponent(panel) or not path then
-        ModLog("create loaded uic in testing ground failed")
+        ui_editor_lib.log("create loaded uic in testing ground failed")
         return false
     end
 
@@ -364,7 +515,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
 
     local test_uic = UIComponent(testing_grounds:CreateComponent("testing_component", path))
     if not is_uicomponent(test_uic) then
-        ModLog("test uic failed!")
+        ui_editor_lib.log("test uic failed!")
         return false
     end
 
@@ -379,8 +530,8 @@ function ui_obj:create_details_header_for_obj(obj)
     local default_h = self.details_data.default_h
 
     if not is_uicomponent(list_box) then
-        ModLog("display called on obj ["..obj:get_key().."], but the list box don't exist yo")
-        ModLog(tostring(list_box))
+        ui_editor_lib.log("display called on obj ["..obj:get_key().."], but the list box don't exist yo")
+        ui_editor_lib.log(tostring(list_box))
         return false
     end
 
@@ -426,43 +577,43 @@ function ui_obj:create_details_header_for_obj(obj)
     -- loop through every field in "data" and call its own display() method
     local data = obj:get_data()
 
-    -- ModLog("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
+    -- ui_editor_lib.log("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
 
     for i = 1, #data do
-        -- ModLog("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
+        -- ui_editor_lib.log("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
         local d = data[i]
         -- local d_key = d.key -- needed?
         local d_obj
 
-        -- ModLog("Testing obj: "..tostring(d))
-        -- ModLog("")
+        -- ui_editor_lib.log("Testing obj: "..tostring(d))
+        -- ui_editor_lib.log("")
 
         if obj:get_key() == "dy_txt" then
-            -- ModLog("VANDY LOOK HERE")
-            -- ModLog(i.."'s key: " .. d:get_key())
+            -- ui_editor_lib.log("VANDY LOOK HERE")
+            -- ui_editor_lib.log(i.."'s key: " .. d:get_key())
             if tostring(d) == "UI_Field" then
-                -- ModLog(i.."'s val: " .. tostring(d:get_value()))
+                -- ui_editor_lib.log(i.."'s val: " .. tostring(d:get_value()))
             end
         end
 
         if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Container") or string.find(tostring(d), "UI_Field") then
-            -- ModLog("inner child is a class")
+            -- ui_editor_lib.log("inner child is a class")
             d_obj = d
         -- elseif type(d) == "table" then
-        --     ModLog("inner child is a table")
+        --     ui_editor_lib.log("inner child is a table")
         --     if not is_nil(d.value) then
         --         d_obj = d.value
         --     else
-        --         ModLog("inner child table doesn't ")
+        --         ui_editor_lib.log("inner child table doesn't ")
         --     end
         else
             -- TODO errmsg
-            ModLog("inner child is not a field or a class, Y")
+            ui_editor_lib.log("inner child is not a field or a class, Y")
             -- TODO resolve what to do if it's just a raw value?
         end
 
         if is_nil(d_obj) or not is_table(d_obj) then
-            ModLog("we have a nil d_obj!")
+            ui_editor_lib.log("we have a nil d_obj!")
         else
             self:display(d_obj)
         end
@@ -480,8 +631,8 @@ function ui_obj:create_details_row_for_field(obj)
     local default_h = self.details_data.default_h
     
     if not is_uicomponent(list_box) then
-        ModLog("display called on field ["..obj:get_key().."], but the list box don't exist yo")
-        ModLog(tostring(list_box))
+        ui_editor_lib.log("display called on field ["..obj:get_key().."], but the list box don't exist yo")
+        ui_editor_lib.log(tostring(list_box))
         return false
     end
     
@@ -507,7 +658,19 @@ function ui_obj:create_details_row_for_field(obj)
 
     row_uic:SetTooltipText(tooltip_text, true)
 
-    local left_text_uic = UIComponent(row_uic:CreateComponent("left_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
+    if self.key_to_uics[key] then
+        self.key_to_uics[key][#self.key_to_uics[key]+1] = row_uic
+    else
+        self.key_to_uics[key] = {row_uic}
+    end
+
+    if self.value_to_uics[value_text] then
+        self.value_to_uics[value_text][#self.value_to_uics[value_text]+1] = row_uic
+    else
+        self.value_to_uics[value_text] = {row_uic}
+    end
+
+    local left_text_uic = UIComponent(row_uic:CreateComponent("key", "ui/vandy_lib/text/la_gioconda/unaligned"))
 
     do
         local ow,oh = row_uic:Width() * 0.3, row_uic:Height() * 0.9
@@ -533,7 +696,7 @@ function ui_obj:create_details_row_for_field(obj)
 
     -- change the str
     if --[[obj:get_native_type() == "str" and]] obj:get_key() == "text" then
-        local right_text_uic = UIComponent(row_uic:CreateComponent("textbox", "ui/common ui/text_box"))
+        local right_text_uic = UIComponent(row_uic:CreateComponent("value", "ui/common ui/text_box"))
         local ok_button = UIComponent(right_text_uic:CreateComponent("check_name", "ui/templates/square_medium_button"))
 
         right_text_uic:SetVisible(true)
@@ -560,18 +723,18 @@ function ui_obj:create_details_row_for_field(obj)
             end,
             function(context)
                 local state_text = right_text_uic:GetStateText()
-                ModLog("Checking text: "..tostring(state_text))
+                ui_editor_lib.log("Checking text: "..tostring(state_text))
 
                 -- TODO edit the related field in COPY
                 local ok, err = pcall(obj:change_val(state_text))
-                if not ok then ModLog(err) end
+                if not ok then ui_editor_lib.log(err) end
             end,
             true
         )
         
         -- local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", ""))
     else        
-        local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", "ui/vandy_lib/text/la_gioconda/unaligned"))
+        local right_text_uic = UIComponent(row_uic:CreateComponent("value", "ui/vandy_lib/text/la_gioconda/unaligned"))
         right_text_uic:SetCanResizeWidth(true) right_text_uic:SetCanResizeHeight(true)
         do
             local ow,oh = row_uic:Width() * 0.6, row_uic:Height() * 0.9
@@ -605,7 +768,7 @@ function ui_obj:display(obj)
     elseif string.find(tostring(obj), "UI_Field") then
         self:create_details_row_for_field(obj)
     else
-        ModLog("not a field or a class!")
+        ui_editor_lib.log("not a field or a class!")
     end
 end
 
@@ -616,7 +779,7 @@ function ui_obj:create_details_for_loaded_uic()
     -- TODO this uses the copied uic, so shit is easier to get; is this what I should do?
     local root_uic = ui_editor_lib.copied_uic
 
-    ModLog("bloop 1")
+    ui_editor_lib.log("bloop 1")
 
     -- TODO get "headers" working (so you can close/open entire sections, ie. close all states or just one, etc)
     -- TODO figure out the actual look of the text for each thing
@@ -627,8 +790,8 @@ function ui_obj:create_details_for_loaded_uic()
     local details_screen = find_uicomponent(panel, "details_screen")
     local list_box = find_uicomponent(details_screen, "list_view", "list_clip", "list_box")
     
-    ModLog(tostring(list_box))
-    ModLog(tostring(is_uicomponent(list_box)))
+    ui_editor_lib.log(tostring(list_box))
+    ui_editor_lib.log(tostring(is_uicomponent(list_box)))
 
     -- destroy chil'un of list_box (clear previous shit)
     list_box:DestroyChildren()
@@ -639,28 +802,28 @@ function ui_obj:create_details_for_loaded_uic()
     self.details_data.default_h = 0
 
     -- TODO this is a potentially very expensive operation, take a look how it feels with huge files (probably runs like shit (: )
-    ModLog("beginning")
+    ui_editor_lib.log("beginning")
 
     self:display(root_uic)
 
-    ModLog("end")
+    ui_editor_lib.log("end")
 
     -- layout the list_box to make sure everything refreshes propa
     list_box:Layout()
-    end) if not ok then ModLog(err) end
+    end) if not ok then ui_editor_lib.log(err) end
 
 
--- ModLog("bloop end")
+-- ui_editor_lib.log("bloop end")
 end
 
 -- load the currently deciphered UIC
 -- opens the UIC in the testing grounds, and displays all the deciphered details
 function ui_obj:load_uic()
-    ModLog("load_uic() called")
+    ui_editor_lib.log("load_uic() called")
     local panel = self.panel
 
     if not is_uicomponent(panel) then
-        ModLog("load_uic() called, panel not found?")
+        ui_editor_lib.log("load_uic() called, panel not found?")
         return false
     end
 
@@ -729,6 +892,19 @@ core:add_listener(
     true
 )
 
+core:add_listener(
+    "do_the_filter",
+    "ComponentLClickUp",
+    function(context)
+        return context.string == "do_filter"
+    end,
+    function(context)
+        ModLog("DO FILTER")
+        ui_obj:do_filter()
+    end,
+    true
+)
+
 -- listener for the close button
 core:add_listener(
     "ui_editor_close_button",
@@ -747,7 +923,10 @@ core:add_listener(
     "UICreated",
     true,
     function()
+        ui_editor_lib.log("UI Created")
+        local ok, err = pcall(function()
         ui_obj:init()
+        end) if not ok then ui_editor_lib.log(err) end
     end,
     true
 )

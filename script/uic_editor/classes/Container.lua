@@ -24,6 +24,15 @@ function container:new(key, val)
     return o
 end
 
+function container:filter_fields(key_filter, value_filter)
+    local data = self.data
+
+    for i = 1, #data do
+        local inner = data[i]
+        inner:filter_fields(key_filter, value_filter)
+    end
+end
+
 -- TODO if container:set_state() is called from container:switch_state(), then hide children headers. else, don't hide them
 function container:switch_state()
     local state = self.state

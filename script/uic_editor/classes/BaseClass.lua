@@ -1,4 +1,5 @@
--- this file doesn't actually do anything, it's not even loaded by the UI Editor library. It just contains the functions that are copy-pasted into each class type.
+local ui_editor_lib = core:get_static_object("ui_editor_lib")
+local parser = ui_editor_lib.parser
 
 local obj = {
     type = "BaseClass",
@@ -22,6 +23,15 @@ function obj:new(o)
     o.state = "open"
 
     return o
+end
+
+function obj:filter_fields(key_filter, value_filter)
+    local data = self.data
+
+    for i = 1, #data do
+        local inner = data[i]
+        inner:filter_fields(key_filter, value_filter)
+    end
 end
 
 function obj:get_type()
@@ -92,7 +102,7 @@ end
 -- then, assign the key through add_data if the field is "name" or "ui-id"
 -- if ui-id is added but name was already added, keep name.
 function obj:set_key(key, new_key_type)
-    ModLog("set_key() called on obj with type "..self:get_type())
+    ui_editor_lib.log("set_key() called on obj with type "..self:get_type())
     local key_type = self.key_type
     local current_key = self:get_key()
 
@@ -124,7 +134,7 @@ function obj:set_key(key, new_key_type)
         -- do nuffin?
     end
 
-    ModLog("old key ["..current_key.."], new key ["..self.key.."].")
+    ui_editor_lib.log("old key ["..current_key.."], new key ["..self.key.."].")
 end
 
 function obj:add_data(data)
@@ -139,11 +149,11 @@ function obj:add_data(data)
         end
     end
 
-    ModLog("Add Data called, ["..self:get_key().."] is getting a fresh new ["..tostring(data).."] with key ["..data:get_key().."].")
+    ui_editor_lib.log("Add Data called, ["..self:get_key().."] is getting a fresh new ["..tostring(data).."] with key ["..data:get_key().."].")
 
     if self:get_key() == "dy_txt" then
-        ModLog("VANDY VANDY VANDY")
-        ModLog("Adding data to dy_txt, data is: "..tostring(data))
+        ui_editor_lib.log("VANDY VANDY VANDY")
+        ui_editor_lib.log("Adding data to dy_txt, data is: "..tostring(data))
     end
 
     self.data[#self.data+1] = data
@@ -158,7 +168,7 @@ function obj:add_data_table(fields)
 end
 
 function obj:decipher()
-    ModLog("decipher called on "..self:get_key().." but the decipher method has not been overriden!")
+    ui_editor_lib.log("decipher called on "..self:get_key().." but the decipher method has not been overriden!")
 end
 
 
