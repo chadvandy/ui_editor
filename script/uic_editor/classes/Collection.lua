@@ -47,14 +47,44 @@ end
 
 function collection:set_state(state)
     self.state = state
-    
+
     local data = self:get_data()
 
-    for i = 1, #data do
-        local inner = data[i]
-        inner:set_state(state)
-    end
+    if ui_editor_lib.is_large_file then
+        for i = 1, #data do
+            local datum = data[i]
 
+            -- only trigger on Field children
+            if string.find(tostring(datum), "UI_Field") then
+                -- if state is open, create
+                if state == "open" then
+                    ui_editor_lib.ui:create_details_row_for_field(datum, self:get_uic())
+                else -- closed; destroy
+                    ui_editor_lib.ui:delete_component(datum:get_uic())
+                end
+            end
+        end
+
+        -- TODO error check
+        local uic = self:get_uic()
+        local parent = UIComponent(uic:Parent())
+        local id = uic:Id()
+
+        local canvas = parent:Find(id.."_canvas")
+
+        if state == "closed" then
+            -- hide the listbox!
+            canvas:SetVisible(false)
+        else
+            canvas:SetVisible(true)
+        end
+    else
+        for i = 1, #data do
+            local inner = data[i]
+            inner:set_state(state)
+        end
+    end
+  
     -- set the state of the header (invisible if inner?)
     local uic = self.uic
     if is_uicomponent(uic) then

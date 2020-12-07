@@ -38,7 +38,22 @@ function obj:get_type()
     return "UIED_" .. self.type
 end
 
--- TODO this; save the header UIC to the obj, and loop through all children when opening/closing this obj to set their child UIC visible/invisible
+-- if ui_editor_lib.is_large_file then
+--     ui_editor_lib.log("Header pressed!")
+--     local data = obj:get_data()
+    
+--     for i = 1, #data do
+--         local datum = data[i]
+--         if string.find(tostring(datum), "UI_Field") then
+--             -- TODO make this cleaner, too
+--             ui_obj:create_details_row_for_field(datum, obj:get_uic())
+--         end
+--     end
+
+--     local list_box = ui_obj.details_data.list_box
+--     list_box:Layout()
+-- else
+
 function obj:switch_state()
     local state = self.state
     local new_state = "closed"
@@ -55,9 +70,39 @@ function obj:set_state(state)
 
     local data = self:get_data()
 
-    for i = 1, #data do
-        local inner = data[i]
-        inner:set_state(state)
+    if ui_editor_lib.is_large_file then
+        for i = 1, #data do
+            local datum = data[i]
+
+            -- only trigger on Field children
+            if string.find(tostring(datum), "UI_Field") then
+                -- if state is open, create
+                if state == "open" then
+                    ui_editor_lib.ui:create_details_row_for_field(datum, self:get_uic())
+                else -- closed; destroy
+                    ui_editor_lib.ui:delete_component(datum:get_uic())
+                end
+            end
+        end
+
+        -- TODO error check
+        local uic = self:get_uic()
+        local parent = UIComponent(uic:Parent())
+        local id = uic:Id()
+
+        local canvas = UIComponent(parent:Find(id.."_canvas"))
+
+        if state == "closed" then
+            -- hide the listbox!
+            canvas:SetVisible(false)
+        else
+            canvas:SetVisible(true)
+        end
+    else
+        for i = 1, #data do
+            local inner = data[i]
+            inner:set_state(state)
+        end
     end
   
     -- set the state of the header (invisible if inner?)
