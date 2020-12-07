@@ -33,7 +33,7 @@ function ui_editor_lib.print_log()
     local log_file_path = ui_editor_lib.log_file
     local logging = ui_editor_lib.logging
 
-    local str = table.concat(logging, "\n")
+    local str = "\n"..table.concat(logging, "\n")
 
     local log_file = io.open(log_file_path, "a+")
     log_file:write(str)
