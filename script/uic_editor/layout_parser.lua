@@ -501,6 +501,9 @@ setmetatable(parser, {
 
         -- TODO verify the hex table first?
 
+        self.data = {}
+        self.root_uic = nil
+
         local root_uic = ui_editor_lib.classes.Component:new()
         root_uic:set_is_root(true)
 
