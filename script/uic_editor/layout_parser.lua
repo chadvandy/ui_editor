@@ -13,6 +13,8 @@ local parser = {
 
     root_uic = nil,         -- this is the saved UIC object which contains every field and baby class, also cleared on every call
     location = 1,           -- used to jump through the hex bytes
+
+    field_count = 0,
 }
 
 function parser:str16_to_chunk(str)
@@ -314,6 +316,9 @@ function parser:decipher_chunk(format, j, k)
     -- set location to k+1, for next decipher_chunk call
     self.location = end_k+1
 
+    -- increase the internal field count
+    self.field_count = self.field_count+1
+
     return value,hex
 end
 
@@ -418,14 +423,14 @@ function parser:decipher_collection(collected_type, obj_to_add)
         --hex = hex .. new_hex
     end
 
-    -- containers don't take raw hex (only needed for individual lines!)
-    local container = ui_editor_lib.new_obj("Container", key, ret)
-    --ui_editor_lib.classes.Container:new(key, ret)
+    -- collections don't take raw hex (only needed for individual lines!)
+    local collection = ui_editor_lib.new_obj("Collection", key, ret)
+    --ui_editor_lib.classes.Collection:new(key, ret)
 
     -- TODO do this within the :decipher() method on each type? ie. `self:add_data(obj:decipher_collection("ComponentImage"))` less shit to pass around.
-    obj_to_add:add_data(container)
+    obj_to_add:add_data(collection)
 
-    return container--,hex
+    return collection--,hex
 end
 
 -- key here is a unique ID so the field can be saved into the root uic. key also references the relevant tooltip and text localisations
@@ -504,7 +509,7 @@ setmetatable(parser, {
         self.location =   1
 
         -- go right into deciphering! (returns the root_uic created!)
-        return root_uic:decipher()
+        return root_uic:decipher(), self.field_count
     end
 })
 

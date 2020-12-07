@@ -1,17 +1,17 @@
--- container object is a special type of field that's just a full collection of smaller objects
+-- collection object is a special type of field that's just a full collection of smaller objects
 -- used for collections of objects, such as "States" or "ComponentImages".
 
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
 
-local container = {
-    type = "UI_Container",
+local collection = {
+    type = "UI_Collection",
 }
 
-function container:__tostring()
-    return "UI_Container" -- TODO should this have the "UIED_" prepend?
+function collection:__tostring()
+    return "UI_Collection" -- TODO should this have the "UIED_" prepend?
 end
 
-function container:new(key, val)
+function collection:new(key, val)
     local o = {}
     setmetatable(o, self)
     self.__index = self
@@ -24,7 +24,7 @@ function container:new(key, val)
     return o
 end
 
-function container:filter_fields(key_filter, value_filter)
+function collection:filter_fields(key_filter, value_filter)
     local data = self.data
 
     for i = 1, #data do
@@ -33,8 +33,8 @@ function container:filter_fields(key_filter, value_filter)
     end
 end
 
--- TODO if container:set_state() is called from container:switch_state(), then hide children headers. else, don't hide them
-function container:switch_state()
+-- TODO if collection:set_state() is called from collection:switch_state(), then hide children headers. else, don't hide them
+function collection:switch_state()
     local state = self.state
     local new_state = "closed"
 
@@ -45,7 +45,7 @@ function container:switch_state()
     self:set_state(new_state)
 end
 
-function container:set_state(state)
+function collection:set_state(state)
     self.state = state
     
     local data = self:get_data()
@@ -66,7 +66,7 @@ function container:set_state(state)
     end
 end
 
-function container:set_uic(uic)
+function collection:set_uic(uic)
     if not is_uicomponent(uic) then
         -- errmsg
         return false
@@ -75,7 +75,7 @@ function container:set_uic(uic)
     self.uic = uic
 end
 
-function container:get_uic()
+function collection:get_uic()
     local uic = self.uic
     if not is_uicomponent(uic) then
         -- errmsg
@@ -85,11 +85,11 @@ function container:get_uic()
     return uic
 end
 
-function container:get_type()
-    return "UI_Container"
+function collection:get_type()
+    return "UI_Collection"
 end
 
-function container:get_hex()
+function collection:get_hex()
     -- local data = self.data
     local len = #self.data
 
@@ -97,20 +97,20 @@ function container:get_hex()
 
 end
 
--- disable :set_key() on container
-function container:set_key()
+-- disable :set_key() on collection
+function collection:set_key()
     return
 end
 
-function container:get_key()
+function collection:get_key()
     return self.key
 end
 
-function container:get_data()
+function collection:get_data()
     return self.data
 end
 
-function container:add_data(new_field)
+function collection:add_data(new_field)
     -- TODO type check if it's a Field
     -- local key = new_field:get_key()
 
@@ -119,10 +119,10 @@ function container:add_data(new_field)
     return new_field
 end
 
-function container:add_data_table(fields)
+function collection:add_data_table(fields)
     for i = 1, #fields do
         self:add_data(fields[i])
     end
 end
 
-return container
+return collection

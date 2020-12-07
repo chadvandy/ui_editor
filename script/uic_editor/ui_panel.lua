@@ -538,7 +538,8 @@ function ui_obj:create_details_header_for_obj(obj)
     -- TODO figure out how to save all the rows to the header
 
     -- create the header_uic for the holder of the UIC
-    local header_uic = UIComponent(list_box:CreateComponent("ui_header_"..self.row_index, "ui/vandy_lib/expandable_row_header"))
+    local i = self.row_index
+    local header_uic = UIComponent(list_box:CreateComponent("ui_header_"..i, "ui/vandy_lib/expandable_row_header"))
 
     self.rows_to_objs[tostring(self.row_index)] = obj
     self.row_index = self.row_index+1
@@ -560,7 +561,7 @@ function ui_obj:create_details_header_for_obj(obj)
     dy_title:SetStateText(obj:get_type() .. ": " .. obj:get_key())
 
     local child_count = find_uicomponent(header_uic, "child_count")
-    if obj:get_type() == "UI_Container" then
+    if obj:get_type() == "UI_Collection" then
         local str = tostring(#obj.data)
         if not str or str == "" then
             child_count:SetVisible(false)
@@ -573,6 +574,41 @@ function ui_obj:create_details_header_for_obj(obj)
 
     -- move the x_margin over a bit
     self.details_data.x_margin = x_margin + 10
+
+    -- create the Canvas for large files only
+    if ui_editor_lib.is_large_file then
+        local list_view = UIComponent(list_box:CreateComponent("ui_header_"..i.."_canvas", "ui/vandy_lib/vlist"))
+
+        list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
+        list_view:Resize(header_uic:Width()-self.details_data.x_margin, 5)
+        list_view:SetDockingPoint(0)
+        list_view:SetDockOffset(self.details_data.x_margin, 0)
+    
+        local x,y = list_view:Position()
+        local w,h = list_view:Dimensions()
+        -- ui_editor_lib.log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
+    
+        local lclip = find_uicomponent(list_view, "list_clip")
+        lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
+        lclip:SetDockingPoint(2)
+        lclip:SetDockOffset(0, 0)
+        lclip:Resize(w,h)
+
+        -- ui_editor_lib.log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
+    
+        local lbox = find_uicomponent(lclip, "list_box")
+        lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
+        lbox:SetDockingPoint(2)
+        lbox:SetDockOffset(0, 0)
+        lbox:Resize(w,h)
+
+        list_view:SetVisible(false)
+
+        -- hide da scroll bar
+        local vslider = find_uicomponent(list_view, "vslider")
+        vslider:SetVisible(false) 
+        vslider:PropagateVisibility(false)
+    end
 
     -- loop through every field in "data" and call its own display() method
     local data = obj:get_data()
@@ -596,7 +632,7 @@ function ui_obj:create_details_header_for_obj(obj)
             end
         end
 
-        if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Container") or string.find(tostring(d), "UI_Field") then
+        if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Collection") or string.find(tostring(d), "UI_Field") then
             -- ui_editor_lib.log("inner child is a class")
             d_obj = d
         -- elseif type(d) == "table" then
@@ -625,7 +661,7 @@ end
 
 
 
-function ui_obj:create_details_row_for_field(obj)
+function ui_obj:create_details_row_for_field(obj, parent_uic)
     local list_box = self.details_data.list_box
     local x_margin = self.details_data.x_margin
     local default_h = self.details_data.default_h
@@ -637,11 +673,35 @@ function ui_obj:create_details_row_for_field(obj)
     end
     
     -- TODO get this working betterer (prettierer) for tables
+
     local key = obj:get_key()
 
     local type_text,tooltip_text,value_text = obj:get_display_text()
 
-    local row_uic = UIComponent(list_box:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
+    local row_uic
+    local canvas = nil
+    if is_uicomponent(parent_uic) then
+        local id = parent_uic:Id()
+        canvas = find_uicomponent(list_box, id.."_canvas")
+
+        if is_uicomponent(canvas) then
+            ui_editor_lib.log("Canvas found!")
+
+            local lbox = find_uicomponent(canvas, "list_clip", "list_box")
+            
+            row_uic = UIComponent(lbox:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
+
+            canvas:SetVisible(true)
+
+            -- TODO figure this out?
+            -- resize canvas automatically, use Layout(), what?
+        else
+            ui_editor_lib.log("Canvas not found!!!! "..id)
+            return false
+        end
+    else
+        row_uic = UIComponent(list_box:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
+    end 
 
     self.rows_to_objs[tostring(self.row_index)] = obj
     self.row_index = self.row_index + 1
@@ -650,11 +710,16 @@ function ui_obj:create_details_row_for_field(obj)
 
     row_uic:SetCanResizeWidth(true) row_uic:SetCanResizeHeight(true)
     row_uic:Resize(math.floor(list_box:Width() * 0.95 - x_margin), default_h)
-    --row_uic:SetCanResizeWidth(false) row_uic:SetCanResizeHeight(false)
+    row_uic:SetCanResizeWidth(false) row_uic:SetCanResizeHeight(false)
     row_uic:SetInteractive(true)
 
     row_uic:SetDockingPoint(0)
-    row_uic:SetDockOffset(x_margin, 0)
+
+    if canvas then
+        row_uic:SetDockOffset(0, 0)
+    else
+        row_uic:SetDockOffset(x_margin, 0)
+    end
 
     row_uic:SetTooltipText(tooltip_text, true)
 
@@ -725,7 +790,6 @@ function ui_obj:create_details_row_for_field(obj)
                 local state_text = right_text_uic:GetStateText()
                 ui_editor_lib.log("Checking text: "..tostring(state_text))
 
-                -- TODO edit the related field in COPY
                 local ok, err = pcall(obj:change_val(state_text))
                 if not ok then ui_editor_lib.log(err) end
             end,
@@ -758,17 +822,34 @@ function ui_obj:create_details_row_for_field(obj)
 
         right_text_uic:SetTooltipText(obj:get_hex(), true)
     end
+
+    if canvas then
+        local cw,ch = canvas:Width(), canvas:Height()
+        local rw,rh = row_uic:Width(), row_uic:Height()
+
+        canvas:SetDockingPoint(0)
+        canvas:SetDockOffset(x_margin, 0)
+        canvas:Resize(cw, ch+rh+5)
+
+        canvas:Layout()
+    end
 end
 
 
 function ui_obj:display(obj)
-
-    if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Container") then
-        self:create_details_header_for_obj(obj)
-    elseif string.find(tostring(obj), "UI_Field") then
-        self:create_details_row_for_field(obj)
+    -- if file too big, only create headers
+    if ui_editor_lib.is_large_file then
+        if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Collection") then
+            self:create_details_header_for_obj(obj)
+        end
     else
-        ui_editor_lib.log("not a field or a class!")
+        if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Collection") then
+            self:create_details_header_for_obj(obj)
+        elseif string.find(tostring(obj), "UI_Field") then
+            self:create_details_row_for_field(obj)
+        else
+            ui_editor_lib.log("not a field or a class!")
+        end
     end
 end
 
@@ -789,6 +870,8 @@ function ui_obj:create_details_for_loaded_uic()
 
     local details_screen = find_uicomponent(panel, "details_screen")
     local list_box = find_uicomponent(details_screen, "list_view", "list_clip", "list_box")
+
+    ui_editor_lib.log("The total amount of fields in this file is: "..tostring(ui_editor_lib.parser.field_count))
     
     ui_editor_lib.log(tostring(list_box))
     ui_editor_lib.log(tostring(is_uicomponent(list_box)))
@@ -845,7 +928,25 @@ core:add_listener(
 
         local obj = ui_obj.rows_to_objs[ind]
 
-        obj:switch_state()
+        -- TODO figure out making this cleaner, do it all through switch state
+
+        if ui_editor_lib.is_large_file then
+            ui_editor_lib.log("Header pressed!")
+            local data = obj:get_data()
+            
+            for i = 1, #data do
+                local datum = data[i]
+                if string.find(tostring(datum), "UI_Field") then
+                    -- TODO make this cleaner, too
+                    ui_obj:create_details_row_for_field(datum, obj:get_uic())
+                end
+            end
+
+            local list_box = ui_obj.details_data.list_box
+            list_box:Layout()
+        else
+            obj:switch_state()
+        end
     end,
     true
 )

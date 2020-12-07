@@ -62,8 +62,8 @@ function ComponentImageMetric:decipher()
 
     deciph("dock_offset", "int16", {x=4,y=4})
 
-    -- TODO this might be CanResizeWidth/Height
     -- dock right/bottom; they seem to be bools?
+    -- TODO this might be CanResizeWidth/Height
     deciph("dock", "bool", {right=1,left=1})
 
     deciph("rotation_angle", "hex", 4)

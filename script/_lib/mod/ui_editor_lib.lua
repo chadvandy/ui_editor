@@ -2,6 +2,8 @@ local ui_editor_lib = {
     loaded_uic = nil,
     loaded_uic_path = nil,
 
+    loaded_uic_field_count = 0,
+
     log_file = "a_vandy_lib.txt",
     logging = {},
     is_checking = false,
@@ -13,10 +15,18 @@ function ui_editor_lib.log(text)
     text = tostring(text) or ""
 
 
-
     ui_editor_lib.logging[#ui_editor_lib.logging+1] = text
 
     ui_editor_lib.check_logging()
+end
+
+function ui_editor_lib.log_init()
+    local str = "New log started!\nEnjoy, fuckface!"
+    local log_file_path = ui_editor_lib.log_file
+
+    local log_file = io.open(log_file_path, "w+")
+    log_file:write(str)
+    log_file:close()
 end
 
 function ui_editor_lib.print_log()
@@ -62,7 +72,9 @@ function ui_editor_lib.check_logging()
     end
 end
 
+-- TODO change this to module loading w/ loadfile(), so env is shared
 function ui_editor_lib.init()
+    ui_editor_lib.log_init()
     local path = "script/uic_editor/"
 
     ui_editor_lib.parser =              require(path.."layout_parser") -- the manager for deciphering the hex and turning it into more accessible objects
@@ -76,7 +88,7 @@ function ui_editor_lib.init()
 
     classes.Component =                     require(path.."Component")              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
     classes.Field =                         require(path.."Field")                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
-    classes.Container =                     require(path.."Container")              -- the class def for containers, which are just slightly involved tables (for lists of states, images, etc)
+    classes.Collection =                     require(path.."Collection")              -- the class def for collections, which are just slightly involved tables (for lists of states, images, etc)
 
     classes.ComponentImage =                require(path.."ComponentImage")         -- ComponentImages, simple stuff, just controls image path / width / height /etc
     classes.ComponentState =                require(path.."ComponentState")         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
@@ -219,10 +231,20 @@ function ui_editor_lib.load_uic_with_path(path)
 
     local ok, err = pcall(function()
 
-    local uic = ui_editor_lib.parser(data)
+    local uic,field_count = ui_editor_lib.parser(data)
 
     ui_editor_lib.loaded_uic = uic
     ui_editor_lib.loaded_uic_path = path
+
+    -- TODO decide dis number
+
+    -- set this file to large if it has a lot of fields; 
+    local b = false
+    if field_count >= 5000 then
+        b = true
+    end
+
+    ui_editor_lib.is_large_file = b
 
     -- make a "copy" of the UIC
     ui_editor_lib.copied_uic = ui_editor_lib.new_obj("Component", uic)

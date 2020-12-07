@@ -12,7 +12,7 @@ local uic_field = {}
 uic_field.__index = uic_field
 
 function uic_field:__tostring()
-    return "UI_Field" -- TODO this shouldn't be "UIED" should it?
+    return "UI_Field"
 end
 
 function uic_field:new(key, value, hex)
