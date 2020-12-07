@@ -45,10 +45,10 @@ function ui_editor_lib.print_log()
     core:remove_listener("lib_check_logging")
 end
 
--- only print the log if A) logging has 1000 lines or B) it's been 5s since the last call to logging
+-- only print the log if A) logging has 5000 lines or B) it's been 5s since the last call to logging
 function ui_editor_lib.check_logging()
     if ui_editor_lib.is_checking then
-        if #ui_editor_lib.logging >= 1000 then
+        if #ui_editor_lib.logging >= 5000 then
             ui_editor_lib.print_log()
         else
             -- do nothing?
