@@ -201,8 +201,13 @@ function Component:decipher()
 
         -- TODO templates and UIC's are really the same thing, don't treat them differently like this
         for i = 1, num_child do
-            local bits = deciph("bits", "hex", 2):get_value() --parser:decipher_chunk("hex", 1, 2)
+            local bits,hex = parser:decipher_chunk("hex", 1, 2)
+
+            -- local bits = deciph("bits", "hex", 2):get_value() --parser:decipher_chunk("hex", 1, 2)
             if bits == "00 00" then
+                local new_field = ui_editor_lib.classes.Field:new("bits", bits, hex)
+                self:add_data(new_field)
+
                 ui_editor_lib.log("deciphering new component within "..self:get_key())
 
                 local child = ui_editor_lib.new_obj("Component")
@@ -219,7 +224,7 @@ function Component:decipher()
                 local template = ui_editor_lib.new_obj("ComponentTemplate")
                 template:decipher()
 
-
+                self:add_data(template)
             end
         end
     else
@@ -306,6 +311,8 @@ function Component:decipher()
         if type == "List" or type == "HorizontalList" then
             local new_type = ui_editor_lib.new_obj("ComponentLayoutEngine")
             local val = new_type:decipher(type)
+
+            self:add_data(val)
 
             has_type = true
         end

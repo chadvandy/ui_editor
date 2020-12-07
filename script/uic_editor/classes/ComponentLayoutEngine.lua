@@ -23,7 +23,7 @@ function ComponentLayoutEngine:new(o)
     return o
 end
 
-function ComponentLayoutEngine:decipher(type)
+function ComponentLayoutEngine:decipher(my_type)
     local v = parser.root_uic:get_version()
 
 
@@ -68,7 +68,7 @@ function ComponentLayoutEngine:decipher(type)
         deciph("b5_04", "int16", 4)
 
 
-        if type == "List" then
+        if my_type == "List" then
             -- TODO this really sucks
             local len = 19
 
@@ -101,7 +101,7 @@ function ComponentLayoutEngine:decipher(type)
             if v == 106 then
                 deciph("b8", "hex", 7)
             end
-        elseif type == "HorizontalList" then
+        elseif my_type == "HorizontalList" then
             deciph("b6", "int16", 4)
             deciph("b7", "str")
 
