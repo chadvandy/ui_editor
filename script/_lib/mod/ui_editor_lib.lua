@@ -7,8 +7,6 @@ local ui_editor_lib = {
     log_file = "a_vandy_lib.txt",
     logging = {},
     is_checking = false,
-
-    display_data = {} -- this is a table solely used for the creation of the display of UI in-game, it's cleared after every use
 }
 
 function ui_editor_lib.log(text)
@@ -185,11 +183,11 @@ function ui_editor_lib.print_copied_uic()
 
     ui_editor_lib.log(bin_str)
 
-    local new_file = io.open("data/UI/templates/TEST", "w+b")
+    local new_file = io.open("data/UI/ui_editor/TEST", "w+b")
     new_file:write(bin_str)
     new_file:close()
 
-    ui_editor_lib.ui:create_loaded_uic_in_testing_ground(true)
+    -- ui_editor_lib.ui:create_loaded_uic_in_testing_ground(true)
 
 end) if not ok then ui_editor_lib.log(err) end
 end
@@ -199,6 +197,11 @@ function ui_editor_lib.load_uic_with_path(path)
         -- errmsg
         return false
     end
+
+    ui_editor_lib.loaded_uic = nil
+    ui_editor_lib.loaded_uic_path = ""
+    ui_editor_lib.is_large_file = false
+    ui_editor_lib.copied_uic = nil
 
     ui_editor_lib.log("load uic with path: "..path)
 
