@@ -35,6 +35,9 @@ function ui_obj:delete_component(uic)
                 -- ERROR WOOPS
             end
         end
+    else
+        ui_editor_lib.log("Invalid type passed to ui:delete_component()")
+        return
     end
 
     dummy:DestroyChildren()
@@ -373,6 +376,12 @@ function ui_obj:create_sections()
     end
 end
 
+-- TODO clear filter function
+-- TODO clear all canvases function
+-- TODO better row uic names and getting and shit, esp. with canvases
+
+-- TODO use canvases off large-file mode; large file should just start everything deleted, while not-large has everything created
+
 function ui_obj:do_filter()
     ModLog("Doing the filter")
     local panel = self.panel
@@ -383,52 +392,105 @@ function ui_obj:do_filter()
         return false
     end
 
+    local ok, err = pcall(function()
+
     local key_filter_input = find_uicomponent(filter_holder, "key_filter_input")
     local value_filter_input = find_uicomponent(filter_holder, "value_filter_input")
 
     local key_filter = key_filter_input:GetStateText()
     local value_filter = value_filter_input:GetStateText()
 
-    if key_filter ~= "" then
-        for key,uics in pairs(self.key_to_uics) do
-            if string.find(key, key_filter) then
-                -- for i = 1, #uics do
-                --     local uic = uics[i]
-                --     uic:SetVisible(true)
-                -- end
+    if key_filter == "" then key_filter = nil end
+    if value_filter == "" then value_filter = nil end
+
+    if ui_editor_lib.is_large_file then
+        -- TODO clear all canvases
+        local root = ui_editor_lib.copied_uic
+
+        local function loopy(stuff, parent_uic)
+            local str = tostring(stuff)
+            if str:find("UI_Field") then
+                local key = stuff:get_key()
+                local value = stuff:get_value_text()
+
+                local create = false
+
+                if key_filter and key:find(key_filter) then
+                    create = true
+                end
+
+                if value_filter and value:find(value_filter) then
+                    create = true
+                end
+
+                if create then
+                    self:create_details_row_for_field(stuff, parent_uic)
+                end
+
+                return create
             else
-                for i = 1, #uics do
-                    local uic = uics[i]
-                    uic:SetVisible(false)
+                local list_box = self.details_data.list_box
+                local uic = stuff:get_uic()
+                local id = uic:Id()
+
+                local canvas = UIComponent(list_box:Find(id.."_canvas"))
+
+                local data = stuff:get_data()
+                local any_created = false
+                for i = 1, #data do
+                    local datum = data[i]
+
+                    local created = loopy(datum, uic)
+                    if created then any_created = true end
+                end
+
+                if any_created then
+                    if is_uicomponent(canvas) then
+                        canvas:SetVisible(true)
+                    end
                 end
             end
         end
-    end
 
-    if value_filter ~= "" then
-        for value,uics in pairs(self.value_to_uics) do
-            if string.find(value, value_filter) then
-                for i = 1, #uics do
-                    local uic = uics[i]
-                    uic:SetVisible(true)
-                end
-            else
-                for i = 1, #uics do
-                    local uic = uics[i]
-                    uic:SetVisible(false)
+        loopy(root)
+    else
+
+        if key_filter ~= "" then
+            for key,uics in pairs(self.key_to_uics) do
+                if string.find(key, key_filter) then
+                    -- for i = 1, #uics do
+                    --     local uic = uics[i]
+                    --     uic:SetVisible(true)
+                    -- end
+                else
+                    for i = 1, #uics do
+                        local uic = uics[i]
+                        uic:SetVisible(false)
+                    end
                 end
             end
         end
+
+        if value_filter ~= "" then
+            for value,uics in pairs(self.value_to_uics) do
+                if string.find(value, value_filter) then
+                    for i = 1, #uics do
+                        local uic = uics[i]
+                        uic:SetVisible(true)
+                    end
+                else
+                    for i = 1, #uics do
+                        local uic = uics[i]
+                        uic:SetVisible(false)
+                    end
+                end
+            end
+        end
+
     end
 
-    -- ModLog("Key: "..key_filter)
-    -- ModLog("Val: "..value_filter)
+    end) if not ok then ui_editor_lib.log(err) end
 
-    -- local root_uic = ui_editor_lib.copied_uic
-
-    -- local ok, err = pcall(function()
-    -- root_uic:filter_fields(key_filter, value_filter)
-    -- end) if not ok then ModLog(err) end
 end
 
 -- create the various buttons of the bottom bar
@@ -691,7 +753,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
             
             row_uic = UIComponent(lbox:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
 
-            canvas:SetVisible(true)
+            -- canvas:SetVisible(true)
 
             -- TODO figure this out?
             -- resize canvas automatically, use Layout(), what?
@@ -928,24 +990,11 @@ core:add_listener(
 
         local obj = ui_obj.rows_to_objs[ind]
 
-        -- TODO figure out making this cleaner, do it all through switch state
+        obj:switch_state()
 
-        if ui_editor_lib.is_large_file then
-            ui_editor_lib.log("Header pressed!")
-            local data = obj:get_data()
-            
-            for i = 1, #data do
-                local datum = data[i]
-                if string.find(tostring(datum), "UI_Field") then
-                    -- TODO make this cleaner, too
-                    ui_obj:create_details_row_for_field(datum, obj:get_uic())
-                end
-            end
-
-            local list_box = ui_obj.details_data.list_box
+        local list_box = ui_obj.details_data.list_box
+        if is_uicomponent(list_box) then
             list_box:Layout()
-        else
-            obj:switch_state()
         end
     end,
     true
@@ -959,7 +1008,7 @@ core:add_listener(
         return context.string == "ui_editor_save_button"
     end,
     function(context)
-        ui_obj:create_loaded_uic_in_testing_ground(true)
+        ui_editor_lib.print_copied_uic()
     end,
     true
 )
@@ -971,7 +1020,7 @@ core:add_listener(
         return context.string == "ui_editor_test_button"
     end,
     function(context)
-        ui_editor_lib.print_copied_uic()
+        ui_obj:create_loaded_uic_in_testing_ground(true)
     end,
     true
 )
@@ -983,7 +1032,7 @@ core:add_listener(
         return context.string == "ui_editor_load_button"
     end,
     function(context)
-        -- TODO make this work for anything else
+        -- TODO make sure get_path is valid 
         local path = ui_obj:get_path()
 
         ui_editor_lib.load_uic_with_path(path)
