@@ -178,13 +178,7 @@ function uic_field:set_state(state)
     end
 end
 
--- returns the localised text + tooltip text for this field, using the "key" field
-function uic_field:get_display_text()
-    local key = self:get_key()
-
-    local text = effect.get_localised_string("layout_parser_"..key.."_text")
-    local tt   = effect.get_localised_string("layout_parser_"..key.."_tt")
-
+function uic_field:get_value_text()
     local value = self:get_value()
     local value_str
     if is_table(value) then
@@ -199,13 +193,40 @@ function uic_field:get_display_text()
         value_str = tostring(value)
     end
 
+    return value_str
+end
+
+function uic_field:get_text_text()
+    local key = self:get_key()
+
+    local text = effect.get_localised_string("layout_parser_"..key.."_text")
+
     if not text or text == "" then
         text = key
     end
-    
+
+    return text
+end
+
+function uic_field:get_tt_text()
+    local key = self:get_key()
+
+
+    local tt   = effect.get_localised_string("layout_parser_"..key.."_tt")
+
     if not tt or tt == "" then
         tt = "Tooltip not found"
     end
+
+    return tt
+end
+
+-- returns the localised text + tooltip text for this field, using the "key" field
+function uic_field:get_display_text()
+    local text = self:get_text_text() -- lol
+    local tt = self:get_tt_text()
+    local value_str = self:get_value_text()
+
 
     return text,tt,value_str
 end
