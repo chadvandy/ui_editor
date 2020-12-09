@@ -38,8 +38,8 @@ function ComponentImage:decipher()
     deciph("img_path", "str", -1)
 
     -- get the width + height
-    deciph("w", "int16", 4)
-    deciph("h", "int16", 4)
+    deciph("w", "int32", 4)
+    deciph("h", "int32", 4)
 
     -- TODO decode
     deciph("unknown_bool", "hex", 1)

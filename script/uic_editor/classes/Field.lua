@@ -26,7 +26,7 @@ function uic_field:new(key, value, hex)
     o.hex = hex
     o.uic = nil
 
-    o.native_type = "" -- native type is the actual data type being used - int16, str, etc
+    o.native_type = "" -- native type is the actual data type being used - int32, str, etc
 
     return o
 end
@@ -59,7 +59,7 @@ function uic_field:filter_fields(key_filter, value_filter)
     end
 
     if key_filter ~= "" then
-        local key_uic = find_uicomponent(uic, "key")
+        local key_uic = UIComponent(uic:Find("key"))
 
         if not is_uicomponent(key_uic) then
             ModLog("no key uic wtf")
@@ -75,7 +75,7 @@ function uic_field:filter_fields(key_filter, value_filter)
     end
 
     if value_filter ~= "" then
-        local value_uic = find_uicomponent(uic, "value")
+        local value_uic = UIComponent(uic:Find("value"))
 
         if not is_uicomponent(value_uic) then
             ModLog("no value uic wtf")
@@ -95,7 +95,18 @@ end
 function uic_field:change_val(new_val)
     if self:test_change(new_val) == true then
         -- TODO assume it's a string for right now, lul
-        local new_hex = parser:str16_to_chunk(new_val)
+        local t = self:get_native_type()
+        local new_hex = ""
+        if t == "str" then
+            new_hex = parser:str_to_chunk(new_val)
+        elseif t == "utf8" then
+            new_hex = parser:utf8_to_chunk(new_val)
+        elseif t == "int32" then
+            new_hex = parser:int32_to_chunk(new_val)
+        elseif t == "int16" then
+            new_hex = parser:int16_to_chunk(new_val)
+        end
+
         ui_editor_lib.log("New hex: "..new_hex)
 
         -- local new_file = io.open("data/ui/templates/TEST", "w+b")
@@ -103,8 +114,6 @@ function uic_field:change_val(new_val)
 
         self.value = new_val
         self.hex = new_hex
-
-        
 
         -- ui_editor_lib.print_copied_uic()
 

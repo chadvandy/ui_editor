@@ -42,41 +42,41 @@ function ComponentState:decipher()
 
     deciph("name", "str", -1)
 
-    deciph("width", "int16", 4)
-    deciph("height", "int16", 4)
+    deciph("width", "int32", 4)
+    deciph("height", "int32", 4)
 
     -- localised text
-    deciph("text", "str16", -1)
-    deciph("tooltip_text", "str16", -1)
+    deciph("text", "utf8", -1)
+    deciph("tooltip", "utf8", -1)
 
     -- text bounds
-    deciph("text_width", "int16", 4)
-    deciph("text_height", "int16", 4)
+    deciph("text_width", "int32", 4)
+    deciph("text_height", "int32", 4)
 
     -- text alignment -- TODO figure out translation, ie. 1 = Top or whatever
-    deciph("text_valign", "int16", 4)
-    deciph("text_halign", "int16", 4)
+    deciph("text_valign", "int32", 4)
+    deciph("text_halign", "int32", 4)
 
     -- texthbehavior(?) TODO decode
     deciph("b1", "hex", 1)
 
-    deciph("text_label", "str16", -1)
+    deciph("text_label", "utf8", -1)
 
     -- they swap order between versions
     if v_num <= 115 then
         deciph("b3", "hex", 2)
-        deciph("text_localised", "str16", -1)
+        deciph("tooltip_localised", "utf8", -1)
     else        
-        deciph("text_localised", "str16", -1)
+        deciph("tooltip_localised", "utf8", -1)
         deciph("b3", "hex", 2)
     end
 
     -- TODO this seems wrong, shouldn't they all have tt label?
     -- tooltip_label + two undeciphered fields
     if v_num >= 70 and v_num < 90 then
-        deciph("tooltip_label", "str16")
+        deciph("tooltip_id", "utf8")
     elseif v_num >= 90 and v_num < 110 then
-        deciph("tooltip_label", "str16")
+        deciph("tooltip_id", "utf8")
         deciph("b5", "str")
     elseif v_num >= 110 and v_num < 120 then
         if v_num <= 115 then
@@ -88,9 +88,9 @@ function ComponentState:decipher()
 
     -- text infos!
     deciph("font_name", "str")
-    deciph("font_size", "int16", 4)
-    deciph("font_leading", "int16", 4)
-    deciph("font_tracking", "int16", 4)
+    deciph("font_size", "int32", 4)
+    deciph("font_leading", "int32", 4)
+    deciph("font_tracking", "int32", 4)
     deciph("font_colour", "hex", 4)
 
     -- font category
@@ -99,9 +99,9 @@ function ComponentState:decipher()
     -- text offsets!
     -- first is only two ints - x and y offset; second is four, with left/right/top/bottom offsets
     if v_num >= 70 and v_num < 80 then
-        deciph("text_offset", "int16", {x=4,y=4})
+        deciph("text_offset", "int32", {x=4,y=4})
     elseif v_num >= 80 and v_num <= 130 then
-        deciph("text_offset", "int16", {l=4,r=4,t=4,b=4})
+        deciph("text_offset", "int32", {l=4,r=4,t=4,b=4})
     end
 
     -- undeciphered!
@@ -114,13 +114,13 @@ function ComponentState:decipher()
 
     deciph("shader_name", "str")
     -- TODO these are actually floats not ints!
-    -- shader variables; int16
-    deciph("shader_vars", "int16", {one=4,two=4,three=4,four=4})
+    -- shader variables; int32
+    deciph("shader_vars", "int32", {one=4,two=4,three=4,four=4})
 
     deciph("text_shader_name", "str")
     -- TODO these are actually floats not ints!
-    -- shader variables; int16
-    deciph("text_shader_vars", "int16", {one=4,two=4,three=4,four=4})
+    -- shader variables; int32
+    deciph("text_shader_vars", "int32", {one=4,two=4,three=4,four=4})
 
     parser:decipher_collection("ComponentImageMetric", self)
 

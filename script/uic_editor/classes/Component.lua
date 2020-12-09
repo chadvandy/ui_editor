@@ -107,7 +107,7 @@ function Component:decipher()
 
     -- next section is the offsets tables
     do
-        deciph("offsets", "int16", {x = 4, y = 4})
+        deciph("offsets", "int32", {x = 4, y = 4})
     end    
 
     -- next section is undeciphered b1, which is only available between 70-89
@@ -133,22 +133,22 @@ function Component:decipher()
 
     -- next bit is optional tooltip text
     do
-        deciph("tooltip_text", "str16", -1)
+        deciph("tooltip_text", "utf8", -1)
     end
 
     -- next bit is tooltip_id; optional again
     do
-        deciph("tooltip_id", "str16", -1) 
+        deciph("tooltip_id", "utf8", -1) 
     end
 
-    -- next bit is docking point, a little-endian int16 (so 01 00 00 00 turns into 00 00 00 01 turns into 1)
+    -- next bit is docking point, a little-endian int32 (so 01 00 00 00 turns into 00 00 00 01 turns into 1)
     do
-        deciph("docking_point", "int16", 4)
+        deciph("docking_point", "int32", 4)
     end
 
     -- next bit is docking offset (x,y)
     do
-        deciph("dock_offsets", "int16", {x=4, y=4})
+        deciph("dock_offsets", "int32", {x=4, y=4})
     end
 
     -- next bit is the component priority (where it's printed on the screen, higher = front, lower = back)
@@ -196,7 +196,7 @@ function Component:decipher()
 
     -- TODO move this into decipher_collection
     if v_num >= 100 and v < 130 then
-        local num_child = deciph("num_children", "int16", 4):get_value() --parser:decipher_chunk("int16", 1, 4)
+        local num_child = deciph("num_children", "int32", 4):get_value() --parser:decipher_chunk("int32", 1, 4)
         ui_editor_lib.log("VANDY NUM CHILDREN: "..tostring(num_child))
 
         -- TODO templates and UIC's are really the same thing, don't treat them differently like this
@@ -339,7 +339,7 @@ function Component:decipher()
             bit = bit:get_value()
 
             if bit == '01' then
-                local int = parser:decipher_chunk("int16", 1, 4)
+                local int = parser:decipher_chunk("int32", 1, 4)
                 for i = 1, int do
                     deciph("after_bit_"..i, "hex", 4)
                 end
@@ -350,8 +350,8 @@ function Component:decipher()
                 bit2 = bit2:get_value()
 
                 if bit2 == '01' then
-                    local len = deciph("after_2_bit_int1", "int16", 4):get_value()
-                    deciph("after_2_bit_int2", "int16", 4)
+                    local len = deciph("after_2_bit_int1", "int32", 4):get_value()
+                    deciph("after_2_bit_int2", "int32", 4)
 
                     for i = 1,4 do
                         deciph("after_2_bit_hex"..i, "hex", len)
@@ -370,14 +370,14 @@ function Component:decipher()
                 deciph("after_3_bit_b0", "hex", 74)
 
                 -- num models?
-                local len = deciph("after_3_bit_b1", "int16", 4):get_value()
+                local len = deciph("after_3_bit_b1", "int32", 4):get_value()
 
                 for i = 1, len do
                     deciph("after_3_bit_model"..i.."str1", "str", -1)
                     deciph("after_3_bit_model"..i.."str2", "str", -1)
                     deciph("after_3_bit_model"..i.."hex1", "hex", 1)
 
-                    local len = deciph("after_3_bit_anim_num", "int16", 4):get_value()
+                    local len = deciph("after_3_bit_anim_num", "int32", 4):get_value()
                     for j = 1, len do
                         deciph("after_3_bit_model"..i.."_anim"..j.."str1", "str", -1)
                         deciph("after_3_bit_model"..i.."_anim"..j.."str2", "str", -1)
@@ -394,9 +394,9 @@ function Component:decipher()
 
             if v >= 110 and v < 130 then
                 -- TODO three floats (not ints!)
-                deciph("after_3_bit_f1", "int16", 4)
-                deciph("after_3_bit_f2", "int16", 4)
-                deciph("after_3_bit_f3", "int16", 4)
+                deciph("after_3_bit_f1", "int32", 4)
+                deciph("after_3_bit_f2", "int32", 4)
+                deciph("after_3_bit_f3", "int32", 4)
             end
         end) if not ok then ui_editor_lib.log(err) end
         end

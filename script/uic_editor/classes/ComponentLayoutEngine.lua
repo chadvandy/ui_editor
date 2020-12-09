@@ -32,18 +32,18 @@ function ComponentLayoutEngine:decipher(my_type)
     end
 
     -- I believe these are column widths? number of columns and each width?
-    local num_sth = deciph("num_sth", "int16", 4):get_value()
+    local num_sth = deciph("num_sth", "int32", 4):get_value()
 
     for i = 1, num_sth do
         deciph("column_"..i, "float", 4)
     end
 
-    deciph("b0","int16", 4)
-    deciph("b1","int16", 4)
+    deciph("b0","int32", 4)
+    deciph("b1","int32", 4)
 
     deciph("b2", "bool", 1)
 
-    deciph("b3", "int16", 4)
+    deciph("b3", "int32", 4)
 
     if v >= 91 and v < 97 then
         deciph("bit", "hex", 1)
@@ -62,10 +62,10 @@ function ComponentLayoutEngine:decipher(my_type)
         deciph("b4", "hex", 2)
 
         -- margins?
-        deciph("b5_01", "int16", 4)
-        deciph("b5_02", "int16", 4)
-        deciph("b5_03", "int16", 4)
-        deciph("b5_04", "int16", 4)
+        deciph("b5_01", "int32", 4)
+        deciph("b5_02", "int32", 4)
+        deciph("b5_03", "int32", 4)
+        deciph("b5_04", "int32", 4)
 
 
         if my_type == "List" then
@@ -102,14 +102,14 @@ function ComponentLayoutEngine:decipher(my_type)
                 deciph("b8", "hex", 7)
             end
         elseif my_type == "HorizontalList" then
-            deciph("b6", "int16", 4)
+            deciph("b6", "int32", 4)
             deciph("b7", "str")
 
             if v == 105 then
-                deciph("b8", "int16", 4)
+                deciph("b8", "int32", 4)
                 deciph("b9", "hex", 1)
             elseif v >= 106 then
-                deciph("b8", "int16", 4)
+                deciph("b8", "int32", 4)
 
                 deciph("b9", "str")
                 deciph("b10", "hex", 7)

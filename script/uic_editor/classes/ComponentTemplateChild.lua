@@ -38,7 +38,7 @@ function ComponentTemplateChild:decipher()
     if v >= 122 and v < 130 then
         deciph("b_sth", "hex", 16)
 
-        local num_states = deciph("num_states", "int16", 4):get_value()
+        local num_states = deciph("num_states", "int32", 4):get_value()
 
         for i = 1, num_states do
             deciph("state_"..i.."_str", "str")
@@ -51,14 +51,14 @@ function ComponentTemplateChild:decipher()
     if v >= 100 and v < 110 then
         deciph("type", "str")
     elseif v >= 110 and v < 130 then
-        local num_events = deciph("num_events", "int16", 4):get_value()
+        local num_events = deciph("num_events", "int32", 4):get_value()
         for i = 1, num_events do
             deciph("event_str1_"..i, "str")
             deciph("event_str2_"..i, "str")
             deciph("event_str3_"..i, "str")
 
             if v >= 124 and v < 130 or v == 121 then
-                local num_sth = deciph("num_sth", "int16", 4):get_value()
+                local num_sth = deciph("num_sth", "int32", 4):get_value()
 
                 for j = 1, num_sth do
                     deciph("sth_str1_"..j, "str")
@@ -72,7 +72,7 @@ function ComponentTemplateChild:decipher()
 
     deciph("b_floats", "float", {one=4,two=4,three=4,four=4})
 
-    deciph("b_ints", "int16", {w=4,h=4})
+    deciph("b_ints", "int32", {w=4,h=4})
     
     if v >= 122 and v < 130 then
         deciph("b1", "hex", 2)
@@ -80,11 +80,11 @@ function ComponentTemplateChild:decipher()
         deciph("b1", "hex", 1)
     end
 
-    deciph("docking", "int16", 4)
+    deciph("docking", "int32", 4)
     deciph("b2", "hex", 6)
 
-    deciph("tooltip_id", "str16")
-    deciph("tooltip_text", "str16")
+    deciph("tooltip_id", "utf8")
+    deciph("tooltip_text", "utf8")
 
     -- TODO some weird shit here
     -- if ($this->name_src){
@@ -99,8 +99,8 @@ function ComponentTemplateChild:decipher()
 
     while true do
         local num = {
-            parser:decipher_chunk("int8", 1, 2),
-            parser:decipher_chunk("int8", 1, 2),
+            parser:decipher_chunk("int16", 1, 2),
+            parser:decipher_chunk("int16", 1, 2),
         }
 
         parser.location = parser.location -4
@@ -110,10 +110,10 @@ function ComponentTemplateChild:decipher()
         end
 
         deciph("state_"..i, "str")
-        deciph("state_b1"..i, "str16")
-        deciph("state_b2"..i, "str16")
-        deciph("state_b3"..i, "str16")
-        deciph("state_b4"..i, "str16")
+        deciph("state_b1"..i, "utf8")
+        deciph("state_b2"..i, "utf8")
+        deciph("state_b3"..i, "utf8")
+        deciph("state_b4"..i, "utf8")
 
         if v >= 122 and v < 130 then
             deciph("state_hex_"..i, "hex", 1)
@@ -127,14 +127,14 @@ function ComponentTemplateChild:decipher()
         end
     end
 
-    local num_dynamic = deciph("num_dynamic", "int16", 4):get_value()
+    local num_dynamic = deciph("num_dynamic", "int32", 4):get_value()
 
     for i = 1, num_dynamic do
         deciph("dynamic_"..i.."_key", "str")
         deciph("dynamic_"..i.."_value", "str")
     end
 
-    local num_images = deciph("num_images", "int16", 4):get_value()
+    local num_images = deciph("num_images", "int32", 4):get_value()
 
     for i = 1, num_images do
         deciph("image_"..i, "str")
@@ -143,7 +143,7 @@ function ComponentTemplateChild:decipher()
     if v >= 122 and v < 130 then
         deciph("b4", "hex", 4)
 
-        local num_sth = deciph("num_sth", "int16", 4):get_value()
+        local num_sth = deciph("num_sth", "int32", 4):get_value()
 
         for i = 1, num_sth do
             deciph("sth_"..i.."_str1", "str")
@@ -153,7 +153,7 @@ function ComponentTemplateChild:decipher()
             deciph("sth_"..i.."_hex2", "hex", 12)
         end
 
-        local num_img = deciph("num_img", "int16", 4):get_value()
+        local num_img = deciph("num_img", "int32", 4):get_value()
 
         for i = 1, num_img do
             deciph("img_"..i.."_str", "str")

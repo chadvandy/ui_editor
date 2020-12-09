@@ -35,8 +35,8 @@ function ComponentFunctionAnimation:decipher()
 
     -- TODO there's some nonsense with this in different versions, investigate examples
     -- if v >= 110 and v < 130 then
-    --     local len = parser:decipher_chunk("int8", 1, 2)
-    --     -- local len = deciph("len", "int8", 2):get_value()
+    --     local len = parser:decipher_chunk("int16", 1, 2)
+    --     -- local len = deciph("len", "int16", 2):get_value()
 
     --     if len == "0xFFFF" then -- TODO ??? 
     --         deciph("b_hex_0", "hex", 2)
@@ -51,7 +51,7 @@ function ComponentFunctionAnimation:decipher()
     --         else
     --             deciph("b_str", "str")
 
-    --             len = deciph("len2", "int8", 2):get_value()
+    --             len = deciph("len2", "int16", 2):get_value()
 
     --             if len == 0 then
     --                 deciph("b_hex", "hex", 2)
@@ -64,7 +64,7 @@ function ComponentFunctionAnimation:decipher()
 
 
     -- TODO this sux
-    local len = parser:decipher_chunk("int8", 1, 2)
+    local len = parser:decipher_chunk("int16", 1, 2)
     ui_editor_lib.log("LEN1: "..len)
 
     parser.location = parser.location - 2
@@ -82,7 +82,7 @@ function ComponentFunctionAnimation:decipher()
         else
             deciph("b_str", "str")
 
-            local len = parser:decipher_chunk("int8", 1, 2)
+            local len = parser:decipher_chunk("int16", 1, 2)
             ui_editor_lib.log("LEN2: "..len)
 
             parser.location = parser.location -2
@@ -113,8 +113,8 @@ function ComponentFunctionAnimation:decipher()
     deciph("offset_left", "float", 4)
     deciph("offset_top", "float", 4)
 
-    deciph("targetmetrics_m_width", "int16", 4)
-    deciph("targetmetrics_m_height", "int16", 4)
+    deciph("targetmetrics_m_width", "int32", 4)
+    deciph("targetmetrics_m_height", "int32", 4)
 
     deciph("targetmetrics_m_colour", "hex", 4)
 
@@ -122,15 +122,15 @@ function ComponentFunctionAnimation:decipher()
 
     deciph("rotation_angle", "float", 4)
 
-    deciph("imageindex1", "int16", 4)
-    deciph("imageindex2", "int16", 4)
+    deciph("imageindex1", "int32", 4)
+    deciph("imageindex2", "int32", 4)
 
     if v >= 110 and v < 130 then
-        deciph("m_font_scale", "int16", 4)
+        deciph("m_font_scale", "int32", 4)
     end
 
-    deciph("interpolationtime", "int16", 4)
-    deciph("interpolationpropertymask", "int16", 4)
+    deciph("interpolationtime", "int32", 4)
+    deciph("interpolationpropertymask", "int32", 4)
 
     deciph("easing_weight", "float", 4)
     deciph("easing_curve_type", "str", -1)

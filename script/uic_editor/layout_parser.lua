@@ -17,7 +17,7 @@ local parser = {
     field_count = 0,
 }
 
-function parser:str16_to_chunk(str)
+function parser:utf8_to_chunk(str)
     -- first, grab the length
     local hex_str = ""
 
@@ -40,7 +40,7 @@ function parser:str16_to_chunk(str)
             -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
             c = string.format("%02X", string.byte(c)) .. "00"
     
-            -- the "00" is added padding for str16's
+            -- the "00" is added padding for utf8's
     
             hex_str = hex_str .. c
         end
@@ -107,15 +107,65 @@ function parser:str_to_chunk(str)
 end
 
 function parser:int16_to_chunk(int)
+    local hex = string.format("%X", int)
+    
+    if hex:len() < 4 then
+        for _ = 1, 4 - hex:len() do
+            hex = "0" .. hex
+        end
+    end
 
+    local data = {}
+    for i = 2,4,2 do
+        local c = hex:sub(i-1, i)
+        data[#data+1] = c
+    end
 
+    local str = ""
+    for i = #data,1,-1 do
+        str = str .. data[i]
+    end
+
+    return str
+end
+
+-- takes an integer and turns it into the relevant hex
+function parser:int32_to_chunk(int)
+    -- convert the integer into a hex right away.
+    -- this converts "1920" into "780"
+    local hex = string.format("%X", int)
+
+    -- add in padding to get the number up to 4 total bytes
+    -- becomes "00000780"
+    if hex:len() < 8 then
+        for _ = 1, 8 - hex:len() do
+            hex = "0" .. hex
+        end
+    end
+
+    -- split the full string into the 4 separate bytes
+    -- ie., {00, 00, 07, 80}
+    local data = {}
+    for i = 2,8,2 do
+        local c = hex:sub(i-1,i)
+        data[#data+1] = c
+    end
+
+    -- recreate the string with little endian (so the smallest byte is first, largest byte is last)
+    -- ie., "80070000" (the correct version!)
+    local str = ""
+    for i = #data,1,-1 do
+        str = str .. data[i]
+    end
+
+    return str
 end
 
 -- little-endian, four-bytes number. 00 00 80 3F -> 1, 00 00 00 40 -> 2, 00 00 80 40 -> 3, no clue what the patter here is.
 -- TODO make this!
 function parser:chunk_to_float(j, k)
-    -- for now, just do int16, fuck it
-    return self:chunk_to_int16(j, k)
+    -- for now, just do int32, fuck it
+    return self:chunk_to_int32(j, k)
 end
 
 -- converts a series of hexadecimal bytes (between j and k) into a string
@@ -128,7 +178,7 @@ function parser:chunk_to_str(j, k)
     -- only perform this stuff if there's a -1 k provided
     if k == -1 then
         -- first two bytes are the length identifier
-        local len = self:chunk_to_int8(j, j+1)
+        local len = self:chunk_to_int16(j, j+1)
         ui_editor_lib.log("len is: "..len)
 
         -- if the len is 0, then just return a string of "" (for optional strings)
@@ -166,12 +216,12 @@ function parser:chunk_to_str(j, k)
 end
 
 -- converts a length of text into a string-16 (which is, in hex, a string with empty 00 bytes between each character)
-function parser:chunk_to_str16(j, k)
+function parser:chunk_to_utf8(j, k)
     -- first two bytes are the length identifier (tells the game how long the incoming string is)
 
     local start_j = j
     if k == -1 then
-        local len = self:chunk_to_int8(j, j+1)
+        local len = self:chunk_to_int16(j, j+1)
 
         -- if the len is 0, then just return a string of "" (for optional strings)
         if len == 0 then return "\"\"", self:chunk_to_hex(j, j+1), j+1 end
@@ -216,11 +266,11 @@ function parser:chunk_to_hex(j, k)
 end
 
 -- takes two bytes and turns them into a Lua number
--- always an unsigned int8, which means it's a hex byte converted into a number followed by an empty 00
+-- always an unsigned int16, which means it's a hex byte converted into a number followed by an empty 00
 -- this is "little endian", which means the hex is actually read backwards. ie., 56 00 is actually read as 00 56, which is translated to 00 86 in base-16
-function parser:chunk_to_int8(j, k)
-    -- TODO int8 should only take numbers 1 apart from each other, it can only be two bytes. error check that
-    ui_editor_lib.log("chunk to int8 between "..tostring(j).." and " ..tostring(k))
+function parser:chunk_to_int16(j, k)
+    -- TODO int16 should only take numbers 1 apart from each other, it can only be two bytes. error check that
+    ui_editor_lib.log("chunk to int16 between "..tostring(j).." and " ..tostring(k))
 
     -- grab the relevant bytes
     local block = {}
@@ -247,8 +297,8 @@ end
 
 -- convert a 4-byte hex section into an integer
 -- this part is a little weird, since integers like this are actually read backwards in hex (little-endian). ie., 84 03 00 00 in hex is read as 00 00 03 84, which ends up being 03 84, which is converted into 900
-function parser:chunk_to_int16(j, k)
-    -- TODO int16's can only be 4-bytes!
+function parser:chunk_to_int32(j, k)
+    -- TODO int32's can only be 4-bytes!
 
     local block = {}
     for i = j,k do
@@ -292,12 +342,12 @@ function parser:decipher_chunk(format, j, k)
     
         -- string types (hex is a string-ified set of hexadecimal bytes, ie "84 03 00 00")
         str = parser.chunk_to_str,
-        str16 = parser.chunk_to_str16,
+        utf8 = parser.chunk_to_utf8,
         hex = parser.chunk_to_hex,
 
         -- number types!
-        int8 = parser.chunk_to_int8,
         int16 = parser.chunk_to_int16,
+        int32 = parser.chunk_to_int32,
         float = parser.chunk_to_float,
 
         -- boolean (with a pseudonym)
@@ -397,8 +447,8 @@ function parser:decipher_collection(collected_type, obj_to_add)
 
     -- local func = type_to_func[collected_type]
 
-    -- every collection starts with an int16 (four bytes) to inform how much of that thing is within
-    local len,hex = dec(collected_type.."len","int16", 4, obj_to_add):get_value()
+    -- every collection starts with an int32 (four bytes) to inform how much of that thing is within
+    local len,hex = dec(collected_type.."len","int32", 4, obj_to_add):get_value()
 
     ui_editor_lib.log("len of "..collected_type.." is "..len)
 
@@ -434,7 +484,7 @@ function parser:decipher_collection(collected_type, obj_to_add)
 end
 
 -- key here is a unique ID so the field can be saved into the root uic. key also references the relevant tooltip and text localisations
--- format is the type you're expecting - hex, str, int16, etc. Can also be the Lua object type - ie., "ComponentImage". If a native type is provided, a "Field" is returned
+-- format is the type you're expecting - hex, str, int32, etc. Can also be the Lua object type - ie., "ComponentImage". If a native type is provided, a "Field" is returned
 -- k is the end searched location. ie., if you're looking at a 4-byte field, k should be 4. k default to -1, for "unknown length". k can be a k/v table as well, for fields with multiple data inside (ie. offsets). it should be a k/v table with keys linked to lengths (ie. {x=4,y=4})
 -- obj is the object it's being added to (ie. is this field in a specific state, or component, or WHAT). Defaults to the root uic obj
 function parser:dec(key, format, k, obj)
@@ -510,6 +560,7 @@ setmetatable(parser, {
         self.data =       hex_table
         self.root_uic =   root_uic
         self.location =   1
+        self.field_count = 0
 
         -- go right into deciphering! (returns the root_uic created!)
         return root_uic:decipher(), self.field_count

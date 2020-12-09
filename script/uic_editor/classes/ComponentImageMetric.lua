@@ -41,8 +41,8 @@ function ComponentImageMetric:decipher()
         deciph("b_sth", "hex", 16)
     end
 
-    deciph("offset", "int16", {x=4,y=4})
-    deciph("dimensions", "int16", {w=4,h=4})
+    deciph("offset", "int32", {x=4,y=4})
+    deciph("dimensions", "int32", {w=4,h=4})
 
     deciph("colour", "hex", 4)
 
@@ -58,23 +58,23 @@ function ComponentImageMetric:decipher()
     deciph("x_flipped", "bool", 1)
     deciph("y_flipped", "bool", 1)
 
-    deciph("docking_point", "int16", 4)
+    deciph("docking_point", "int32", 4)
 
-    deciph("dock_offset", "int16", {x=4,y=4})
+    deciph("dock_offset", "int32", {x=4,y=4})
 
     -- dock right/bottom; they seem to be bools?
     -- TODO this might be CanResizeWidth/Height
     deciph("dock", "bool", {right=1,left=1})
 
     deciph("rotation_angle", "hex", 4)
-    deciph("pivot_point", "int16", {x=4,y=4})
+    deciph("pivot_point", "int32", {x=4,y=4})
 
     if v >= 103 then
-        deciph("rotation_axis", "int16", {4,4,4})
+        deciph("rotation_axis", "int32", {4,4,4})
         deciph("shader_name", "str")
     else
         deciph("shader_name", "str")
-        deciph("rotation_axis", "int16", {4,4,4})
+        deciph("rotation_axis", "int32", {4,4,4})
     end
 
     if v <= 102 then
