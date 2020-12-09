@@ -70,7 +70,6 @@ function ui_editor_lib:check_logging()
     end
 end
 
--- TODO change this to module loading w/ loadfile(), so env is shared
 function ui_editor_lib:init()
     ui_editor_lib:log_init()
     local path = "script/uic_editor/"
@@ -303,8 +302,6 @@ function ui_editor_lib:load_uic_with_path(path)
     -- make a "copy" of the UIC
     ui_editor_lib.copied_uic = ui_editor_lib:new_obj("Component", uic)
 
-    -- TODO testing the name and the like
-    ui_editor_lib:log("Copied ui: "..ui_editor_lib.copied_uic:get_key())
 
     ui_editor_lib.ui:load_uic()
     end) if not ok then ui_editor_lib:log(err) end

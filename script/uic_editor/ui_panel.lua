@@ -783,8 +783,6 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
             
             row_uic = UIComponent(lbox:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
 
-            -- canvas:SetVisible(true)
-
             -- TODO figure this out?
             -- resize canvas automatically, use Layout(), what?
         else
@@ -949,12 +947,10 @@ end
 function ui_obj:create_details_for_loaded_uic()
     local panel = self.panel
 
-    -- TODO this uses the copied uic, so shit is easier to get; is this what I should do?
     local root_uic = ui_editor_lib.copied_uic
 
     ui_editor_lib:log("bloop 1")
 
-    -- TODO get "headers" working (so you can close/open entire sections, ie. close all states or just one, etc)
     -- TODO figure out the actual look of the text for each thing
     -- TODO figure out tables
 
@@ -986,9 +982,6 @@ function ui_obj:create_details_for_loaded_uic()
     -- layout the list_box to make sure everything refreshes propa
     list_box:Layout()
     end) if not ok then ui_editor_lib:log(err) end
-
-
--- ui_editor_lib:log("bloop end")
 end
 
 -- load the currently deciphered UIC
@@ -1001,8 +994,6 @@ function ui_obj:load_uic()
         ui_editor_lib:log("load_uic() called, panel not found?")
         return false
     end
-
-    --self:create_loaded_uic_in_testing_ground()
 
     self:create_details_for_loaded_uic()
 end

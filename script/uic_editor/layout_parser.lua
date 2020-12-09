@@ -24,7 +24,11 @@ function parser:utf8_to_chunk(str)
     local len = str:len()
 
     ui_editor_lib:log("Length of str: "..len)
-    local hex_len = string.format("%02X", len) ..  "00"
+    local hex_len = string.format("%02X", len)-- ..  "00"
+
+    for _ = 1, 4-hex_len:len() do
+        hex_len = hex_len .. "0"
+    end
 
     ui_editor_lib:log("Hex len of str: "..hex_len)
 
@@ -71,7 +75,11 @@ function parser:str_to_chunk(str)
     local len = str:len()
 
     ui_editor_lib:log("Length of str: "..len)
-    local hex_len = string.format("%02X", len) ..  "00"
+    local hex_len = string.format("%02X", len)-- ..  "00"
+
+    for _ = 1, 4-hex_len:len() do
+        hex_len = hex_len .. "0"
+    end
 
     ui_editor_lib:log("Hex len of str: "..hex_len)
 
