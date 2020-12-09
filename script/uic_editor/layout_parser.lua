@@ -23,10 +23,10 @@ function parser:utf8_to_chunk(str)
 
     local len = str:len()
 
-    ui_editor_lib.log("Length of str: "..len)
+    ui_editor_lib:log("Length of str: "..len)
     local hex_len = string.format("%02X", len) ..  "00"
 
-    ui_editor_lib.log("Hex len of str: "..hex_len)
+    ui_editor_lib:log("Hex len of str: "..hex_len)
 
     hex_str = hex_len
 
@@ -34,7 +34,7 @@ function parser:utf8_to_chunk(str)
         for i = 1, len do
             local c = str:sub(i, i)
             -- print(c)
-            ui_editor_lib.log(c)
+            ui_editor_lib:log(c)
     
             -- string.byte converts the character (ie. "r") to the binary data, and then string.format turns the binary byte into a hexadecimal value
             -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
@@ -56,7 +56,7 @@ function parser:utf8_to_chunk(str)
         --     bin_str = bin_str .. bin_byte
         -- end
     
-        -- ui_editor_lib.log(bin_str)
+        -- ui_editor_lib:log(bin_str)
     
         return hex_str
 end
@@ -70,10 +70,10 @@ function parser:str_to_chunk(str)
 
     local len = str:len()
 
-    ui_editor_lib.log("Length of str: "..len)
+    ui_editor_lib:log("Length of str: "..len)
     local hex_len = string.format("%02X", len) ..  "00"
 
-    ui_editor_lib.log("Hex len of str: "..hex_len)
+    ui_editor_lib:log("Hex len of str: "..hex_len)
 
     hex_str = hex_len
 
@@ -81,7 +81,7 @@ function parser:str_to_chunk(str)
     for i = 1, len do
         local c = str:sub(i, i)
         -- print(c)
-        ui_editor_lib.log(c)
+        ui_editor_lib:log(c)
 
         -- string.byte converts the character (ie. "r") to the binary data, and then string.format turns the binary byte into a hexadecimal value
         -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
@@ -101,7 +101,7 @@ function parser:str_to_chunk(str)
     --     bin_str = bin_str .. bin_byte
     -- end
 
-    -- ui_editor_lib.log(bin_str)
+    -- ui_editor_lib:log(bin_str)
 
     return hex_str
 end
@@ -171,7 +171,7 @@ end
 -- converts a series of hexadecimal bytes (between j and k) into a string
 -- takes an original 2 bytes *before* the string as the "len" identifier.
 function parser:chunk_to_str(j, k)
-    ui_editor_lib.log("chunk to str "..tostring(j) .. " & "..tostring(k))
+    ui_editor_lib:log("chunk to str "..tostring(j) .. " & "..tostring(k))
 
     local start_j = j
 
@@ -179,20 +179,20 @@ function parser:chunk_to_str(j, k)
     if k == -1 then
         -- first two bytes are the length identifier
         local len = self:chunk_to_int16(j, j+1)
-        ui_editor_lib.log("len is: "..len)
+        ui_editor_lib:log("len is: "..len)
 
         -- if the len is 0, then just return a string of "" (for optional strings)
-        if len == 0 then ui_editor_lib.log(tostring(j)) ui_editor_lib.log(tostring(j+1)) return "\"\"", self:chunk_to_hex(j, j+1), j+1 end
+        if len == 0 then ui_editor_lib:log(tostring(j)) ui_editor_lib:log(tostring(j+1)) return "\"\"", self:chunk_to_hex(j, j+1), j+1 end
 
 
         -- set k to the proper spot
         k = len + self.location -1
-        ui_editor_lib.log(tostring(j)) ui_editor_lib.log(tostring(k))
+        ui_editor_lib:log(tostring(j)) ui_editor_lib:log(tostring(k))
 
         -- move j and k up by 2 (for the length above)
         j = j + 2
         k = k + 2
-        ui_editor_lib.log(tostring(j)) ui_editor_lib.log(tostring(k))
+        ui_editor_lib:log(tostring(j)) ui_editor_lib:log(tostring(k))
     end
 
     -- adds each relevant hexadecimal byte into a table (only the string!)
@@ -270,7 +270,7 @@ end
 -- this is "little endian", which means the hex is actually read backwards. ie., 56 00 is actually read as 00 56, which is translated to 00 86 in base-16
 function parser:chunk_to_int16(j, k)
     -- TODO int16 should only take numbers 1 apart from each other, it can only be two bytes. error check that
-    ui_editor_lib.log("chunk to int16 between "..tostring(j).." and " ..tostring(k))
+    ui_editor_lib:log("chunk to int16 between "..tostring(j).." and " ..tostring(k))
 
     -- grab the relevant bytes
     local block = {}
@@ -355,10 +355,10 @@ function parser:decipher_chunk(format, j, k)
         boolean = parser.chunk_to_boolean,
     }
 
-    ui_editor_lib.log("deciphering chunk ["..tostring(j).." - "..tostring(k) .. "], with format ["..format.."]")
+    ui_editor_lib:log("deciphering chunk ["..tostring(j).." - "..tostring(k) .. "], with format ["..format.."]")
 
     local func = format_to_func[format]
-    if not func then ui_editor_lib.log("func not found") return end
+    if not func then ui_editor_lib:log("func not found") return end
 
     -- this returns the *value* searched for, the string'd hex of the chunk, and the start and end indices (needed for types such as strings or tables with unknown lengths before deciphering)
     local value,hex,end_k = func(self, j, k)
@@ -374,7 +374,7 @@ end
 
 -- shorthand to prevent typing the same thing a billions
 local function dec(key, format, k, obj)
-    ui_editor_lib.log("decoding field with key ["..key.."] and format ["..format.."]")
+    ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -431,7 +431,7 @@ function parser:decipher_collection(collected_type, obj_to_add)
 
     -- local hex = ""
 
-    ui_editor_lib.log("\ndeciphering "..collected_type)
+    ui_editor_lib:log("\ndeciphering "..collected_type)
 
     -- local type_to_func = {
     --     Component =                 parser.decipher_component,
@@ -448,36 +448,36 @@ function parser:decipher_collection(collected_type, obj_to_add)
     -- local func = type_to_func[collected_type]
 
     -- every collection starts with an int32 (four bytes) to inform how much of that thing is within
-    local len,hex = dec(collected_type.."len","int32", 4, obj_to_add):get_value()
+    local len,hex = self:decipher_chunk("int32", 1, 4) 
+    --dec(collected_type.."len","int32", 4, obj_to_add):get_value()
 
-    ui_editor_lib.log("len of "..collected_type.." is "..len)
+    ui_editor_lib:log("len of "..collected_type.." is "..len)
 
     -- if none are found, just return 0 / "00 00 00 00"
-    if len == 0 then
-        return len,hex--,4
-    end
+    -- if len == 0 then
+    --     return len,hex--,4
+    -- end
 
     local ret = {}
 
     for i = 1, len do
-        local new_type = ui_editor_lib.new_obj(collected_type)
+        local new_type = ui_editor_lib:new_obj(collected_type)
         local val = new_type:decipher()
 
         --local val,new_hex,end_k = func(self)
 
         -- set the key as, example, "ComponentMouse1" (if there's no ui-id or name set!)
         val:set_key(collected_type..tostring(i), "index")
-        ui_editor_lib.log("created "..collected_type.." with key "..val:get_key())
+        ui_editor_lib:log("created "..collected_type.." with key "..val:get_key())
 
         ret[#ret+1] = val
         --hex = hex .. new_hex
     end
 
     -- collections don't take raw hex (only needed for individual lines!)
-    local collection = ui_editor_lib.new_obj("Collection", key, ret)
+    local collection = ui_editor_lib:new_obj("Collection", key, ret)
     --ui_editor_lib.classes.Collection:new(key, ret)
 
-    -- TODO do this within the :decipher() method on each type? ie. `self:add_data(obj:decipher_collection("ComponentImage"))` less shit to pass around.
     obj_to_add:add_data(collection)
 
     return collection--,hex
@@ -507,12 +507,12 @@ function parser:dec(key, format, k, obj)
         end
 
         new_field = ui_editor_lib.classes.Field:new(key, val, hex_boi)
-        ui_editor_lib.log("chunk deciphered with key ["..key.."], the hex was ["..hex_boi.."]")
+        ui_editor_lib:log("chunk deciphered with key ["..key.."], the hex was ["..hex_boi.."]")
     else -- k is not a table, decipher normally
         local ret,hex = self:decipher_chunk(format, j, k)
 
         new_field = ui_editor_lib.classes.Field:new(key, ret, hex)
-        ui_editor_lib.log("chunk deciphered with key ["..key.."], the hex was ["..hex.."]")
+        ui_editor_lib:log("chunk deciphered with key ["..key.."], the hex was ["..hex.."]")
     end
 
     new_field:set_native_type(format)
@@ -530,7 +530,7 @@ end
 --         return false
 --     end
 
---     ui_editor_lib.log("decipher name: "..self.name)
+--     ui_editor_lib:log("decipher name: "..self.name)
 
 --     local root_uic = self.root_uic
 
@@ -542,12 +542,12 @@ end
 setmetatable(parser, {
     __index = parser,
     __call = function(self, hex_table) -- called by using `parser(hex_table)`, where hex_table is an array with each hex byte set as a string in order ("t" here is a reference to the "parser" table itself)
-        -- ui_editor_lib.log("yay")
-        -- ui_editor_lib.log(self.name)
+        -- ui_editor_lib:log("yay")
+        -- ui_editor_lib:log(self.name)
 
         -- self.name = "new name"
 
-        -- ui_editor_lib.log(self.name)
+        -- ui_editor_lib:log(self.name)
 
         -- TODO verify the hex table first?
 

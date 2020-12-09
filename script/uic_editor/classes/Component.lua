@@ -1,9 +1,9 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib.get_class("BaseClass")
+local BaseClass = ui_editor_lib:get_class("BaseClass")
 
 local parser = ui_editor_lib.parser
 local function dec(key, format, k, obj)
-    ui_editor_lib.log("decoding field with key ["..key.."] and format ["..format.."]")
+    ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -197,7 +197,7 @@ function Component:decipher()
     -- TODO move this into decipher_collection
     if v_num >= 100 and v < 130 then
         local num_child = deciph("num_children", "int32", 4):get_value() --parser:decipher_chunk("int32", 1, 4)
-        ui_editor_lib.log("VANDY NUM CHILDREN: "..tostring(num_child))
+        ui_editor_lib:log("VANDY NUM CHILDREN: "..tostring(num_child))
 
         -- TODO templates and UIC's are really the same thing, don't treat them differently like this
         for i = 1, num_child do
@@ -208,27 +208,27 @@ function Component:decipher()
                 local new_field = ui_editor_lib.classes.Field:new("bits", bits, hex)
                 self:add_data(new_field)
 
-                ui_editor_lib.log("deciphering new component within "..self:get_key())
+                ui_editor_lib:log("deciphering new component within "..self:get_key())
 
-                local child = ui_editor_lib.new_obj("Component")
+                local child = ui_editor_lib:new_obj("Component")
                 child:decipher()
 
-                ui_editor_lib.log("component deciphered with key ["..child:get_key().."]")
+                ui_editor_lib:log("component deciphered with key ["..child:get_key().."]")
 
-                ui_editor_lib.log("adding them to the current obj, "..self:get_key())
+                ui_editor_lib:log("adding them to the current obj, "..self:get_key())
                 self:add_data(child)
             else
                 parser.location = parser.location -2
 
                 -- TODO this shouldn't be separate
-                local template = ui_editor_lib.new_obj("ComponentTemplate")
+                local template = ui_editor_lib:new_obj("ComponentTemplate")
                 template:decipher()
 
                 self:add_data(template)
             end
         end
     else
-        ui_editor_lib.log("is this ever called?")
+        ui_editor_lib:log("is this ever called?")
         parser:decipher_collection("Component", self)
     end
 
@@ -309,7 +309,7 @@ function Component:decipher()
     else
         local has_type = false
         if type == "List" or type == "HorizontalList" then
-            local new_type = ui_editor_lib.new_obj("ComponentLayoutEngine")
+            local new_type = ui_editor_lib:new_obj("ComponentLayoutEngine")
             local val = new_type:decipher(type)
 
             self:add_data(val)
@@ -398,12 +398,12 @@ function Component:decipher()
                 deciph("after_3_bit_f2", "int32", 4)
                 deciph("after_3_bit_f3", "int32", 4)
             end
-        end) if not ok then ui_editor_lib.log(err) end
+        end) if not ok then ui_editor_lib:log(err) end
         end
     end
 
     -- if parent_obj then
-    --     ui_editor_lib.log("adding UIC ["..current_uic:get_key().."] as child to parent ["..parent_obj:get_key().."].")
+    --     ui_editor_lib:log("adding UIC ["..current_uic:get_key().."] as child to parent ["..parent_obj:get_key().."].")
 
     --     parent_obj:add_data(current_uic)
     -- end
@@ -419,11 +419,11 @@ function Component:decipher()
 
     local d = self:get_data()
 
-    ui_editor_lib.log("Component created with name ["..self:get_key().."]. Looping through data:")
+    ui_editor_lib:log("Component created with name ["..self:get_key().."]. Looping through data:")
     for i = 1, #d do
-        ui_editor_lib.log("Data at "..tostring(i).." is ["..tostring(d[i]).."].")
+        ui_editor_lib:log("Data at "..tostring(i).." is ["..tostring(d[i]).."].")
         if tostring(d[i]) == "UIED_Component" then
-            ui_editor_lib.log("Key is: "..d[i]:get_key())
+            ui_editor_lib:log("Key is: "..d[i]:get_key())
         end
     end
 

@@ -1,9 +1,9 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib.get_class("BaseClass")
+local BaseClass = ui_editor_lib:get_class("BaseClass")
 
 local parser = ui_editor_lib.parser
 local function dec(key, format, k, obj)
-    ui_editor_lib.log("decoding field with key ["..key.."] and format ["..format.."]")
+    ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -24,8 +24,6 @@ function ComponentImage:new(o)
 end
 
 function ComponentImage:decipher()
-    -- local obj = ui_editor_lib.classes.ComponentImage:new()
-
     local function deciph(key, format, k)
         return dec(key, format, k, self)
     end

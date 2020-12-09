@@ -36,7 +36,7 @@ function ui_obj:delete_component(uic)
             end
         end
     else
-        ui_editor_lib.log("Invalid type passed to ui:delete_component()")
+        ui_editor_lib:log("Invalid type passed to ui:delete_component()")
         return
     end
 
@@ -47,20 +47,20 @@ end
 function ui_obj:init()
     local new_button
     if __game_mode == __lib_type_campaign or __game_mode == __lib_type_battle then
-        ui_editor_lib.log("bloop")
+        ui_editor_lib:log("bloop")
         local button_group = find_uicomponent(core:get_ui_root(), "menu_bar", "buttongroup")
         new_button = UIComponent(button_group:CreateComponent("button_ui_editor", "ui/templates/round_small_button"))
 
         new_button:SetTooltipText("UI Editor", true)
 
-        ui_editor_lib.log("bloop 2")
+        ui_editor_lib:log("bloop 2")
         --new_button:SetImagePath()
 
         new_button:PropagatePriority(button_group:Priority())
 
         button_group:Layout()
 
-        ui_editor_lib.log("bloop 5")
+        ui_editor_lib:log("bloop 5")
     elseif __game_mode == __lib_type_frontend then
         local button_group = find_uicomponent(core:get_ui_root(), "sp_frame", "menu_bar")
 
@@ -70,7 +70,7 @@ function ui_obj:init()
         button_group:Layout()
     end
 
-    if not is_uicomponent(new_button) then ui_editor_lib.log("NO NEW BUTTON") return end
+    if not is_uicomponent(new_button) then ui_editor_lib:log("NO NEW BUTTON") return end
 
     self.button = new_button
 
@@ -123,7 +123,7 @@ function ui_obj:create_panel()
 
     panel:SetVisible(true)
 
-    ui_editor_lib.log("test 1")
+    ui_editor_lib:log("test 1")
 
     self.panel = panel
 
@@ -133,21 +133,21 @@ function ui_obj:create_panel()
     panel:SetCanResizeWidth(true) panel:SetCanResizeHeight(true)
 
     
-    ui_editor_lib.log("test 2")
+    ui_editor_lib:log("test 2")
 
     local sw,sh = core:get_screen_resolution()
     panel:Resize(sw*0.95, sh*0.95)
 
     panel:SetCanResizeWidth(false) panel:SetCanResizeHeight(false)
 
-    ui_editor_lib.log("test 3")
+    ui_editor_lib:log("test 3")
 
     -- edit the name
     local title_plaque = UIComponent(panel:Find("title_plaque"))
     local title = UIComponent(title_plaque:Find("title"))
     title:SetStateText("UI Editor")
 
-    ui_editor_lib.log("test 4")
+    ui_editor_lib:log("test 4")
 
     -- hide stuff from the gfx window
     local comps = {
@@ -159,7 +159,7 @@ function ui_obj:create_panel()
         UIComponent(panel:Find("dropdown_quality")),
     }
 
-    ui_editor_lib.log("test 5")
+    ui_editor_lib:log("test 5")
 
     self:delete_component(comps)
 
@@ -169,7 +169,7 @@ function ui_obj:create_panel()
     close_button_uic:SetImagePath(img_path)
     close_button_uic:SetTooltipText("Close panel", true)
 
-    ui_editor_lib.log("test 6")
+    ui_editor_lib:log("test 6")
 
     -- move to bottom center
     close_button_uic:SetDockingPoint(8)
@@ -336,7 +336,7 @@ function ui_obj:create_sections()
     
         local x,y = list_view:Position()
         local w,h = list_view:Bounds()
-        ui_editor_lib.log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
+        ui_editor_lib:log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
     
         local lclip = UIComponent(list_view:Find("list_clip"))
         lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
@@ -344,7 +344,7 @@ function ui_obj:create_sections()
         lclip:SetDockOffset(0, 0)
         lclip:Resize(w,h)
 
-        ui_editor_lib.log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
+        ui_editor_lib:log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
     
         local lbox = UIComponent(lclip:Find("list_box"))
         lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
@@ -352,7 +352,7 @@ function ui_obj:create_sections()
         lbox:SetDockOffset(0, 0)
         lbox:Resize(w-30,h)
 
-        ui_editor_lib.log("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
+        ui_editor_lib:log("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
     end
 
     do
@@ -489,7 +489,7 @@ function ui_obj:do_filter()
 
     end
 
-    end) if not ok then ui_editor_lib.log(err) end
+    end) if not ok then ui_editor_lib:log(err) end
 
 end
 
@@ -568,7 +568,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
 
     local panel = self.panel
     if not panel or not is_uicomponent(panel) or not path then
-        ui_editor_lib.log("create loaded uic in testing ground failed")
+        ui_editor_lib:log("create loaded uic in testing ground failed")
         return false
     end
 
@@ -577,7 +577,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
 
     local test_uic = UIComponent(testing_grounds:CreateComponent("testing_component", path))
     if not is_uicomponent(test_uic) then
-        ui_editor_lib.log("test uic failed!")
+        ui_editor_lib:log("test uic failed!")
         return false
     end
 
@@ -622,8 +622,8 @@ function ui_obj:create_details_header_for_obj(obj)
     local default_h = self.details_data.default_h
 
     if not is_uicomponent(list_box) then
-        ui_editor_lib.log("display called on obj ["..obj:get_key().."], but the list box don't exist yo")
-        ui_editor_lib.log(tostring(list_box))
+        ui_editor_lib:log("display called on obj ["..obj:get_key().."], but the list box don't exist yo")
+        ui_editor_lib:log(tostring(list_box))
         return false
     end
 
@@ -678,7 +678,7 @@ function ui_obj:create_details_header_for_obj(obj)
     
         local x,y = list_view:Position()
         local w,h = list_view:Dimensions()
-        -- ui_editor_lib.log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
+        -- ui_editor_lib:log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
     
         local lclip = UIComponent(list_view:Find("list_clip"))
         lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
@@ -686,7 +686,7 @@ function ui_obj:create_details_header_for_obj(obj)
         lclip:SetDockOffset(0, 0)
         lclip:Resize(w,h)
 
-        -- ui_editor_lib.log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
+        -- ui_editor_lib:log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
     
         local lbox = UIComponent(lclip:Find("list_box"))
         lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
@@ -705,43 +705,43 @@ function ui_obj:create_details_header_for_obj(obj)
     -- loop through every field in "data" and call its own display() method
     local data = obj:get_data()
 
-    -- ui_editor_lib.log("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
+    -- ui_editor_lib:log("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
 
     for i = 1, #data do
-        -- ui_editor_lib.log("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
+        -- ui_editor_lib:log("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
         local d = data[i]
         -- local d_key = d.key -- needed?
         local d_obj
 
-        -- ui_editor_lib.log("Testing obj: "..tostring(d))
-        -- ui_editor_lib.log("")
+        -- ui_editor_lib:log("Testing obj: "..tostring(d))
+        -- ui_editor_lib:log("")
 
         -- if obj:get_key() == "dy_txt" then
-        --     -- ui_editor_lib.log("VANDY LOOK HERE")
-        --     -- ui_editor_lib.log(i.."'s key: " .. d:get_key())
+        --     -- ui_editor_lib:log("VANDY LOOK HERE")
+        --     -- ui_editor_lib:log(i.."'s key: " .. d:get_key())
         --     if tostring(d) == "UI_Field" then
-        --         -- ui_editor_lib.log(i.."'s val: " .. tostring(d:get_value()))
+        --         -- ui_editor_lib:log(i.."'s val: " .. tostring(d:get_value()))
         --     end
         -- end
 
         if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Collection") or string.find(tostring(d), "UI_Field") then
-            -- ui_editor_lib.log("inner child is a class")
+            -- ui_editor_lib:log("inner child is a class")
             d_obj = d
         -- elseif type(d) == "table" then
-        --     ui_editor_lib.log("inner child is a table")
+        --     ui_editor_lib:log("inner child is a table")
         --     if not is_nil(d.value) then
         --         d_obj = d.value
         --     else
-        --         ui_editor_lib.log("inner child table doesn't ")
+        --         ui_editor_lib:log("inner child table doesn't ")
         --     end
         else
             -- TODO errmsg
-            ui_editor_lib.log("inner child is not a field or a class, Y")
+            ui_editor_lib:log("inner child is not a field or a class, Y")
             -- TODO resolve what to do if it's just a raw value?
         end
 
         if is_nil(d_obj) or not is_table(d_obj) then
-            ui_editor_lib.log("we have a nil d_obj!")
+            ui_editor_lib:log("we have a nil d_obj!")
         else
             self:display(d_obj)
         end
@@ -759,8 +759,8 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
     local default_h = self.details_data.default_h
     
     if not is_uicomponent(list_box) then
-        ui_editor_lib.log("display called on field ["..obj:get_key().."], but the list box don't exist yo")
-        ui_editor_lib.log(tostring(list_box))
+        ui_editor_lib:log("display called on field ["..obj:get_key().."], but the list box don't exist yo")
+        ui_editor_lib:log(tostring(list_box))
         return false
     end
     
@@ -777,7 +777,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
         canvas = UIComponent(list_box:Find(id.."_canvas"))
 
         if is_uicomponent(canvas) then
-            ui_editor_lib.log("Canvas found!")
+            ui_editor_lib:log("Canvas found!")
 
             local lbox = find_uicomponent(canvas, "list_clip", "list_box")
             
@@ -788,7 +788,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
             -- TODO figure this out?
             -- resize canvas automatically, use Layout(), what?
         else
-            ui_editor_lib.log("Canvas not found!!!! "..id)
+            ui_editor_lib:log("Canvas not found!!!! "..id)
             return false
         end
     else
@@ -880,10 +880,10 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
             end,
             function(context)
                 local state_text = right_text_uic:GetStateText()
-                ui_editor_lib.log("Checking text: "..tostring(state_text))
+                ui_editor_lib:log("Checking text: "..tostring(state_text))
 
                 local ok, err = pcall(obj:change_val(state_text))
-                if not ok then ui_editor_lib.log(err) end
+                if not ok then ui_editor_lib:log(err) end
             end,
             true
         )
@@ -940,7 +940,7 @@ function ui_obj:display(obj)
         elseif string.find(tostring(obj), "UI_Field") then
             self:create_details_row_for_field(obj)
         else
-            ui_editor_lib.log("not a field or a class!")
+            ui_editor_lib:log("not a field or a class!")
         end
     end
 end
@@ -952,7 +952,7 @@ function ui_obj:create_details_for_loaded_uic()
     -- TODO this uses the copied uic, so shit is easier to get; is this what I should do?
     local root_uic = ui_editor_lib.copied_uic
 
-    ui_editor_lib.log("bloop 1")
+    ui_editor_lib:log("bloop 1")
 
     -- TODO get "headers" working (so you can close/open entire sections, ie. close all states or just one, etc)
     -- TODO figure out the actual look of the text for each thing
@@ -963,10 +963,10 @@ function ui_obj:create_details_for_loaded_uic()
     local details_screen = UIComponent(panel:Find("details_screen"))
     local list_box = find_uicomponent(details_screen, "list_view", "list_clip", "list_box")
 
-    ui_editor_lib.log("The total amount of fields in this file is: "..tostring(ui_editor_lib.parser.field_count))
+    ui_editor_lib:log("The total amount of fields in this file is: "..tostring(ui_editor_lib.parser.field_count))
     
-    ui_editor_lib.log(tostring(list_box))
-    ui_editor_lib.log(tostring(is_uicomponent(list_box)))
+    ui_editor_lib:log(tostring(list_box))
+    ui_editor_lib:log(tostring(is_uicomponent(list_box)))
 
     -- destroy chil'un of list_box (clear previous shit)
     list_box:DestroyChildren()
@@ -977,28 +977,28 @@ function ui_obj:create_details_for_loaded_uic()
     self.details_data.default_h = 0
 
     -- TODO this is a potentially very expensive operation, take a look how it feels with huge files (probably runs like shit (: )
-    ui_editor_lib.log("beginning")
+    ui_editor_lib:log("beginning")
 
     self:display(root_uic)
 
-    ui_editor_lib.log("end")
+    ui_editor_lib:log("end")
 
     -- layout the list_box to make sure everything refreshes propa
     list_box:Layout()
-    end) if not ok then ui_editor_lib.log(err) end
+    end) if not ok then ui_editor_lib:log(err) end
 
 
--- ui_editor_lib.log("bloop end")
+-- ui_editor_lib:log("bloop end")
 end
 
 -- load the currently deciphered UIC
 -- opens the UIC in the testing grounds, and displays all the deciphered details
 function ui_obj:load_uic()
-    ui_editor_lib.log("load_uic() called")
+    ui_editor_lib:log("load_uic() called")
     local panel = self.panel
 
     if not is_uicomponent(panel) then
-        ui_editor_lib.log("load_uic() called, panel not found?")
+        ui_editor_lib:log("load_uic() called, panel not found?")
         return false
     end
 
@@ -1038,7 +1038,7 @@ core:add_listener(
         return context.string == "ui_editor_save_button"
     end,
     function(context)
-        ui_editor_lib.print_copied_uic()
+        ui_editor_lib:print_copied_uic()
     end,
     true
 )
@@ -1065,7 +1065,7 @@ core:add_listener(
         -- TODO make sure get_path is valid 
         local path = ui_obj:get_path()
 
-        ui_editor_lib.load_uic_with_path(path)
+        ui_editor_lib:load_uic_with_path(path)
 
         --ui_obj:
     end,
@@ -1103,10 +1103,10 @@ core:add_listener(
     "UICreated",
     true,
     function()
-        ui_editor_lib.log("UI Created")
+        ui_editor_lib:log("UI Created")
         local ok, err = pcall(function()
         ui_obj:init()
-        end) if not ok then ui_editor_lib.log(err) end
+        end) if not ok then ui_editor_lib:log(err) end
     end,
     true
 )

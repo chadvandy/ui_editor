@@ -123,8 +123,9 @@ function collection:get_hex()
     -- local data = self.data
     local len = #self.data
 
-    
+    local hex = ui_editor_lib.parser:int32_to_chunk(len)
 
+    return hex
 end
 
 -- disable :set_key() on collection

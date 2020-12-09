@@ -1,9 +1,9 @@
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib.get_class("BaseClass")
+local BaseClass = ui_editor_lib:get_class("BaseClass")
 
 local parser = ui_editor_lib.parser
 local function dec(key, format, k, obj)
-    ui_editor_lib.log("decoding field with key ["..key.."] and format ["..format.."]")
+    ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -28,7 +28,7 @@ end
 function ComponentTemplate:decipher()
     local v = parser.root_uic:get_version()
 
-    -- local obj = ui_editor_lib.new_obj("ComponentTemplate")
+    -- local obj = ui_editor_lib:new_obj("ComponentTemplate")
 
     local function deciph(key, format, k)
         return dec(key, format, k, self)

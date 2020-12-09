@@ -39,7 +39,7 @@ function obj:get_type()
 end
 
 -- if ui_editor_lib.is_large_file then
---     ui_editor_lib.log("Header pressed!")
+--     ui_editor_lib:log("Header pressed!")
 --     local data = obj:get_data()
     
 --     for i = 1, #data do
@@ -147,7 +147,7 @@ end
 -- then, assign the key through add_data if the field is "name" or "ui-id"
 -- if ui-id is added but name was already added, keep name.
 function obj:set_key(key, new_key_type)
-    ui_editor_lib.log("set_key() called on obj with type "..self:get_type())
+    ui_editor_lib:log("set_key() called on obj with type "..self:get_type())
     local key_type = self.key_type
     local current_key = self:get_key()
 
@@ -179,7 +179,7 @@ function obj:set_key(key, new_key_type)
         -- do nuffin?
     end
 
-    ui_editor_lib.log("old key ["..current_key.."], new key ["..self.key.."].")
+    ui_editor_lib:log("old key ["..current_key.."], new key ["..self.key.."].")
 end
 
 function obj:add_data(data)
@@ -194,11 +194,11 @@ function obj:add_data(data)
         end
     end
 
-    ui_editor_lib.log("Add Data called, ["..self:get_key().."] is getting a fresh new ["..tostring(data).."] with key ["..data:get_key().."].")
+    ui_editor_lib:log("Add Data called, ["..self:get_key().."] is getting a fresh new ["..tostring(data).."] with key ["..data:get_key().."].")
 
     if self:get_key() == "dy_txt" then
-        ui_editor_lib.log("VANDY VANDY VANDY")
-        ui_editor_lib.log("Adding data to dy_txt, data is: "..tostring(data))
+        ui_editor_lib:log("VANDY VANDY VANDY")
+        ui_editor_lib:log("Adding data to dy_txt, data is: "..tostring(data))
     end
 
     self.data[#self.data+1] = data
@@ -213,7 +213,7 @@ function obj:add_data_table(fields)
 end
 
 function obj:decipher()
-    ui_editor_lib.log("decipher called on "..self:get_key().." but the decipher method has not been overriden!")
+    ui_editor_lib:log("decipher called on "..self:get_key().." but the decipher method has not been overriden!")
 end
 
 

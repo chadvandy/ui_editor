@@ -18,7 +18,7 @@ end
 function uic_field:new(key, value, hex)
     local o = {}
     setmetatable(o, self)
-    -- ui_editor_lib.log("Testing new UIC Field: "..tostring(o))
+    -- ui_editor_lib:log("Testing new UIC Field: "..tostring(o))
     -- self.__index = self
 
     o.key = key
@@ -107,15 +107,13 @@ function uic_field:change_val(new_val)
             new_hex = parser:int16_to_chunk(new_val)
         end
 
-        ui_editor_lib.log("New hex: "..new_hex)
+        ui_editor_lib:log("New hex: "..new_hex)
 
         -- local new_file = io.open("data/ui/templates/TEST", "w+b")
         -- new_file:write(self.hex)
 
         self.value = new_val
         self.hex = new_hex
-
-        -- ui_editor_lib.print_copied_uic()
 
         -- new_file:write(self.hex)
 
