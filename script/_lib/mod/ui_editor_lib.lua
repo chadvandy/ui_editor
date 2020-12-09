@@ -75,35 +75,82 @@ function ui_editor_lib.init()
     ui_editor_lib.log_init()
     local path = "script/uic_editor/"
 
-    ui_editor_lib.parser =              require(path.."layout_parser") -- the manager for deciphering the hex and turning it into more accessible objects
-    ui_editor_lib.ui =                  require(path.."ui_panel") -- the in-game UI panel manager
+    ui_editor_lib.parser =              ui_editor_lib.load_module("layout_parser", path) -- the manager for deciphering the hex and turning it into more accessible objects
+    ui_editor_lib.ui =                  ui_editor_lib.load_module("ui_panel", path) -- the in-game UI panel manager
 
     path = path .. "classes/"
     ui_editor_lib.classes = {}
     local classes = ui_editor_lib.classes
 
-    classes.BaseClass =                     require(path.."BaseClass")
+    classes.BaseClass =                         ui_editor_lib.load_module("BaseClass", path)
 
-    classes.Component =                     require(path.."Component")              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
-    classes.Field =                         require(path.."Field")                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
-    classes.Collection =                     require(path.."Collection")              -- the class def for collections, which are just slightly involved tables (for lists of states, images, etc)
+    classes.Component =                         ui_editor_lib.load_module("Component", path)              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
+    classes.Field =                             ui_editor_lib.load_module("Field", path)                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
+    classes.Collection =                        ui_editor_lib.load_module("Collection", path)              -- the class def for collections, which are just slightly involved tables (for lists of states, images, etc)
 
-    classes.ComponentImage =                require(path.."ComponentImage")         -- ComponentImages, simple stuff, just controls image path / width / height /etc
-    classes.ComponentState =                require(path.."ComponentState")         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
-    classes.ComponentImageMetric =          require(path.."ComponentImageMetric")   -- controls the different fields on an image within a state - visible, tile, etc
-    classes.ComponentMouse =                require(path.."ComponentMouse")
-    classes.ComponentMouseSth =             require(path.."ComponentMouseSth")
-    classes.ComponentProperty =             require(path.."ComponentProperty")
-    classes.ComponentFunction =             require(path.."ComponentFunction")
-    classes.ComponentFunctionAnimation =    require(path.."ComponentFunctionAnimation")
-    classes.ComponentFunctionAnimationTrigger = require(path.."ComponentFunctionAnimationTrigger")
-    classes.ComponentEvent =                require(path.."ComponentEvent")
-    classes.ComponentEventProperty =        require(path.."ComponentEventProperty")
+    classes.ComponentImage =                    ui_editor_lib.load_module("ComponentImage", path)         -- ComponentImages, simple stuff, just controls image path / width / height /etc
+    classes.ComponentState =                    ui_editor_lib.load_module("ComponentState", path)         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
+    classes.ComponentImageMetric =              ui_editor_lib.load_module("ComponentImageMetric", path)   -- controls the different fields on an image within a state - visible, tile, etc
+    classes.ComponentMouse =                    ui_editor_lib.load_module("ComponentMouse", path)
+    classes.ComponentMouseSth =                 ui_editor_lib.load_module("ComponentMouseSth", path)
+    classes.ComponentProperty =                 ui_editor_lib.load_module("ComponentProperty", path)
+    classes.ComponentFunction =                 ui_editor_lib.load_module("ComponentFunction", path)
+    classes.ComponentFunctionAnimation =        ui_editor_lib.load_module("ComponentFunctionAnimation", path)
+    classes.ComponentFunctionAnimationTrigger = ui_editor_lib.load_module("ComponentFunctionAnimationTrigger", path)
+    classes.ComponentEvent =                    ui_editor_lib.load_module("ComponentEvent", path)
+    classes.ComponentEventProperty =            ui_editor_lib.load_module("ComponentEventProperty", path)
 
-    classes.ComponentLayoutEngine = require(path.."ComponentLayoutEngine")
+    classes.ComponentLayoutEngine =             ui_editor_lib.load_module("ComponentLayoutEngine", path)
 
-    classes.ComponentTemplate = require(path.."ComponentTemplate")
-    classes.ComponentTemplateChild = require(path.."ComponentTemplateChild")
+    classes.ComponentTemplate =                 ui_editor_lib.load_module("ComponentTemplate", path)
+    classes.ComponentTemplateChild =            ui_editor_lib.load_module("ComponentTemplateChild", path)
+end
+
+function ui_editor_lib.load_module(module_name, path)
+    --[[if package.loaded[module_name] then
+        return 
+    end]]
+
+    local full_file_name = path .. module_name .. ".lua"
+
+    local file, load_error = loadfile(full_file_name)
+
+    if not file then
+        ui_editor_lib.log("Attempted to load module with name ["..module_name.."], but loadfile had an error: ".. load_error .."")
+        --return
+    else
+        ui_editor_lib.log("Loading module with name [" .. module_name .. ".lua]")
+
+        local global_env = core:get_env()
+        local attach_env = {}
+        setmetatable(attach_env, {__index = global_env})
+
+        -- pass valuable stuff to the modules
+        -- attach_env.mct = self
+        --attach_env.core = core
+
+        setfenv(file, attach_env)
+        local lua_module = file(module_name)
+        package.loaded[module_name] = lua_module or true
+
+        ui_editor_lib.log("[" .. module_name .. ".lua] loaded successfully!")
+
+        --if module_name == "mod_obj" then
+        --    self.mod_obj = lua_module
+        --end
+
+        --self[module_name] = lua_module
+
+        return lua_module
+    end
+
+    local ok, err = pcall(function() require(module_name) end)
+
+    --if not ok then
+    ui_editor_lib.log("Tried to load module with name [" .. module_name .. ".lua], failed on runtime. Error below:")
+    ui_editor_lib.log(err)
+        return false
+    --end
 end
 
 -- TODO return BaseClass by default?
@@ -168,7 +215,7 @@ function ui_editor_lib.print_copied_uic()
 
     iter(uic)
 
-    ui_editor_lib.log(hex_str)
+    -- ui_editor_lib.log(hex_str)
 
     -- loops through every single hex byte (ie. everything with two hexa values, %x%x), then converts that byte into the relevant "char"
     for byte in hex_str:gmatch("%x%x") do
@@ -181,7 +228,7 @@ function ui_editor_lib.print_copied_uic()
         bin_str = bin_str .. bin_byte
     end
 
-    ui_editor_lib.log(bin_str)
+    -- ui_editor_lib.log(bin_str)
 
     local new_file = io.open("data/UI/ui_editor/TEST", "w+b")
     new_file:write(bin_str)
