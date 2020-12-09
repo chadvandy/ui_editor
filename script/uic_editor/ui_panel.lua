@@ -143,20 +143,20 @@ function ui_obj:create_panel()
     ui_editor_lib.log("test 3")
 
     -- edit the name
-    local title_plaque = find_uicomponent(panel, "title_plaque")
-    local title = find_uicomponent(title_plaque, "title")
+    local title_plaque = UIComponent(panel:Find("title_plaque"))
+    local title = UIComponent(title_plaque:Find("title"))
     title:SetStateText("UI Editor")
 
     ui_editor_lib.log("test 4")
 
     -- hide stuff from the gfx window
     local comps = {
-        find_uicomponent(panel, "checkbox_windowed"),
-        find_uicomponent(panel, "ok_cancel_buttongroup"),
-        find_uicomponent(panel, "button_advanced_options"),
-        find_uicomponent(panel, "button_recommended"),
-        find_uicomponent(panel, "dropdown_resolution"),
-        find_uicomponent(panel, "dropdown_quality"),
+        UIComponent(panel:Find("checkbox_windowed")),
+        UIComponent(panel:Find("ok_cancel_buttongroup")),
+        UIComponent(panel:Find("button_advanced_options")),
+        UIComponent(panel:Find("button_recommended")),
+        UIComponent(panel:Find("dropdown_resolution")),
+        UIComponent(panel:Find("dropdown_quality")),
     }
 
     ui_editor_lib.log("test 5")
@@ -338,7 +338,7 @@ function ui_obj:create_sections()
         local w,h = list_view:Bounds()
         ui_editor_lib.log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
     
-        local lclip = find_uicomponent(list_view, "list_clip")
+        local lclip = UIComponent(list_view:Find("list_clip"))
         lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
         lclip:SetDockingPoint(0)
         lclip:SetDockOffset(0, 0)
@@ -346,7 +346,7 @@ function ui_obj:create_sections()
 
         ui_editor_lib.log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
     
-        local lbox = find_uicomponent(lclip, "list_box")
+        local lbox = UIComponent(lclip:Find("list_box"))
         lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
         lbox:SetDockingPoint(0)
         lbox:SetDockOffset(0, 0)
@@ -394,8 +394,8 @@ function ui_obj:do_filter()
 
     local ok, err = pcall(function()
 
-    local key_filter_input = find_uicomponent(filter_holder, "key_filter_input")
-    local value_filter_input = find_uicomponent(filter_holder, "value_filter_input")
+    local key_filter_input = UIComponent(filter_holder:Find("key_filter_input"))
+    local value_filter_input = UIComponent(filter_holder:Find("value_filter_input"))
 
     local key_filter = key_filter_input:GetStateText()
     local value_filter = value_filter_input:GetStateText()
@@ -498,7 +498,7 @@ function ui_obj:create_buttons_holder()
     -- to start, just a "load" button that automatically loads "ui/templates/bullet_point"
 
     local panel = self.panel
-    local buttons_holder = find_uicomponent(panel, "buttons_holder")
+    local buttons_holder = UIComponent(panel:Find("buttons_holder"))
     if not is_uicomponent(buttons_holder) then
         -- errmsg
         return false
@@ -563,7 +563,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
     local path = ui_editor_lib.loaded_uic_path
 
     if is_copied then
-        path = "data/UI/templates/TEST"
+        path = "ui/ui_editor/TEST"
     end
 
     local panel = self.panel
@@ -572,7 +572,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
         return false
     end
 
-    local testing_grounds = find_uicomponent(panel, "testing_grounds")
+    local testing_grounds = UIComponent(panel:Find("testing_grounds"))
     testing_grounds:DestroyChildren()
 
     local test_uic = UIComponent(testing_grounds:CreateComponent("testing_component", path))
@@ -584,6 +584,36 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
     test_uic:SetVisible(true)
     test_uic:SetDockingPoint(5)
     test_uic:SetDockOffset(0, 0)
+
+    local w,h = test_uic:Bounds()
+
+    local ow,oh = testing_grounds:Dimensions()
+
+    local wf,hf = 0,0
+
+    if w > ow then
+        wf = w/ow
+    end
+
+    if h > oh then
+        hf = h/oh
+    end
+
+    local f
+
+    if wf >= hf then f = wf else f = hf end
+
+    if f == 0 then
+        return
+    end
+
+    test_uic:SetCanResizeWidth(true)
+    test_uic:SetCanResizeHeight(true)
+
+    test_uic:Resize(w/f,h/f)
+
+    test_uic:SetCanResizeWidth(false)
+    test_uic:SetCanResizeHeight(false)
 end
 
 function ui_obj:create_details_header_for_obj(obj)
@@ -619,10 +649,10 @@ function ui_obj:create_details_header_for_obj(obj)
     header_uic:SetDockingPoint(0)
     header_uic:SetDockOffset(x_margin, 0)
 
-    local dy_title = find_uicomponent(header_uic, "dy_title")
+    local dy_title = UIComponent(header_uic:Find("dy_title"))
     dy_title:SetStateText(obj:get_type() .. ": " .. obj:get_key())
 
-    local child_count = find_uicomponent(header_uic, "child_count")
+    local child_count = UIComponent(header_uic:Find("child_count"))
     if obj:get_type() == "UI_Collection" then
         local str = tostring(#obj.data)
         if not str or str == "" then
@@ -650,7 +680,7 @@ function ui_obj:create_details_header_for_obj(obj)
         local w,h = list_view:Dimensions()
         -- ui_editor_lib.log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
     
-        local lclip = find_uicomponent(list_view, "list_clip")
+        local lclip = UIComponent(list_view:Find("list_clip"))
         lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
         lclip:SetDockingPoint(2)
         lclip:SetDockOffset(0, 0)
@@ -658,7 +688,7 @@ function ui_obj:create_details_header_for_obj(obj)
 
         -- ui_editor_lib.log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
     
-        local lbox = find_uicomponent(lclip, "list_box")
+        local lbox = UIComponent(lclip:Find("list_box"))
         lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
         lbox:SetDockingPoint(2)
         lbox:SetDockOffset(0, 0)
@@ -667,7 +697,7 @@ function ui_obj:create_details_header_for_obj(obj)
         list_view:SetVisible(false)
 
         -- hide da scroll bar
-        local vslider = find_uicomponent(list_view, "vslider")
+        local vslider = UIComponent(list_view:Find("vslider"))
         vslider:SetVisible(false) 
         vslider:PropagateVisibility(false)
     end
@@ -686,13 +716,13 @@ function ui_obj:create_details_header_for_obj(obj)
         -- ui_editor_lib.log("Testing obj: "..tostring(d))
         -- ui_editor_lib.log("")
 
-        if obj:get_key() == "dy_txt" then
-            -- ui_editor_lib.log("VANDY LOOK HERE")
-            -- ui_editor_lib.log(i.."'s key: " .. d:get_key())
-            if tostring(d) == "UI_Field" then
-                -- ui_editor_lib.log(i.."'s val: " .. tostring(d:get_value()))
-            end
-        end
+        -- if obj:get_key() == "dy_txt" then
+        --     -- ui_editor_lib.log("VANDY LOOK HERE")
+        --     -- ui_editor_lib.log(i.."'s key: " .. d:get_key())
+        --     if tostring(d) == "UI_Field" then
+        --         -- ui_editor_lib.log(i.."'s val: " .. tostring(d:get_value()))
+        --     end
+        -- end
 
         if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Collection") or string.find(tostring(d), "UI_Field") then
             -- ui_editor_lib.log("inner child is a class")
@@ -744,7 +774,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
     local canvas = nil
     if is_uicomponent(parent_uic) then
         local id = parent_uic:Id()
-        canvas = find_uicomponent(list_box, id.."_canvas")
+        canvas = UIComponent(list_box:Find(id.."_canvas"))
 
         if is_uicomponent(canvas) then
             ui_editor_lib.log("Canvas found!")
@@ -822,7 +852,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
     left_text_uic:SetTooltipText(tooltip_text, true)
 
     -- change the str
-    if --[[obj:get_native_type() == "str" and]] obj:get_key() == "text" then
+    if obj:get_native_type() == "str" or obj:get_native_type() == "utf8"--[[and obj:get_key() == "text"]] then
         local right_text_uic = UIComponent(row_uic:CreateComponent("value", "ui/common ui/text_box"))
         local ok_button = UIComponent(right_text_uic:CreateComponent("check_name", "ui/templates/square_medium_button"))
 
@@ -930,7 +960,7 @@ function ui_obj:create_details_for_loaded_uic()
 
     local ok, err = pcall(function()
 
-    local details_screen = find_uicomponent(panel, "details_screen")
+    local details_screen = UIComponent(panel:Find("details_screen"))
     local list_box = find_uicomponent(details_screen, "list_view", "list_clip", "list_box")
 
     ui_editor_lib.log("The total amount of fields in this file is: "..tostring(ui_editor_lib.parser.field_count))
