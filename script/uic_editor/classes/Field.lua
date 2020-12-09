@@ -25,6 +25,7 @@ function uic_field:new(key, value, hex)
     o.value = value
     o.hex = hex
     o.uic = nil
+    o.editable = false
 
     o.native_type = "" -- native type is the actual data type being used - int32, str, etc
 
@@ -48,6 +49,19 @@ function string.tohex(str)
     return (str:gsub('.', function (c)
         return string.format('%02X', string.byte(c))
     end))
+end
+
+function uic_field:set_editable(b)
+    if not is_boolean(b) then
+        -- errmsg
+        return false
+    end
+
+    self.editable = b
+end
+
+function uic_field:is_editable()
+    return self.editable
 end
 
 function uic_field:filter_fields(key_filter, value_filter)

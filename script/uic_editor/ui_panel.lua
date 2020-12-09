@@ -672,9 +672,9 @@ function ui_obj:create_details_header_for_obj(obj)
         local list_view = UIComponent(list_box:CreateComponent("ui_header_"..i.."_canvas", "ui/vandy_lib/vlist"))
 
         list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
-        list_view:Resize(header_uic:Width()-self.details_data.x_margin, 5)
+        list_view:Resize(list_box:Width(), 5)
         list_view:SetDockingPoint(0)
-        list_view:SetDockOffset(self.details_data.x_margin, 0)
+        list_view:SetDockOffset(0, 0)
     
         local x,y = list_view:Position()
         local w,h = list_view:Dimensions()
@@ -770,7 +770,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
 
     local type_text,tooltip_text,value_text = obj:get_display_text()
 
-    local row_uic
+    local row_uic = nil
     local canvas = nil
     if is_uicomponent(parent_uic) then
         local id = parent_uic:Id()
@@ -791,7 +791,8 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
         end
     else
         row_uic = UIComponent(list_box:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
-    end 
+    end    
+
 
     self.rows_to_objs[tostring(self.row_index)] = obj
     self.row_index = self.row_index + 1
@@ -805,11 +806,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
 
     row_uic:SetDockingPoint(0)
 
-    if canvas then
-        row_uic:SetDockOffset(0, 0)
-    else
-        row_uic:SetDockOffset(x_margin, 0)
-    end
+    row_uic:SetDockOffset(x_margin, 0)
 
     row_uic:SetTooltipText(tooltip_text, true)
 
@@ -915,10 +912,10 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
 
     if canvas then
         local cw,ch = canvas:Width(), canvas:Height()
-        local rw,rh = row_uic:Width(), row_uic:Height()
+        local _,rh = row_uic:Width(), row_uic:Height()
 
         canvas:SetDockingPoint(0)
-        canvas:SetDockOffset(x_margin, 0)
+        canvas:SetDockOffset(0, 0)
         canvas:Resize(cw, ch+rh+5)
 
         canvas:Layout()

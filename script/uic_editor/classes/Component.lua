@@ -78,7 +78,14 @@ function Component:decipher()
     end
 
     local function deciph(key, format, k)
-        return dec(key, format, k, self)
+        local field = dec(key, format, k, self)
+        -- if this field is a child of root, set it to uneditable, forever
+        if self:is_root() then
+            field:set_editable(false)
+        else
+            field:set_editable(true)
+        end
+        return field
     end
 
     -- grab the "UI-ID", which is a unique 4-byte identifier for the UIC layout (all UI-ID's have to be unique within one file, I think globally as well but not sure)
