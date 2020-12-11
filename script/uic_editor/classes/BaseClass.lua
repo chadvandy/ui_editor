@@ -214,7 +214,12 @@ end
 
 function obj:decipher()
     ui_editor_lib:log("decipher called on "..self:get_key().." but the decipher method has not been overriden!")
+    return
 end
 
+function obj:create_default()
+    ui_editor_lib:log("create_default called on "..self:get_key().." but the create_default method has not been overriden!")
+    return
+end
 
 return obj

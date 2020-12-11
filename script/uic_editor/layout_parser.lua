@@ -17,6 +17,42 @@ local parser = {
     field_count = 0,
 }
 
+-- create a 4-byte hex code (ie. "AF 52 C4 DE"), randomly
+function parser:regenerate_uiid()
+    local hexes = {
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+    }
+
+    local bytes = {}
+
+    math.randomseed(os.time())
+
+    for i = 1,8 do
+        local c = hexes[math.random(1, #hexes)]
+
+        bytes[#bytes+1] = c
+    end
+
+    local str = table.concat(bytes, "")
+
+    return str
+end
+
 function parser:bool_to_chunk(bool)
     if not is_boolean(bool) then
         -- errmsg

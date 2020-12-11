@@ -61,7 +61,6 @@ function Component:set_version(verzh)
     self.version = verzh
 end
 
-
 function Component:decipher()
     local v_num = nil
     local v = nil

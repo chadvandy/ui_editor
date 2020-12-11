@@ -23,6 +23,18 @@ function ComponentImage:new(o)
     return o
 end
 
+function ComponentImage:create_default()
+    local ui_id = parser:regenerate_uiid()
+    local img_path = "00 00"
+
+    local w = "00 00 00 00"
+    local h = "00 00 00 00"
+
+    local unknonwn_bool = "00"
+
+    
+end
+
 function ComponentImage:decipher()
     local function deciph(key, format, k)
         return dec(key, format, k, self)
