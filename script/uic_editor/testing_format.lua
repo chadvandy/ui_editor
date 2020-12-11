@@ -102,8 +102,8 @@ function string.tohex(str)
     end))
 end
 
-local b = "84 03 00 00"
-print(b:fromhex())
+-- local b = "84 03 00 00"
+-- print(b:fromhex())
 -- local b = "6F"
 -- print(b)
 -- b = string.char(tonumber(b))
@@ -121,3 +121,63 @@ print(bin)
 local test = struct.pack("s", bin)
 
 print(test)]]
+
+local function hex_to_int32(hex)
+    local str = ""
+    for i = #hex,1,-1 do
+        str = str .. hex[i]
+    end
+
+    local ret = tonumber(str, 16)
+
+    return ret
+end
+
+local function int32_to_hex(int32)
+    print(int32)
+
+    local hex = string.format("%X", int32)
+    print(hex)
+
+    local len = hex:len()
+
+    for _ = 1, 8 - len do
+        hex = "0" .. hex
+    end
+
+    local data = {}
+    for i = 2,8,2 do
+        local c = hex:sub(i-1,i)
+        data[#data+1] = c
+    end
+
+    local str = ""
+    for i = #data,1,-1 do
+        str = str .. data[i]
+    end
+
+    -- local str = ""
+    -- for i = 8,1,-1 do
+    --     local c = hex:sub(i,i)
+    --     str = str .. c
+    -- end
+
+    return str
+end
+
+-- local hex = {"80", "07", "00", "00"}
+-- local int32 = hex_to_int32(hex)
+-- print(int32)
+
+
+local my_num = 1920
+local my_hex = int32_to_hex(my_num)
+print(my_hex)
+
+print("fuck yes")
+for i = 1,0 do
+    print("my Test")
+end
+print('fuck no')
+
+local str 

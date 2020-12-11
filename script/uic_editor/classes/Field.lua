@@ -108,9 +108,10 @@ end
 -- TODO this should only work for copied_uic?
 function uic_field:change_val(new_val)
     if self:test_change(new_val) == true then
-        -- TODO assume it's a string for right now, lul
         local t = self:get_native_type()
+
         local new_hex = ""
+
         if t == "str" then
             new_hex = parser:str_to_chunk(new_val)
         elseif t == "utf8" then
@@ -119,19 +120,14 @@ function uic_field:change_val(new_val)
             new_hex = parser:int32_to_chunk(new_val)
         elseif t == "int16" then
             new_hex = parser:int16_to_chunk(new_val)
+        elseif t == "bool" or t == "boolean" then
+            new_hex = parser:bool_to_chunk(new_val)
         end
 
         ui_editor_lib:log("New hex: "..new_hex)
 
-        -- local new_file = io.open("data/ui/templates/TEST", "w+b")
-        -- new_file:write(self.hex)
-
         self.value = new_val
         self.hex = new_hex
-
-        -- new_file:write(self.hex)
-
-        -- new_file:close()
     end
 end
 

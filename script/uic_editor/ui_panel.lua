@@ -521,9 +521,17 @@ function ui_obj:create_buttons_holder()
     local test_button = core:get_or_create_component("ui_editor_test_button", "ui/templates/square_medium_button", buttons_holder)
     test_button:SetVisible(true)
     test_button:SetDockingPoint(5)
-    test_button:SetDockOffset(-65, 0)
+    test_button:SetDockOffset(-100, 0)
     test_button:SetInteractive(true)
     test_button:SetTooltipText("Display UIC", true)
+
+    local full_screen_button = core:get_or_create_component("ui_editor_full_screen_button", "ui/templates/square_medium_button", buttons_holder)
+    full_screen_button:SetVisible(true)
+    full_screen_button:SetDockingPoint(5)
+    full_screen_button:SetDockOffset(-100, -50)
+    full_screen_button:SetInteractive(true)
+    full_screen_button:SetTooltipText("Display UIC as Fullscreen", true)
+
 
     local path_name_input = core:get_or_create_component("path_name_input","ui/common ui/text_box", buttons_holder)
 
@@ -559,11 +567,11 @@ function ui_obj:get_path()
     return path
 end
 
-function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
+function ui_obj:create_loaded_uic_in_testing_ground(is_copied, is_fullscreen)
     local path = ui_editor_lib.loaded_uic_path
 
     if is_copied then
-        path = "ui/ui_editor/TEST"
+        path = "ui/ui_editor/"..ui_editor_lib:get_testing_file_string()
     end
 
     local panel = self.panel
@@ -574,6 +582,48 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
 
     local testing_grounds = UIComponent(panel:Find("testing_grounds"))
     testing_grounds:DestroyChildren()
+
+    if is_fullscreen then
+        -- local cw,ch = core:get_screen_resolution()
+        -- testing_grounds:Resize(cw, ch)
+
+        -- TODO add in a un-fullscreen button or functionality somehow
+        local test_uic = UIComponent(core:get_ui_root():CreateComponent("testing_component", path))
+
+        if not is_uicomponent(test_uic) then
+            ui_editor_lib:log("test uic failed!")
+            return false
+        end
+
+        test_uic:SetVisible(true)
+
+        local fullscreen_disable_button = UIComponent(core:get_ui_root():CreateComponent("fullscreen_disable", "ui/templates/square_medium_button"))
+        fullscreen_disable_button:SetDockingPoint(2)
+        fullscreen_disable_button:SetDockOffset(0, 40)
+
+        panel:SetVisible(false)
+
+        core:add_listener(
+            "fullscreen_disable",
+            "ComponentLClickUp",
+            function(context)
+                return context.string == "fullscreen_disable"
+            end,
+            function(context)
+                local uic = UIComponent(context.component)
+
+                self:delete_component(uic)
+                self:delete_component(test_uic)
+
+                if is_uicomponent(panel) then
+                    panel:SetVisible(true)
+                end
+            end,
+            false
+        )
+
+        return
+    end
 
     local test_uic = UIComponent(testing_grounds:CreateComponent("testing_component", path))
     if not is_uicomponent(test_uic) then
@@ -614,6 +664,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied)
 
     test_uic:SetCanResizeWidth(false)
     test_uic:SetCanResizeHeight(false)
+    
 end
 
 function ui_obj:create_details_header_for_obj(obj)
@@ -669,6 +720,10 @@ function ui_obj:create_details_header_for_obj(obj)
 
     -- create the Canvas for large files only
     if ui_editor_lib.is_large_file then
+        -- set the state of the header to closed
+        header_uic:SetState("active")
+        obj.state = "closed"
+
         local list_view = UIComponent(list_box:CreateComponent("ui_header_"..i.."_canvas", "ui/vandy_lib/vlist"))
 
         list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
@@ -847,7 +902,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
     left_text_uic:SetTooltipText(tooltip_text, true)
 
     -- change the str
-    if obj:get_native_type() == "str" or obj:get_native_type() == "utf8"--[[and obj:get_key() == "text"]] then
+    if obj:is_editable() and obj:get_native_type() == "str" or obj:get_native_type() == "utf8"--[[and obj:get_key() == "text"]] then
         local right_text_uic = UIComponent(row_uic:CreateComponent("value", "ui/common ui/text_box"))
         local ok_button = UIComponent(right_text_uic:CreateComponent("check_name", "ui/templates/square_medium_button"))
 
@@ -884,6 +939,54 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
         )
         
         -- local right_text_uic = UIComponent(row_uic:CreateComponent("right_text_uic", ""))
+    -- TODO pick one, fucker (bool or boolean, that is)
+    elseif obj:is_editable() and obj:get_native_type() == "bool" or obj:get_native_type() == "boolean" then
+        local right_text_uic = UIComponent(row_uic:CreateComponent("value", "ui/templates/checkbox_toggle"))
+
+        right_text_uic:SetVisible(true)
+        right_text_uic:SetDockingPoint(5)
+        right_text_uic:SetDockOffset(30, 0)
+
+        right_text_uic:SetTooltipText(obj:get_hex(), true)
+
+        right_text_uic:SetInteractive(true)
+
+        local val = obj:get_value()
+
+        if val == true then
+            right_text_uic:SetState("selected")
+        else 
+            right_text_uic:SetState("active")
+        end
+        -- right_text_uic:Resize(row_uic:Width() * 0.5, row_uic:Height() * 0.85)
+
+        -- right_text_uic:SetStateText(value_text)
+
+        core:add_listener(
+            "checkbox_clicked",
+            "ComponentLClickUp",
+            function(context)
+                return UIComponent(context.component) == right_text_uic
+            end,
+            function(context)
+                -- local state_text = right_text_uic:GetStateText()
+                local my_state = obj:get_value()
+
+                local new_state = not my_state
+                -- local new_state = UIComponent(context.component):CurrentState()
+                -- local b = false
+                -- ui_editor_lib:log("My new state is: "..new_state)
+                -- if new_state == "selected" then
+                --     b = true
+                -- end
+                
+                -- ui_editor_lib:log("Checking text: "..tostring(state_text))
+
+                local ok, err = pcall(obj:change_val(new_state))
+                if not ok then ui_editor_lib:log(err) end
+            end,
+            true
+        )
     else        
         local right_text_uic = UIComponent(row_uic:CreateComponent("value", "ui/vandy_lib/text/la_gioconda/unaligned"))
         right_text_uic:SetCanResizeWidth(true) right_text_uic:SetCanResizeHeight(true)
@@ -1039,6 +1142,18 @@ core:add_listener(
     end,
     function(context)
         ui_obj:create_loaded_uic_in_testing_ground(true)
+    end,
+    true
+)
+
+core:add_listener(
+    "full_screen_button",
+    "ComponentLClickUp",
+    function(context)
+        return context.string == "ui_editor_full_screen_button"
+    end,
+    function(context)
+        ui_obj:create_loaded_uic_in_testing_ground(true, true)
     end,
     true
 )

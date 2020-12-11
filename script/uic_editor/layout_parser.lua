@@ -17,6 +17,19 @@ local parser = {
     field_count = 0,
 }
 
+function parser:bool_to_chunk(bool)
+    if not is_boolean(bool) then
+        -- errmsg
+        return false
+    end
+
+    local hex_str = ""
+
+    if bool == true then hex_str = "01" elseif bool == false then hex_str = "00" end
+
+    return hex_str
+end
+
 function parser:utf8_to_chunk(str)
     -- first, grab the length
     local hex_str = ""
@@ -34,35 +47,35 @@ function parser:utf8_to_chunk(str)
 
     hex_str = hex_len
 
-        -- loop through each char in the string
-        for i = 1, len do
-            local c = str:sub(i, i)
-            -- print(c)
-            ui_editor_lib:log(c)
-    
-            -- string.byte converts the character (ie. "r") to the binary data, and then string.format turns the binary byte into a hexadecimal value
-            -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
-            c = string.format("%02X", string.byte(c)) .. "00"
-    
-            -- the "00" is added padding for utf8's
-    
-            hex_str = hex_str .. c
-        end
-    
-        -- loops through every single hex byte (ie. everything with two hexa values, %x%x), then converts that byte into the relevant "char"
-        -- for byte in hex_str:gmatch("%x%x") do
-        --     -- print(byte)
-    
-        --     local bin_byte = string.char(tonumber(byte, 16))
-    
-        --     -- print(bin_byte)
-    
-        --     bin_str = bin_str .. bin_byte
-        -- end
-    
-        -- ui_editor_lib:log(bin_str)
-    
-        return hex_str
+    -- loop through each char in the string
+    for i = 1, len do
+        local c = str:sub(i, i)
+        -- print(c)
+        ui_editor_lib:log(c)
+
+        -- string.byte converts the character (ie. "r") to the binary data, and then string.format turns the binary byte into a hexadecimal value
+        -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
+        c = string.format("%02X", string.byte(c)) .. "00"
+
+        -- the "00" is added padding for utf8's
+
+        hex_str = hex_str .. c
+    end
+
+    -- loops through every single hex byte (ie. everything with two hexa values, %x%x), then converts that byte into the relevant "char"
+    -- for byte in hex_str:gmatch("%x%x") do
+    --     -- print(byte)
+
+    --     local bin_byte = string.char(tonumber(byte, 16))
+
+    --     -- print(bin_byte)
+
+    --     bin_str = bin_str .. bin_byte
+    -- end
+
+    -- ui_editor_lib:log(bin_str)
+
+    return hex_str
 end
 
 -- parsers here (translate raw hex into actual data, and vice versa)

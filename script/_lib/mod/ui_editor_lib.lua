@@ -7,20 +7,31 @@ local ui_editor_lib = {
     log_file = "a_vandy_lib.txt",
     logging = {},
     is_checking = false,
+
+    testing_file_str = "TEST",
+    testing_file_ind = 0,
 }
+
+function ui_editor_lib:get_testing_file_string()
+    local ret = self.testing_file_str..tostring(self.testing_file_ind)
+
+    -- self.testing_file_ind = self.testing_file_ind+1
+
+    return ret
+end
 
 function ui_editor_lib:log(text)
     text = tostring(text) or ""
 
 
-    ui_editor_lib.logging[#ui_editor_lib.logging+1] = text
+    self.logging[#self.logging+1] = text
 
-    ui_editor_lib:check_logging()
+    self:check_logging()
 end
 
 function ui_editor_lib:log_init()
     local str = "New log started!\nEnjoy, fuckface!"
-    local log_file_path = ui_editor_lib.log_file
+    local log_file_path = self.log_file
 
     local log_file = io.open(log_file_path, "w+")
     log_file:write(str)
@@ -28,8 +39,8 @@ function ui_editor_lib:log_init()
 end
 
 function ui_editor_lib:print_log()
-    local log_file_path = ui_editor_lib.log_file
-    local logging = ui_editor_lib.logging
+    local log_file_path = self.log_file
+    local logging = self.logging
 
     local str = "\n"..table.concat(logging, "\n")
 
@@ -45,9 +56,9 @@ end
 
 -- only print the log if A) logging has 5000 lines or B) it's been 5s since the last call to logging
 function ui_editor_lib:check_logging()
-    if ui_editor_lib.is_checking then
-        if #ui_editor_lib.logging >= 5000 then
-            ui_editor_lib:print_log()
+    if self.is_checking then
+        if #self.logging >= 5000 then
+            self:print_log()
         else
             -- do nothing?
         end
@@ -59,50 +70,51 @@ function ui_editor_lib:check_logging()
                 return context.string == "lib_check_logging"
             end,
             function(context)
-                ui_editor_lib:print_log()
+                self:print_log()
             end,
             false
         )
 
         real_timer.register_singleshot("lib_check_logging", 5000)
 
-        ui_editor_lib.is_checking = true
+        self.is_checking = true
     end
 end
 
 function ui_editor_lib:init()
-    ui_editor_lib:log_init()
+    self:log_init()
     local path = "script/uic_editor/"
 
-    ui_editor_lib.parser =              ui_editor_lib:load_module("layout_parser", path) -- the manager for deciphering the hex and turning it into more accessible objects
-    ui_editor_lib.ui =                  ui_editor_lib:load_module("ui_panel", path) -- the in-game UI panel manager
+    self.parser =              self:load_module("layout_parser", path) -- the manager for deciphering the hex and turning it into more accessible objects
+    self.ui =                  self:load_module("ui_panel", path) -- the in-game UI panel manager
 
     path = path .. "classes/"
-    ui_editor_lib.classes = {}
-    local classes = ui_editor_lib.classes
 
-    classes.BaseClass =                         ui_editor_lib:load_module("BaseClass", path)
+    self.classes = {}
+    local classes = self.classes
 
-    classes.Component =                         ui_editor_lib:load_module("Component", path)              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
-    classes.Field =                             ui_editor_lib:load_module("Field", path)                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
-    classes.Collection =                        ui_editor_lib:load_module("Collection", path)              -- the class def for collections, which are just slightly involved tables (for lists of states, images, etc)
+    classes.BaseClass =                         self:load_module("BaseClass", path)
 
-    classes.ComponentImage =                    ui_editor_lib:load_module("ComponentImage", path)         -- ComponentImages, simple stuff, just controls image path / width / height /etc
-    classes.ComponentState =                    ui_editor_lib:load_module("ComponentState", path)         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
-    classes.ComponentImageMetric =              ui_editor_lib:load_module("ComponentImageMetric", path)   -- controls the different fields on an image within a state - visible, tile, etc
-    classes.ComponentMouse =                    ui_editor_lib:load_module("ComponentMouse", path)
-    classes.ComponentMouseSth =                 ui_editor_lib:load_module("ComponentMouseSth", path)
-    classes.ComponentProperty =                 ui_editor_lib:load_module("ComponentProperty", path)
-    classes.ComponentFunction =                 ui_editor_lib:load_module("ComponentFunction", path)
-    classes.ComponentFunctionAnimation =        ui_editor_lib:load_module("ComponentFunctionAnimation", path)
-    classes.ComponentFunctionAnimationTrigger = ui_editor_lib:load_module("ComponentFunctionAnimationTrigger", path)
-    classes.ComponentEvent =                    ui_editor_lib:load_module("ComponentEvent", path)
-    classes.ComponentEventProperty =            ui_editor_lib:load_module("ComponentEventProperty", path)
+    classes.Component =                         self:load_module("Component", path)              -- the class def for the UIComponent type - main boy with names, events, offsets, states, images, children, etc
+    classes.Field =                             self:load_module("Field", path)                  -- the class def for UIComponent fields - ie., "offset", "width", "is_interactive" are all fields
+    classes.Collection =                        self:load_module("Collection", path)              -- the class def for collections, which are just slightly involved tables (for lists of states, images, etc)
 
-    classes.ComponentLayoutEngine =             ui_editor_lib:load_module("ComponentLayoutEngine", path)
+    classes.ComponentImage =                    self:load_module("ComponentImage", path)         -- ComponentImages, simple stuff, just controls image path / width / height /etc
+    classes.ComponentState =                    self:load_module("ComponentState", path)         -- controls the different states a UIC can be - open, closed, etc., lots of fields within
+    classes.ComponentImageMetric =              self:load_module("ComponentImageMetric", path)   -- controls the different fields on an image within a state - visible, tile, etc
+    classes.ComponentMouse =                    self:load_module("ComponentMouse", path)
+    classes.ComponentMouseSth =                 self:load_module("ComponentMouseSth", path)
+    classes.ComponentProperty =                 self:load_module("ComponentProperty", path)
+    classes.ComponentFunction =                 self:load_module("ComponentFunction", path)
+    classes.ComponentFunctionAnimation =        self:load_module("ComponentFunctionAnimation", path)
+    classes.ComponentFunctionAnimationTrigger = self:load_module("ComponentFunctionAnimationTrigger", path)
+    classes.ComponentEvent =                    self:load_module("ComponentEvent", path)
+    classes.ComponentEventProperty =            self:load_module("ComponentEventProperty", path)
 
-    classes.ComponentTemplate =                 ui_editor_lib:load_module("ComponentTemplate", path)
-    classes.ComponentTemplateChild =            ui_editor_lib:load_module("ComponentTemplateChild", path)
+    classes.ComponentLayoutEngine =             self:load_module("ComponentLayoutEngine", path)
+
+    classes.ComponentTemplate =                 self:load_module("ComponentTemplate", path)
+    classes.ComponentTemplateChild =            self:load_module("ComponentTemplateChild", path)
 end
 
 function ui_editor_lib:load_module(module_name, path)
@@ -115,10 +127,10 @@ function ui_editor_lib:load_module(module_name, path)
     local file, load_error = loadfile(full_file_name)
 
     if not file then
-        ui_editor_lib:log("Attempted to load module with name ["..module_name.."], but loadfile had an error: ".. load_error .."")
+        self:log("Attempted to load module with name ["..module_name.."], but loadfile had an error: ".. load_error .."")
         --return
     else
-        ui_editor_lib:log("Loading module with name [" .. module_name .. ".lua]")
+        self:log("Loading module with name [" .. module_name .. ".lua]")
 
         local global_env = core:get_env()
         local attach_env = {}
@@ -132,7 +144,7 @@ function ui_editor_lib:load_module(module_name, path)
         local lua_module = file(module_name)
         package.loaded[module_name] = lua_module or true
 
-        ui_editor_lib:log("[" .. module_name .. ".lua] loaded successfully!")
+        self:log("[" .. module_name .. ".lua] loaded successfully!")
 
         --if module_name == "mod_obj" then
         --    self.mod_obj = lua_module
@@ -146,8 +158,8 @@ function ui_editor_lib:load_module(module_name, path)
     local ok, err = pcall(function() require(module_name) end)
 
     --if not ok then
-    ui_editor_lib:log("Tried to load module with name [" .. module_name .. ".lua], failed on runtime. Error below:")
-    ui_editor_lib:log(err)
+    self:log("Tried to load module with name [" .. module_name .. ".lua], failed on runtime. Error below:")
+    self:log(err)
         return false
     --end
 end
@@ -159,7 +171,7 @@ function ui_editor_lib:get_class(class_name)
         return nil
     end
 
-    local ret = ui_editor_lib.classes[class_name]
+    local ret = self.classes[class_name]
 
     if not ret then
         return nil
@@ -172,26 +184,26 @@ end
 -- check if a supplied object is an internal UI class
 function ui_editor_lib:is_ui_class(obj)
     local str = tostring(obj)
-    ui_editor_lib:log("is ui class: "..str)
+    self:log("is ui class: "..str)
     --ui_editor_lib:log(tostring(str.find("UIED_")))
 
     return not not string.find(str, "UIED_")
 end
 
 function ui_editor_lib:new_obj(class_name, ...)
-    if ui_editor_lib.classes[class_name] then
-        return ui_editor_lib.classes[class_name]:new(...)
+    if self.classes[class_name] then
+        return self.classes[class_name]:new(...)
     end
 
-    ui_editor_lib:log("new_obj called, but no class was found with name ["..class_name.."].")
+    self:log("new_obj called, but no class was found with name ["..class_name.."].")
     
     return false
 end
 
 function ui_editor_lib:print_copied_uic()
-    ui_editor_lib:log("print copied UIC")
+    self:log("print copied UIC")
     local ok, err = pcall(function()
-    local uic = ui_editor_lib.copied_uic
+    local uic = self.copied_uic
 
     -- loop through aaaaaall fields and print their hex
 
@@ -233,13 +245,14 @@ function ui_editor_lib:print_copied_uic()
 
     -- ui_editor_lib:log(bin_str)
 
-    local new_file = io.open("data/UI/ui_editor/TEST", "w+b")
+    self.testing_file_ind=self.testing_file_ind+1
+    local new_file = io.open("data/UI/ui_editor/"..self:get_testing_file_string(), "w+b")
     new_file:write(bin_str)
     new_file:close()
 
     -- ui_editor_lib.ui:create_loaded_uic_in_testing_ground(true)
 
-end) if not ok then ui_editor_lib:log(err) end
+end) if not ok then self:log(err) end
 end
 
 function ui_editor_lib:load_uic_with_path(path)
@@ -248,16 +261,16 @@ function ui_editor_lib:load_uic_with_path(path)
         return false
     end
 
-    ui_editor_lib.loaded_uic = nil
-    ui_editor_lib.loaded_uic_path = ""
-    ui_editor_lib.is_large_file = false
-    ui_editor_lib.copied_uic = nil
+    self.loaded_uic = nil
+    self.loaded_uic_path = ""
+    self.is_large_file = false
+    self.copied_uic = nil
 
-    ui_editor_lib:log("load uic with path: "..path)
+    self:log("load uic with path: "..path)
 
     local file = assert(io.open(path, "rb+"))
     if not file then
-        ui_editor_lib:log("file not found!")
+        self:log("file not found!")
         return false
     end
 
@@ -280,14 +293,14 @@ function ui_editor_lib:load_uic_with_path(path)
 
     file:close()
 
-    ui_editor_lib:log("file opened!")
+    self:log("file opened!")
 
     local ok, err = pcall(function()
 
-    local uic,field_count = ui_editor_lib.parser(data)
+    local uic,field_count = self.parser(data)
 
-    ui_editor_lib.loaded_uic = uic
-    ui_editor_lib.loaded_uic_path = path
+    self.loaded_uic = uic
+    self.loaded_uic_path = path
 
     -- TODO decide dis number
 
@@ -297,14 +310,14 @@ function ui_editor_lib:load_uic_with_path(path)
         b = true
     end
 
-    ui_editor_lib.is_large_file = b
+    self.is_large_file = b
 
     -- make a "copy" of the UIC
-    ui_editor_lib.copied_uic = ui_editor_lib:new_obj("Component", uic)
+    self.copied_uic = self:new_obj("Component", uic)
 
 
-    ui_editor_lib.ui:load_uic()
-    end) if not ok then ui_editor_lib:log(err) end
+    self.ui:load_uic()
+    end) if not ok then self:log(err) end
 end
 
 core:add_static_object("ui_editor_lib", ui_editor_lib)
