@@ -2,29 +2,33 @@
 -- used for collections of objects, such as "States" or "ComponentImages".
 
 local ui_editor_lib = core:get_static_object("ui_editor_lib")
+local BaseClass = ui_editor_lib:get_class("BaseClass")
 
-local collection = {
+local Collection = {
     type = "UI_Collection",
 }
 
-function collection:__tostring()
-    return "UI_Collection" -- TODO should this have the "UIED_" prepend?
-end
+setmetatable(Collection, BaseClass)
 
-function collection:new(key, val)
-    local o = {}
+Collection.__index = Collection
+Collection.__tostring = BaseClass.__tostring
+
+function Collection:new(key, val)
+    local o = BaseClass:new()
+    
     setmetatable(o, self)
-    self.__index = self
 
     o.key = key
     o.data = val
 
-    o.state = "open"
+
+    o.state = "closed"
 
     return o
 end
 
-function collection:filter_fields(key_filter, value_filter)
+
+function Collection:filter_fields(key_filter, value_filter)
     local data = self.data
 
     for i = 1, #data do
@@ -34,7 +38,7 @@ function collection:filter_fields(key_filter, value_filter)
 end
 
 -- TODO if collection:set_state() is called from collection:switch_state(), then hide children headers. else, don't hide them
-function collection:switch_state()
+function Collection:switch_state()
     local state = self.state
     local new_state = "closed"
 
@@ -45,7 +49,7 @@ function collection:switch_state()
     self:set_state(new_state)
 end
 
-function collection:set_state(state)
+function Collection:set_state(state)
     self.state = state
 
     local data = self:get_data()
@@ -96,7 +100,7 @@ function collection:set_state(state)
     end
 end
 
-function collection:set_uic(uic)
+function Collection:set_uic(uic)
     if not is_uicomponent(uic) then
         -- errmsg
         return false
@@ -105,7 +109,7 @@ function collection:set_uic(uic)
     self.uic = uic
 end
 
-function collection:get_uic()
+function Collection:get_uic()
     local uic = self.uic
     if not is_uicomponent(uic) then
         -- errmsg
@@ -115,11 +119,7 @@ function collection:get_uic()
     return uic
 end
 
-function collection:get_type()
-    return "UI_Collection"
-end
-
-function collection:get_hex()
+function Collection:get_hex()
     -- local data = self.data
     local len = #self.data
 
@@ -129,31 +129,31 @@ function collection:get_hex()
 end
 
 -- disable :set_key() on collection
-function collection:set_key()
+function Collection:set_key()
     return
 end
 
-function collection:get_key()
-    return self.key
-end
+-- function Collection:get_key()
+--     return self.key
+-- end
 
-function collection:get_data()
-    return self.data
-end
+-- function Collection:get_data()
+--     return self.data
+-- end
 
-function collection:add_data(new_field)
-    -- TODO type check if it's a Field
-    -- local key = new_field:get_key()
+-- function Collection:add_data(new_field)
+--     -- TODO type check if it's a Field
+--     -- local key = new_field:get_key()
 
-    self.data[#self.data+1] = new_field
+--     self.data[#self.data+1] = new_field
 
-    return new_field
-end
+--     return new_field
+-- end
 
-function collection:add_data_table(fields)
-    for i = 1, #fields do
-        self:add_data(fields[i])
-    end
-end
+-- function Collection:add_data_table(fields)
+--     for i = 1, #fields do
+--         self:add_data(fields[i])
+--     end
+-- end
 
-return collection
+return Collection

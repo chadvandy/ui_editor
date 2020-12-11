@@ -8,7 +8,7 @@ local function dec(key, format, k, obj)
 end
 
 local ComponentEventProperty = {
-    type = "ComponentEventProperty",
+    type = "UIED_ComponentEventProperty",
 }
 
 setmetatable(ComponentEventProperty, BaseClass)

@@ -8,7 +8,7 @@ local function dec(key, format, k, obj)
 end
 
 local ComponentFunction = {
-    type = "ComponentFunction",
+    type = "UIED_ComponentFunction",
 }
 
 setmetatable(ComponentFunction, BaseClass)

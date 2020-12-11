@@ -8,7 +8,7 @@ local function dec(key, format, k, obj)
 end
 
 local ComponentFunctionAnimation = {
-    type = "ComponentFunctionAnimation",
+    type = "UIED_ComponentFunctionAnimation",
 }
 
 setmetatable(ComponentFunctionAnimation, BaseClass)

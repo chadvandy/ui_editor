@@ -8,7 +8,7 @@ local function dec(key, format, k, obj)
 end
 
 local ComponentLayoutEngine = {
-    type = "ComponentLayoutEngine",
+    type = "UIED_ComponentLayoutEngine",
 }
 
 setmetatable(ComponentLayoutEngine, BaseClass)

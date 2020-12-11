@@ -8,7 +8,7 @@ local function dec(key, format, k, obj)
 end
 
 local ComponentImageMetric = {
-    type = "ComponentImageMetric",
+    type = "UIED_ComponentImageMetric",
 }
 
 

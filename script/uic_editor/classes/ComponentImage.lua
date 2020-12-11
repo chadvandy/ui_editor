@@ -8,7 +8,7 @@ local function dec(key, format, k, obj)
 end
 
 local ComponentImage = {
-    type = "ComponentImage",
+    type = "UIED_ComponentImage",
 }
 
 setmetatable(ComponentImage, BaseClass)

@@ -2,7 +2,7 @@ local ui_editor_lib = core:get_static_object("ui_editor_lib")
 local parser = ui_editor_lib.parser
 
 local obj = {
-    type = "BaseClass",
+    type = "UI_BaseClass",
 
     key_type = "none",
 }
@@ -35,7 +35,7 @@ function obj:filter_fields(key_filter, value_filter)
 end
 
 function obj:get_type()
-    return "UIED_" .. self.type
+    return self.type
 end
 
 -- if ui_editor_lib.is_large_file then

@@ -8,7 +8,7 @@ local function dec(key, format, k, obj)
 end
 
 local ComponentMouseSth = {
-    type = "ComponentMouseSth",
+    type = "UIED_ComponentMouseSth",
 }
 
 setmetatable(ComponentMouseSth, BaseClass)
