@@ -3,7 +3,7 @@ local BaseClass = ui_editor_lib:get_class("BaseClass")
 
 local parser = ui_editor_lib.parser
 local function dec(key, format, k, obj)
-    ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
+    -- ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -115,12 +115,12 @@ function ComponentState:decipher()
     deciph("shader_name", "str")
     -- TODO these are actually floats not ints!
     -- shader variables; int32
-    deciph("shader_vars", "int32", {one=4,two=4,three=4,four=4})
+    deciph("shader_vars", "float", {one=4,two=4,three=4,four=4})
 
     deciph("text_shader_name", "str")
     -- TODO these are actually floats not ints!
     -- shader variables; int32
-    deciph("text_shader_vars", "int32", {one=4,two=4,three=4,four=4})
+    deciph("text_shader_vars", "float", {one=4,two=4,three=4,four=4})
 
     parser:decipher_collection("ComponentImageMetric", self)
 
