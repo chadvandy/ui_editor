@@ -678,8 +678,6 @@ function ui_obj:create_details_header_for_obj(obj)
         return false
     end
 
-    -- TODO figure out how to save all the rows to the header
-
     -- create the header_uic for the holder of the UIC
     local i = self.row_index
     local header_uic = UIComponent(list_box:CreateComponent("ui_header_"..i, "ui/vandy_lib/expandable_row_header"))
@@ -715,14 +713,59 @@ function ui_obj:create_details_header_for_obj(obj)
         child_count:SetVisible(false)
     end
 
+    if obj:get_type() == "UIED_Component" and not obj:is_root() then
+        local delete_button = UIComponent(header_uic:CreateComponent("delete", "ui/templates/square_medium_button"))
+
+        delete_button:SetDockingPoint(6)
+        delete_button:SetDockOffset(-5, 0)
+
+        delete_button:SetCanResizeWidth(true)
+        delete_button:SetCanResizeHeight(true)
+        delete_button:Resize(header_uic:Height() * 0.8, header_uic:Height() * 0.8)
+        delete_button:SetCanResizeHeight(false)
+        delete_button:SetCanResizeWidth(false)
+
+        core:add_listener(
+            "delete_component",
+            "ComponentLClickUp",
+            function(context)
+                return UIComponent(context.component) == delete_button
+            end,
+            function(context)
+                ui_editor_lib:log("Object ["..obj:get_key().."] with type ["..obj:get_type().."] being deleted!")
+                local parent = obj:get_parent()
+
+                ui_editor_lib:log("Parent obj key is ["..parent:get_key().."], of type ["..parent:get_type().."].")
+
+                -- remove the data from the parent!
+                parent:remove_data(obj)
+
+                -- delete the canvas and the header UIC
+                local header_uic_id = header_uic:Id()
+                self:delete_component(header_uic)
+                self:delete_component(UIComponent(list_box:Find(header_uic_id.."_canvas")))
+            end,
+            false
+        )
+    end
+
     -- move the x_margin over a bit
     self.details_data.x_margin = x_margin + 10
 
     -- create the Canvas for large files only
     if ui_editor_lib.is_large_file then
         -- set the state of the header to closed
-        header_uic:SetState("active")
-        obj.state = "closed"
+        -- if obj is a UIC, set it to closed
+        if obj:get_type() == "UIED_Component" then
+            header_uic:SetState("active")
+            header_uic:SetVisible(true)
+            obj.state = "closed"
+        else 
+            -- set it to invisible
+            header_uic:SetState("active")
+            header_uic:SetVisible(false)
+            obj.state = "invisible"
+        end
 
         local list_view = UIComponent(list_box:CreateComponent("ui_header_"..i.."_canvas", "ui/vandy_lib/vlist"))
 

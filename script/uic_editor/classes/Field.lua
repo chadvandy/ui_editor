@@ -27,9 +27,19 @@ function uic_field:new(key, value, hex)
     o.uic = nil
     o.editable = false
 
+    o.parent = nil
+
     o.native_type = "" -- native type is the actual data type being used - int32, str, etc
 
     return o
+end
+
+function uic_field:set_parent(p)
+    self.parent = p
+end
+
+function uic_field:get_parent()
+    return self.parent
 end
 
 -- TODO this attempts a change of a value; returns true, or a string displaying some sort of error.
@@ -182,15 +192,36 @@ function uic_field:set_uic(uic)
     self.uic = uic
 end
 
-function uic_field:set_state(state)
-    local uic = self:get_uic()
+function uic_field:switch_state()
+    local is_visible = self.state
+    local new_b = not is_visible
 
+    local uic = self:get_uic()
+    if is_uicomponent(uic) then
+        uic:SetVisible(new_b)
+    end
+
+    self.state = new_b
+end
+
+-- This is only called through switch_state(), which will trigger on self as well as on all children.
+function uic_field:set_state(state)
+    -- self:switch_state()
+    self.state = state
+
+    -- set the state of the header (invisible if inner?)
+    local uic = self:get_uic()
     if is_uicomponent(uic) then
         if state == "open" then
-            -- set uic to visible!
             uic:SetVisible(true)
-        else
+            -- uic:SetState("selected")
+        elseif state == "closed" then
+            uic:SetVisible(true)
+            -- uic:SetState("active")
+        elseif state == "invisible" then
+            -- TODO hide all canvas and shit
             uic:SetVisible(false)
+            -- uic:SetState("active")
         end
     end
 end

@@ -21,7 +21,6 @@ function Collection:new(key, val)
     o.key = key
     o.data = val
 
-
     o.state = "closed"
 
     return o
@@ -37,68 +36,68 @@ function Collection:filter_fields(key_filter, value_filter)
     end
 end
 
--- TODO if collection:set_state() is called from collection:switch_state(), then hide children headers. else, don't hide them
-function Collection:switch_state()
-    local state = self.state
-    local new_state = "closed"
+-- -- TODO if collection:set_state() is called from collection:switch_state(), then hide children headers. else, don't hide them
+-- function Collection:switch_state()
+--     local state = self.state
+--     local new_state = "closed"
 
-    if state == "closed" then
-        new_state = "open"
-    end
+--     if state == "closed" then
+--         new_state = "open"
+--     end
 
-    self:set_state(new_state)
-end
+--     self:set_state(new_state)
+-- end
 
-function Collection:set_state(state)
-    self.state = state
+-- function Collection:set_state(state)
+--     self.state = state
 
-    local data = self:get_data()
+--     local data = self:get_data()
 
-    if ui_editor_lib.is_large_file then
-        for i = 1, #data do
-            local datum = data[i]
+--     if ui_editor_lib.is_large_file then
+--         for i = 1, #data do
+--             local datum = data[i]
 
-            -- only trigger on Field children
-            if string.find(tostring(datum), "UI_Field") then
-                -- if state is open, create
-                if state == "open" then
-                    ui_editor_lib.ui:create_details_row_for_field(datum, self:get_uic())
-                else -- closed; destroy
-                    ui_editor_lib.ui:delete_component(datum:get_uic())
-                end
-            end
-        end
+--             -- only trigger on Field children
+--             if string.find(tostring(datum), "UI_Field") then
+--                 -- if state is open, create
+--                 if state == "open" then
+--                     ui_editor_lib.ui:create_details_row_for_field(datum, self:get_uic())
+--                 else -- closed; destroy
+--                     ui_editor_lib.ui:delete_component(datum:get_uic())
+--                 end
+--             end
+--         end
 
-        -- TODO error check
-        local uic = self:get_uic()
-        local parent = UIComponent(uic:Parent())
-        local id = uic:Id()
+--         -- TODO error check
+--         local uic = self:get_uic()
+--         local parent = UIComponent(uic:Parent())
+--         local id = uic:Id()
 
-        local canvas = parent:Find(id.."_canvas")
+--         local canvas = parent:Find(id.."_canvas")
 
-        if state == "closed" then
-            -- hide the listbox!
-            canvas:SetVisible(false)
-        else
-            canvas:SetVisible(true)
-        end
-    else
-        for i = 1, #data do
-            local inner = data[i]
-            inner:set_state(state)
-        end
-    end
+--         if state == "closed" then
+--             -- hide the listbox!
+--             canvas:SetVisible(false)
+--         else
+--             canvas:SetVisible(true)
+--         end
+--     else
+--         for i = 1, #data do
+--             local inner = data[i]
+--             inner:set_state(state)
+--         end
+--     end
   
-    -- set the state of the header (invisible if inner?)
-    local uic = self.uic
-    if is_uicomponent(uic) then
-        if state == "open" then
-            uic:SetState("selected")
-        else
-            uic:SetState("active")
-        end
-    end
-end
+--     -- set the state of the header (invisible if inner?)
+--     local uic = self.uic
+--     if is_uicomponent(uic) then
+--         if state == "open" then
+--             uic:SetState("selected")
+--         else
+--             uic:SetState("active")
+--         end
+--     end
+-- end
 
 function Collection:set_uic(uic)
     if not is_uicomponent(uic) then

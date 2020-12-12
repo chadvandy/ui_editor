@@ -11,7 +11,6 @@ obj.__index = obj
 -- TODO better tostring?
 obj.__tostring = function(self) return self:get_type() end
 
-
 function obj:new(o)
     o = o or {}
     setmetatable(o, self)
@@ -19,10 +18,20 @@ function obj:new(o)
     o.data = o.data or {}
     o.key = o.key or nil
 
+    o.parent = o.parent or nil
+
     o.uic = nil
-    o.state = "open"
+    o.state = "invisible"
 
     return o
+end
+
+function obj:get_parent()
+    return self.parent
+end
+
+function obj:set_parent(p)
+    self.parent = p
 end
 
 function obj:filter_fields(key_filter, value_filter)
@@ -54,63 +63,87 @@ end
 --     list_box:Layout()
 -- else
 
+
+-- This is called whenever a header is pressed, which switches its state and triggers a change on all children fields and objects
 function obj:switch_state()
     local state = self.state
-    local new_state = "closed"
+    local new_state = ""
+    local child_state = ""
 
     if state == "closed" then
         new_state = "open"
+        child_state = "closed"
+    elseif state == "open" then
+        new_state = "closed"
+        child_state = "invisible"
     end
 
-    self:set_state(new_state)
-end
+    local ok, err = pcall(function()
 
-function obj:set_state(state)
-    self.state = state
+    -- self.state = new_state
+    self:set_state(new_state)
 
     local data = self:get_data()
 
     if ui_editor_lib.is_large_file then
         for i = 1, #data do
             local datum = data[i]
-
-            -- only trigger on Field children
+    
             if string.find(tostring(datum), "UI_Field") then
                 -- if state is open, create
-                if state == "open" then
+                if new_state == "open" then
                     ui_editor_lib.ui:create_details_row_for_field(datum, self:get_uic())
                 else -- closed; destroy
                     ui_editor_lib.ui:delete_component(datum:get_uic())
                 end
             end
+            
+            datum:set_state(child_state)
         end
-
+    
         -- TODO error check
         local uic = self:get_uic()
         local parent = UIComponent(uic:Parent())
         local id = uic:Id()
-
+    
         local canvas = UIComponent(parent:Find(id.."_canvas"))
-
-        if state == "closed" then
+    
+        if new_state == "closed" then
             -- hide the listbox!
+            -- resize it to puny so it fixes everything!
             canvas:SetVisible(false)
+            canvas:Resize(canvas:Width(), 5)
         else
             canvas:SetVisible(true)
         end
     else
         for i = 1, #data do
             local inner = data[i]
-            inner:set_state(state)
+            inner:set_state(child_state)
         end
     end
-  
+
+end) if not ok then ui_editor_lib:log(err) end
+end
+
+-- This is only called through switch_state(), which will trigger on self as well as on all children.
+function obj:set_state(state)
+    self.state = state
+
+    ui_editor_lib:log("Setting state of ["..obj:get_key().."] to ["..state.."].")
+
     -- set the state of the header (invisible if inner?)
-    local uic = self.uic
+    local uic = self:get_uic()
     if is_uicomponent(uic) then
         if state == "open" then
+            uic:SetVisible(true)
             uic:SetState("selected")
-        else
+        elseif state == "closed" then
+            uic:SetVisible(true)
+            uic:SetState("active")
+        elseif state == "invisible" then
+            -- TODO hide all canvas and shit
+            uic:SetVisible(false)
             uic:SetState("active")
         end
     end
@@ -182,6 +215,27 @@ function obj:set_key(key, new_key_type)
     ui_editor_lib:log("old key ["..current_key.."], new key ["..self.key.."].")
 end
 
+-- remove a field or object or collection from this object
+function obj:remove_data(datum)
+    ui_editor_lib:log("Remove data called! "..obj:get_key().." is deleted data ["..datum:get_key().."].")
+    local data = self:get_data()
+
+    local new_table = {}
+
+    for i = 1, #data do
+        local inner = data[i]
+
+        if inner == datum then
+            ui_editor_lib:log("Inner found!")
+        else
+            new_table[#new_table+1] = inner
+        end
+    end
+
+    -- replace the data field
+    self.data = new_table
+end
+
 function obj:add_data(data)
     -- TODO confirm that it's a valid obj
 
@@ -202,6 +256,8 @@ function obj:add_data(data)
     end
 
     self.data[#self.data+1] = data
+
+    data:set_parent(self)
 
     return data
 end

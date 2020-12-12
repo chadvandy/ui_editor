@@ -3,7 +3,7 @@ local BaseClass = ui_editor_lib:get_class("BaseClass")
 
 local parser = ui_editor_lib.parser
 local function dec(key, format, k, obj)
-    ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
+    -- ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -28,7 +28,34 @@ function Component:new(o)
     o.version = 0
     o.b_is_root = false
 
+    -- Components start as closed, not invisi
+    o.state = "closed"
+
     return o
+end
+
+-- Components can't be set invisible! (Overriding BaseClass.lua here)
+function Component:set_state(state)
+    if state == "invisible" then state = "closed" end
+    self.state = state
+
+    ui_editor_lib:log("Setting state of ["..Component:get_key().."] to ["..state.."].")
+
+    -- set the state of the header (invisible if inner?)
+    local uic = self:get_uic()
+    if is_uicomponent(uic) then
+        if state == "open" then
+            uic:SetVisible(true)
+            uic:SetState("selected")
+        elseif state == "closed" then
+            uic:SetVisible(true)
+            uic:SetState("active")
+        elseif state == "invisible" then
+            -- TODO hide all canvas and shit
+            uic:SetVisible(false)
+            uic:SetState("active")
+        end
+    end
 end
 
 function Component:set_is_root(b)
@@ -400,9 +427,9 @@ function Component:decipher()
 
             if v >= 110 and v < 130 then
                 -- TODO three floats (not ints!)
-                deciph("after_3_bit_f1", "int32", 4)
-                deciph("after_3_bit_f2", "int32", 4)
-                deciph("after_3_bit_f3", "int32", 4)
+                deciph("after_3_bit_f1", "float", 4)
+                deciph("after_3_bit_f2", "float", 4)
+                deciph("after_3_bit_f3", "float", 4)
             end
         end) if not ok then ui_editor_lib:log(err) end
         end
