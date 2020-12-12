@@ -47,23 +47,6 @@ function obj:get_type()
     return self.type
 end
 
--- if ui_editor_lib.is_large_file then
---     ui_editor_lib:log("Header pressed!")
---     local data = obj:get_data()
-    
---     for i = 1, #data do
---         local datum = data[i]
---         if string.find(tostring(datum), "UI_Field") then
---             -- TODO make this cleaner, too
---             ui_obj:create_details_row_for_field(datum, obj:get_uic())
---         end
---     end
-
---     local list_box = ui_obj.details_data.list_box
---     list_box:Layout()
--- else
-
-
 -- This is called whenever a header is pressed, which switches its state and triggers a change on all children fields and objects
 function obj:switch_state()
     local state = self.state
@@ -85,42 +68,35 @@ function obj:switch_state()
 
     local data = self:get_data()
 
-    if ui_editor_lib.is_large_file then
-        for i = 1, #data do
-            local datum = data[i]
-    
-            if string.find(tostring(datum), "UI_Field") then
-                -- if state is open, create
-                if new_state == "open" then
-                    ui_editor_lib.ui:create_details_row_for_field(datum, self:get_uic())
-                else -- closed; destroy
-                    ui_editor_lib.ui:delete_component(datum:get_uic())
-                end
+    for i = 1, #data do
+        local datum = data[i]
+
+        if string.find(tostring(datum), "UI_Field") then
+            -- if state is open, create
+            if new_state == "open" then
+                ui_editor_lib.ui:create_details_row_for_field(datum, self:get_uic())
+            else -- closed; destroy
+                ui_editor_lib.ui:delete_component(datum:get_uic())
             end
-            
-            datum:set_state(child_state)
         end
-    
-        -- TODO error check
-        local uic = self:get_uic()
-        local parent = UIComponent(uic:Parent())
-        local id = uic:Id()
-    
-        local canvas = UIComponent(parent:Find(id.."_canvas"))
-    
-        if new_state == "closed" then
-            -- hide the listbox!
-            -- resize it to puny so it fixes everything!
-            canvas:SetVisible(false)
-            canvas:Resize(canvas:Width(), 5)
-        else
-            canvas:SetVisible(true)
-        end
+        
+        datum:set_state(child_state)
+    end
+
+    -- TODO error check
+    local uic = self:get_uic()
+    local parent = UIComponent(uic:Parent())
+    local id = uic:Id()
+
+    local canvas = UIComponent(parent:Find(id.."_canvas"))
+
+    if new_state == "closed" then
+        -- hide the listbox!
+        -- resize it to puny so it fixes everything!
+        canvas:SetVisible(false)
+        canvas:Resize(canvas:Width(), 5)
     else
-        for i = 1, #data do
-            local inner = data[i]
-            inner:set_state(child_state)
-        end
+        canvas:SetVisible(true)
     end
 
 end) if not ok then ui_editor_lib:log(err) end

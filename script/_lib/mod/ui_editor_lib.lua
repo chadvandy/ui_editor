@@ -263,7 +263,6 @@ function ui_editor_lib:load_uic_with_path(path)
 
     self.loaded_uic = nil
     self.loaded_uic_path = ""
-    self.is_large_file = false
     self.copied_uic = nil
 
     self:log("load uic with path: "..path)
@@ -309,8 +308,6 @@ function ui_editor_lib:load_uic_with_path(path)
     if field_count >= 5000 then
         b = true
     end
-
-    self.is_large_file = b
 
     -- make a "copy" of the UIC
     self.copied_uic = self:new_obj("Component", uic)

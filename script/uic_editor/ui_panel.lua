@@ -403,91 +403,94 @@ function ui_obj:do_filter()
     if key_filter == "" then key_filter = nil end
     if value_filter == "" then value_filter = nil end
 
-    if ui_editor_lib.is_large_file then
-        -- TODO clear all canvases
-        local root = ui_editor_lib.copied_uic
+    -- if ui_editor_lib.is_large_file then
 
-        local function loopy(stuff, parent_uic)
-            local str = tostring(stuff)
-            if str:find("UI_Field") then
-                local key = stuff:get_key()
-                local value = stuff:get_value_text()
+    -- TODO clear all canvases
+    local root = ui_editor_lib.copied_uic
 
-                local create = false
+    local function loopy(stuff, parent_uic)
+        local str = tostring(stuff)
+        if str:find("UI_Field") then
+            local key = stuff:get_key()
+            local value = stuff:get_value_text()
 
-                if key_filter and key:find(key_filter) then
-                    create = true
-                end
+            local create = false
 
-                if value_filter and value:find(value_filter) then
-                    create = true
-                end
+            if key_filter and key:find(key_filter) then
+                create = true
+            end
 
-                if create then
-                    self:create_details_row_for_field(stuff, parent_uic)
-                end
+            if value_filter and value:find(value_filter) then
+                create = true
+            end
 
-                return create
-            else
-                local list_box = self.details_data.list_box
-                local uic = stuff:get_uic()
-                local id = uic:Id()
+            if create then
+                self:create_details_row_for_field(stuff, parent_uic)
+            end
 
-                local canvas = UIComponent(list_box:Find(id.."_canvas"))
+            return create
+        else
+            local list_box = self.details_data.list_box
+            local uic = stuff:get_uic()
+            local id = uic:Id()
 
-                local data = stuff:get_data()
-                local any_created = false
-                for i = 1, #data do
-                    local datum = data[i]
+            local canvas = UIComponent(list_box:Find(id.."_canvas"))
 
-                    local created = loopy(datum, uic)
-                    if created then any_created = true end
-                end
+            local data = stuff:get_data()
+            local any_created = false
+            for i = 1, #data do
+                local datum = data[i]
 
-                if any_created then
-                    if is_uicomponent(canvas) then
-                        canvas:SetVisible(true)
-                    end
+                local created = loopy(datum, uic)
+                if created then any_created = true end
+            end
+
+            if any_created then
+                if is_uicomponent(canvas) then
+                    canvas:SetVisible(true)
                 end
             end
         end
-
-        loopy(root)
-    else
-
-        if key_filter ~= "" then
-            for key,uics in pairs(self.key_to_uics) do
-                if string.find(key, key_filter) then
-                    -- for i = 1, #uics do
-                    --     local uic = uics[i]
-                    --     uic:SetVisible(true)
-                    -- end
-                else
-                    for i = 1, #uics do
-                        local uic = uics[i]
-                        uic:SetVisible(false)
-                    end
-                end
-            end
-        end
-
-        if value_filter ~= "" then
-            for value,uics in pairs(self.value_to_uics) do
-                if string.find(value, value_filter) then
-                    for i = 1, #uics do
-                        local uic = uics[i]
-                        uic:SetVisible(true)
-                    end
-                else
-                    for i = 1, #uics do
-                        local uic = uics[i]
-                        uic:SetVisible(false)
-                    end
-                end
-            end
-        end
-
     end
+
+    loopy(root)
+
+
+    -- else
+
+    --     if key_filter ~= "" then
+    --         for key,uics in pairs(self.key_to_uics) do
+    --             if string.find(key, key_filter) then
+    --                 -- for i = 1, #uics do
+    --                 --     local uic = uics[i]
+    --                 --     uic:SetVisible(true)
+    --                 -- end
+    --             else
+    --                 for i = 1, #uics do
+    --                     local uic = uics[i]
+    --                     uic:SetVisible(false)
+    --                 end
+    --             end
+    --         end
+    --     end
+
+    --     if value_filter ~= "" then
+    --         for value,uics in pairs(self.value_to_uics) do
+    --             if string.find(value, value_filter) then
+    --                 for i = 1, #uics do
+    --                     local uic = uics[i]
+    --                     uic:SetVisible(true)
+    --                 end
+    --             else
+    --                 for i = 1, #uics do
+    --                     local uic = uics[i]
+    --                     uic:SetVisible(false)
+    --                 end
+    --             end
+    --         end
+    --     end
+
+    -- end
 
     end) if not ok then ui_editor_lib:log(err) end
 
@@ -753,52 +756,55 @@ function ui_obj:create_details_header_for_obj(obj)
     self.details_data.x_margin = x_margin + 10
 
     -- create the Canvas for large files only
-    if ui_editor_lib.is_large_file then
-        -- set the state of the header to closed
-        -- if obj is a UIC, set it to closed
-        if obj:get_type() == "UIED_Component" then
-            header_uic:SetState("active")
-            header_uic:SetVisible(true)
-            obj.state = "closed"
-        else 
-            -- set it to invisible
-            header_uic:SetState("active")
-            header_uic:SetVisible(false)
-            obj.state = "invisible"
-        end
+    -- if ui_editor_lib.is_large_file then
 
-        local list_view = UIComponent(list_box:CreateComponent("ui_header_"..i.."_canvas", "ui/vandy_lib/vlist"))
 
-        list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
-        list_view:Resize(list_box:Width(), 5)
-        list_view:SetDockingPoint(0)
-        list_view:SetDockOffset(0, 0)
-    
-        local x,y = list_view:Position()
-        local w,h = list_view:Dimensions()
-        -- ui_editor_lib:log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
-    
-        local lclip = UIComponent(list_view:Find("list_clip"))
-        lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
-        lclip:SetDockingPoint(2)
-        lclip:SetDockOffset(0, 0)
-        lclip:Resize(w,h)
-
-        -- ui_editor_lib:log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
-    
-        local lbox = UIComponent(lclip:Find("list_box"))
-        lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
-        lbox:SetDockingPoint(2)
-        lbox:SetDockOffset(0, 0)
-        lbox:Resize(w,h)
-
-        list_view:SetVisible(false)
-
-        -- hide da scroll bar
-        local vslider = UIComponent(list_view:Find("vslider"))
-        vslider:SetVisible(false) 
-        vslider:PropagateVisibility(false)
+    -- set the state of the header to closed
+    -- if obj is a UIC, set it to closed
+    if obj:get_type() == "UIED_Component" then
+        header_uic:SetState("active")
+        header_uic:SetVisible(true)
+        obj.state = "closed"
+    else 
+        -- set it to invisible
+        header_uic:SetState("active")
+        header_uic:SetVisible(false)
+        obj.state = "invisible"
     end
+
+    local list_view = UIComponent(list_box:CreateComponent("ui_header_"..i.."_canvas", "ui/vandy_lib/vlist"))
+
+    list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
+    list_view:Resize(list_box:Width(), 5)
+    list_view:SetDockingPoint(0)
+    list_view:SetDockOffset(0, 0)
+
+    local x,y = list_view:Position()
+    local w,h = list_view:Dimensions()
+    -- ui_editor_lib:log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
+
+    local lclip = UIComponent(list_view:Find("list_clip"))
+    lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
+    lclip:SetDockingPoint(2)
+    lclip:SetDockOffset(0, 0)
+    lclip:Resize(w,h)
+
+    -- ui_editor_lib:log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
+
+    local lbox = UIComponent(lclip:Find("list_box"))
+    lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
+    lbox:SetDockingPoint(2)
+    lbox:SetDockOffset(0, 0)
+    lbox:Resize(w,h)
+
+    list_view:SetVisible(false)
+
+    -- hide da scroll bar
+    local vslider = UIComponent(list_view:Find("vslider"))
+    vslider:SetVisible(false) 
+    vslider:PropagateVisibility(false)
+
+    -- end
 
     -- loop through every field in "data" and call its own display() method
     local data = obj:get_data()
@@ -1071,19 +1077,21 @@ end
 
 function ui_obj:display(obj)
     -- if file too big, only create headers
-    if ui_editor_lib.is_large_file then
-        if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Collection") then
-            self:create_details_header_for_obj(obj)
-        end
-    else
-        if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Collection") then
-            self:create_details_header_for_obj(obj)
-        elseif string.find(tostring(obj), "UI_Field") then
-            self:create_details_row_for_field(obj)
-        else
-            ui_editor_lib:log("not a field or a class!")
-        end
+    -- if ui_editor_lib.is_large_file then
+    
+    if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Collection") then
+        self:create_details_header_for_obj(obj)
     end
+
+    -- else
+    --     if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Collection") then
+    --         self:create_details_header_for_obj(obj)
+    --     elseif string.find(tostring(obj), "UI_Field") then
+    --         self:create_details_row_for_field(obj)
+    --     else
+    --         ui_editor_lib:log("not a field or a class!")
+    --     end
+    -- end
 end
 
 
