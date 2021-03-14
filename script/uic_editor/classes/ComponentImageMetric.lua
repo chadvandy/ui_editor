@@ -1,9 +1,9 @@
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib:get_class("BaseClass")
+local uied = core:get_static_object("ui_editor_lib")
+local BaseClass = uied:get_class("BaseClass")
 
-local parser = ui_editor_lib.parser
+local parser = uied.parser
 local function dec(key, format, k, obj)
-    -- ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
+    uied:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -29,7 +29,7 @@ end
 function ComponentImageMetric:decipher()
     local v = parser.root_uic:get_version()
 
-    -- local obj = ui_editor_lib:new_obj("ComponentImageMetric")
+    -- local obj = uied:new_obj("ComponentImageMetric")
 
     local function deciph(key, format, k)
         return dec(key, format, k, self)
@@ -77,10 +77,12 @@ function ComponentImageMetric:decipher()
         deciph("rotation_axis", "int32", {4,4,4})
     end
 
+    -- TOOD b4 is probably opacity!
     if v <= 102 then
         deciph("b4", "hex", 4)
     end
 
+    -- TODO first 4 of the following are probably opacity!
     if v == 79 then
         deciph("b5", "hex", 8)
     elseif v >= 70 and v < 80 then

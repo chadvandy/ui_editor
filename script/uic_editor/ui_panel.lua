@@ -1,13 +1,14 @@
 -- the actual physical for the UI, within the game.
 -- weird concept, right?
 
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
+local uied = core:get_static_object("ui_editor_lib")
 
 local ui_obj = {
     new_button = nil,
     opened = false,
 
     panel = nil,
+    headers_data = {},
     details_data = {},
 
     row_index = 1,
@@ -36,7 +37,7 @@ function ui_obj:delete_component(uic)
             end
         end
     else
-        ui_editor_lib:log("Invalid type passed to ui:delete_component()")
+        uied:log("Invalid type passed to ui:delete_component()")
         return
     end
 
@@ -47,20 +48,20 @@ end
 function ui_obj:init()
     local new_button
     if __game_mode == __lib_type_campaign or __game_mode == __lib_type_battle then
-        ui_editor_lib:log("bloop")
+        uied:log("bloop")
         local button_group = find_uicomponent(core:get_ui_root(), "menu_bar", "buttongroup")
         new_button = UIComponent(button_group:CreateComponent("button_ui_editor", "ui/templates/round_small_button"))
 
         new_button:SetTooltipText("UI Editor", true)
 
-        ui_editor_lib:log("bloop 2")
+        uied:log("bloop 2")
         --new_button:SetImagePath()
 
         new_button:PropagatePriority(button_group:Priority())
 
         button_group:Layout()
 
-        ui_editor_lib:log("bloop 5")
+        uied:log("bloop 5")
     elseif __game_mode == __lib_type_frontend then
         local button_group = find_uicomponent(core:get_ui_root(), "sp_frame", "menu_bar")
 
@@ -70,7 +71,7 @@ function ui_obj:init()
         button_group:Layout()
     end
 
-    if not is_uicomponent(new_button) then ui_editor_lib:log("NO NEW BUTTON") return end
+    if not is_uicomponent(new_button) then uied:log("NO NEW BUTTON") return end
 
     self.button = new_button
 
@@ -81,6 +82,7 @@ function ui_obj:init()
             return UIComponent(context.component) == self.button
         end,
         function(context)
+            uied:log("button_pressed()")
             self:button_pressed()
         end,
         true
@@ -123,7 +125,7 @@ function ui_obj:create_panel()
 
     panel:SetVisible(true)
 
-    ui_editor_lib:log("test 1")
+    uied:log("test 1")
 
     self.panel = panel
 
@@ -133,21 +135,21 @@ function ui_obj:create_panel()
     panel:SetCanResizeWidth(true) panel:SetCanResizeHeight(true)
 
     
-    ui_editor_lib:log("test 2")
+    uied:log("test 2")
 
     local sw,sh = core:get_screen_resolution()
     panel:Resize(sw*0.95, sh*0.95)
 
     panel:SetCanResizeWidth(false) panel:SetCanResizeHeight(false)
 
-    ui_editor_lib:log("test 3")
+    uied:log("test 3")
 
     -- edit the name
     local title_plaque = UIComponent(panel:Find("title_plaque"))
     local title = UIComponent(title_plaque:Find("title"))
     title:SetStateText("UI Editor")
 
-    ui_editor_lib:log("test 4")
+    uied:log("test 4")
 
     -- hide stuff from the gfx window
     local comps = {
@@ -159,7 +161,7 @@ function ui_obj:create_panel()
         UIComponent(panel:Find("dropdown_quality")),
     }
 
-    ui_editor_lib:log("test 5")
+    uied:log("test 5")
 
     self:delete_component(comps)
 
@@ -169,7 +171,7 @@ function ui_obj:create_panel()
     close_button_uic:SetImagePath(img_path)
     close_button_uic:SetTooltipText("Close panel", true)
 
-    ui_editor_lib:log("test 6")
+    uied:log("test 6")
 
     -- move to bottom center
     close_button_uic:SetDockingPoint(8)
@@ -328,31 +330,65 @@ function ui_obj:create_sections()
             do_filter:SetDockOffset(-20, 0)
         end
 
-        local list_view = UIComponent(details_screen:CreateComponent("list_view", "ui/vandy_lib/vlist"))
-        list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
-        list_view:Resize(nw-20, nh-details_title:Height()-filter_holder:Height()-50)
-        list_view:SetDockingPoint(2)
-        list_view:SetDockOffset(10, details_title:Height() + filter_holder:Height() + 5)
-    
-        local x,y = list_view:Position()
-        local w,h = list_view:Bounds()
-        ui_editor_lib:log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
-    
-        local lclip = UIComponent(list_view:Find("list_clip"))
-        lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
-        lclip:SetDockingPoint(0)
-        lclip:SetDockOffset(0, 0)
-        lclip:Resize(w,h)
+        local w,h = nw-20, (nh-details_title:Height()-filter_holder:Height()-50) * 0.45
 
-        ui_editor_lib:log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
+        -- header list view
+        do
+            local list_view = UIComponent(details_screen:CreateComponent("ui_obj_list_view", "ui/vandy_lib/vlist"))
+            list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
+            list_view:Resize(w, h)
+            list_view:SetDockingPoint(2)
+            list_view:SetDockOffset(10, details_title:Height() + filter_holder:Height() + 5)
+        
+            local x,y = list_view:Position()
+            local w,h = list_view:Bounds()
+            uied:log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
+        
+            local lclip = UIComponent(list_view:Find("list_clip"))
+            lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
+            lclip:SetDockingPoint(0)
+            lclip:SetDockOffset(0, 0)
+            lclip:Resize(w,h)
     
-        local lbox = UIComponent(lclip:Find("list_box"))
-        lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
-        lbox:SetDockingPoint(0)
-        lbox:SetDockOffset(0, 0)
-        lbox:Resize(w-30,h)
+            uied:log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
+        
+            local lbox = UIComponent(lclip:Find("list_box"))
+            lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
+            lbox:SetDockingPoint(0)
+            lbox:SetDockOffset(0, 0)
+            lbox:Resize(w-30,h)
+    
+            uied:log("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
+        end
 
-        ui_editor_lib:log("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
+        -- details list view
+        do
+            local list_view = UIComponent(details_screen:CreateComponent("ui_details_list_view", "ui/vandy_lib/vlist"))
+            list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
+            list_view:Resize(w, h)
+            list_view:SetDockingPoint(8)
+            list_view:SetDockOffset(10, 5)
+        
+            local x,y = list_view:Position()
+            local w,h = list_view:Bounds()
+            -- uied:log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
+        
+            local lclip = UIComponent(list_view:Find("list_clip"))
+            lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
+            lclip:SetDockingPoint(0)
+            lclip:SetDockOffset(0, 0)
+            lclip:Resize(w,h)
+    
+            -- uied:log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
+        
+            local lbox = UIComponent(lclip:Find("list_box"))
+            lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
+            lbox:SetDockingPoint(0)
+            lbox:SetDockOffset(0, 0)
+            lbox:Resize(w-30,h)
+    
+            -- uied:log("list box bounds: ("..tostring(lbox:Width()..", "..tostring(lbox:Height())..")"))
+        end
     end
 
     do
@@ -383,12 +419,12 @@ end
 -- TODO use canvases off large-file mode; large file should just start everything deleted, while not-large has everything created
 
 function ui_obj:do_filter()
-    ModLog("Doing the filter")
+    uied:log("Doing the filter")
     local panel = self.panel
     local filter_holder = find_uicomponent(panel, "details_screen", "filter_holder")
 
     if not is_uicomponent(filter_holder) then
-        ModLog("Wtf no filter holder.")
+        uied:log("Wtf no filter holder.")
         return false
     end
 
@@ -403,10 +439,10 @@ function ui_obj:do_filter()
     if key_filter == "" then key_filter = nil end
     if value_filter == "" then value_filter = nil end
 
-    -- if ui_editor_lib.is_large_file then
+    -- if uied.is_large_file then
 
     -- TODO clear all canvases
-    local root = ui_editor_lib.copied_uic
+    local root = uied.copied_uic
 
     local function loopy(stuff, parent_uic)
         local str = tostring(stuff)
@@ -430,7 +466,7 @@ function ui_obj:do_filter()
 
             return create
         else
-            local list_box = self.details_data.list_box
+            local list_box = self.headers_data.list_box
             local uic = stuff:get_uic()
             local id = uic:Id()
 
@@ -492,7 +528,7 @@ function ui_obj:do_filter()
 
     -- end
 
-    end) if not ok then ui_editor_lib:log(err) end
+    end) if not ok then uied:log(err) end
 
 end
 
@@ -571,15 +607,15 @@ function ui_obj:get_path()
 end
 
 function ui_obj:create_loaded_uic_in_testing_ground(is_copied, is_fullscreen)
-    local path = ui_editor_lib.loaded_uic_path
+    local path = uied.loaded_uic_path
 
     if is_copied then
-        path = "ui/ui_editor/"..ui_editor_lib:get_testing_file_string()
+        path = "ui/ui_editor/"..uied:get_testing_file_string()
     end
 
     local panel = self.panel
     if not panel or not is_uicomponent(panel) or not path then
-        ui_editor_lib:log("create loaded uic in testing ground failed")
+        uied:log("create loaded uic in testing ground failed")
         return false
     end
 
@@ -594,7 +630,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied, is_fullscreen)
         local test_uic = UIComponent(core:get_ui_root():CreateComponent("testing_component", path))
 
         if not is_uicomponent(test_uic) then
-            ui_editor_lib:log("test uic failed!")
+            uied:log("test uic failed!")
             return false
         end
 
@@ -613,6 +649,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied, is_fullscreen)
                 return context.string == "fullscreen_disable"
             end,
             function(context)
+                uied:log("fullscreen_disable")
                 local uic = UIComponent(context.component)
 
                 self:delete_component(uic)
@@ -630,7 +667,7 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied, is_fullscreen)
 
     local test_uic = UIComponent(testing_grounds:CreateComponent("testing_component", path))
     if not is_uicomponent(test_uic) then
-        ui_editor_lib:log("test uic failed!")
+        uied:log("test uic failed!")
         return false
     end
 
@@ -671,19 +708,18 @@ function ui_obj:create_loaded_uic_in_testing_ground(is_copied, is_fullscreen)
 end
 
 function ui_obj:create_details_header_for_obj(obj)
-    local list_box = self.details_data.list_box
-    local x_margin = self.details_data.x_margin
-    local default_h = self.details_data.default_h
+    local list_box = self.headers_data.list_box
+    local x_margin = self.headers_data.x_margin
+    local default_h = self.headers_data.default_h
 
     if not is_uicomponent(list_box) then
-        ui_editor_lib:log("display called on obj ["..obj:get_key().."], but the list box don't exist yo")
-        ui_editor_lib:log(tostring(list_box))
+        uied:log("display called on obj ["..obj:get_key().."], but the list box don't exist yo")
+        uied:log(tostring(list_box))
         return false
     end
 
     -- create the header_uic for the holder of the UIC
-    local i = self.row_index
-    local header_uic = UIComponent(list_box:CreateComponent("ui_header_"..i, "ui/vandy_lib/expandable_row_header"))
+    local header_uic = UIComponent(list_box:CreateComponent("ui_header_"..self.row_index, "ui/vandy_lib/expandable_row_header"))
 
     self.rows_to_objs[tostring(self.row_index)] = obj
     self.row_index = self.row_index+1
@@ -695,7 +731,7 @@ function ui_obj:create_details_header_for_obj(obj)
     header_uic:Resize(list_box:Width() * 0.95 - x_margin, header_uic:Height())
     header_uic:SetCanResizeWidth(false)
 
-    if default_h == 0 then self.details_data.default_h = header_uic:Height() end
+    if default_h == 0 then self.headers_data.default_h = header_uic:Height() end
 
     -- TODO set a tooltip on the header uic entirely
     header_uic:SetDockingPoint(0)
@@ -716,7 +752,8 @@ function ui_obj:create_details_header_for_obj(obj)
         child_count:SetVisible(false)
     end
 
-    if obj:get_type() == "UIED_Component" and not obj:is_root() then
+
+    if (obj:get_type() == "UIED_Component" and not obj:is_root()) or obj:get_type() ~= "UIED_Component" and obj:get_type() ~= "UI_Collection" then
         local delete_button = UIComponent(header_uic:CreateComponent("delete", "ui/templates/square_medium_button"))
 
         delete_button:SetDockingPoint(6)
@@ -735,136 +772,110 @@ function ui_obj:create_details_header_for_obj(obj)
                 return UIComponent(context.component) == delete_button
             end,
             function(context)
-                ui_editor_lib:log("Object ["..obj:get_key().."] with type ["..obj:get_type().."] being deleted!")
+                uied:log("Object ["..obj:get_key().."] with type ["..obj:get_type().."] being deleted!")
                 local parent = obj:get_parent()
 
-                ui_editor_lib:log("Parent obj key is ["..parent:get_key().."], of type ["..parent:get_type().."].")
+                uied:log("Parent obj key is ["..parent:get_key().."], of type ["..parent:get_type().."].")
 
                 -- remove the data from the parent!
                 parent:remove_data(obj)
 
+                uied:log("Bloop 1")
+
+
                 -- delete the canvas and the header UIC
                 local header_uic_id = header_uic:Id()
+                uied:log("Bloop 2")
                 self:delete_component(header_uic)
-                self:delete_component(UIComponent(list_box:Find(header_uic_id.."_canvas")))
+                uied:log("Bloop 3")
+
+                local find = list_box:Find(header_uic_id.."_canvas")
+                if find then
+                    self:delete_component(UIComponent(find))
+                end
+                
+                uied:log("Bloop 4")
             end,
             false
         )
     end
 
     -- move the x_margin over a bit
-    self.details_data.x_margin = x_margin + 10
+    self.headers_data.x_margin = x_margin + 10
 
-    -- create the Canvas for large files only
-    -- if ui_editor_lib.is_large_file then
-
-
+    ---- TODO debug stuff, keep this?
     -- set the state of the header to closed
     -- if obj is a UIC, set it to closed
-    if obj:get_type() == "UIED_Component" then
+    -- if obj:get_type() == "UIED_Component" or obj:get_type() == "UI_Collection" and obj:get_key() == "Components" then
         header_uic:SetState("active")
         header_uic:SetVisible(true)
         obj.state = "closed"
-    else 
-        -- set it to invisible
-        header_uic:SetState("active")
-        header_uic:SetVisible(false)
-        obj.state = "invisible"
-    end
-
-    local list_view = UIComponent(list_box:CreateComponent("ui_header_"..i.."_canvas", "ui/vandy_lib/vlist"))
-
-    list_view:SetCanResizeWidth(true) list_view:SetCanResizeHeight(true)
-    list_view:Resize(list_box:Width(), 5)
-    list_view:SetDockingPoint(0)
-    list_view:SetDockOffset(0, 0)
-
-    local x,y = list_view:Position()
-    local w,h = list_view:Dimensions()
-    -- ui_editor_lib:log("list view bounds: ("..tostring(w)..", "..tostring(h)..")")
-
-    local lclip = UIComponent(list_view:Find("list_clip"))
-    lclip:SetCanResizeWidth(true) lclip:SetCanResizeHeight(true)
-    lclip:SetDockingPoint(2)
-    lclip:SetDockOffset(0, 0)
-    lclip:Resize(w,h)
-
-    -- ui_editor_lib:log("list clip bounds: ("..tostring(lclip:Width()..", "..tostring(lclip:Height())..")"))
-
-    local lbox = UIComponent(lclip:Find("list_box"))
-    lbox:SetCanResizeWidth(true) lbox:SetCanResizeHeight(true)
-    lbox:SetDockingPoint(2)
-    lbox:SetDockOffset(0, 0)
-    lbox:Resize(w,h)
-
-    list_view:SetVisible(false)
-
-    -- hide da scroll bar
-    local vslider = UIComponent(list_view:Find("vslider"))
-    vslider:SetVisible(false) 
-    vslider:PropagateVisibility(false)
-
+    -- else 
+    --     -- set it to invisible
+    --     header_uic:SetState("active")
+    --     header_uic:SetVisible(false)
+    --     obj.state = "invisible"
     -- end
 
     -- loop through every field in "data" and call its own display() method
     local data = obj:get_data()
 
-    -- ui_editor_lib:log("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
+    uied:log("hand-crafting details header for obj ["..obj:get_key().."] with type ["..obj:get_type().."].\nNumber of data is: "..tostring(#data))
 
     for i = 1, #data do
-        -- ui_editor_lib:log("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
+        uied:log("in ["..tostring(i).."] within obj ["..obj:get_key().."].")
         local d = data[i]
         -- local d_key = d.key -- needed?
         local d_obj
 
-        -- ui_editor_lib:log("Testing obj: "..tostring(d))
-        -- ui_editor_lib:log("")
+        uied:log("Testing obj: "..tostring(d))
+        uied:log("")
 
         -- if obj:get_key() == "dy_txt" then
-        --     -- ui_editor_lib:log("VANDY LOOK HERE")
-        --     -- ui_editor_lib:log(i.."'s key: " .. d:get_key())
+        --     uied:log("VANDY LOOK HERE")
+        --     uied:log(i.."'s key: " .. d:get_key())
         --     if tostring(d) == "UI_Field" then
-        --         -- ui_editor_lib:log(i.."'s val: " .. tostring(d:get_value()))
+        --         uied:log(i.."'s val: " .. tostring(d:get_value()))
         --     end
         -- end
 
         if string.find(tostring(d), "UIED_") or string.find(tostring(d), "UI_Collection") or string.find(tostring(d), "UI_Field") then
-            -- ui_editor_lib:log("inner child is a class")
+            uied:log("inner child is a class")
             d_obj = d
         -- elseif type(d) == "table" then
-        --     ui_editor_lib:log("inner child is a table")
+        --     uied:log("inner child is a table")
         --     if not is_nil(d.value) then
         --         d_obj = d.value
         --     else
-        --         ui_editor_lib:log("inner child table doesn't ")
+        --         uied:log("inner child table doesn't ")
         --     end
         else
             -- TODO errmsg
-            ui_editor_lib:log("inner child is not a field or a class, Y")
+            uied:log("inner child is not a field or a class, Y")
             -- TODO resolve what to do if it's just a raw value?
         end
 
         if is_nil(d_obj) or not is_table(d_obj) then
-            ui_editor_lib:log("we have a nil d_obj!")
+            uied:log("we have a nil d_obj!")
         else
             self:display(d_obj)
         end
     end
 
     -- move the x_margin back to where it began here, after doing the internal loops
-    self.details_data.x_margin = x_margin
+    self.headers_data.x_margin = x_margin
 end
 
 
 
-function ui_obj:create_details_row_for_field(obj, parent_uic)
+function ui_obj:create_details_row_for_field(obj)
     local list_box = self.details_data.list_box
-    local x_margin = self.details_data.x_margin
-    local default_h = self.details_data.default_h
+    local x_margin = 0
+    local default_h = self.headers_data.default_h
     
     if not is_uicomponent(list_box) then
-        ui_editor_lib:log("display called on field ["..obj:get_key().."], but the list box don't exist yo")
-        ui_editor_lib:log(tostring(list_box))
+        uied:log("display called on field ["..obj:get_key().."], but the list box don't exist yo")
+        uied:log(tostring(list_box))
         return false
     end
     
@@ -874,29 +885,7 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
 
     local type_text,tooltip_text,value_text = obj:get_display_text()
 
-    local row_uic = nil
-    local canvas = nil
-    if is_uicomponent(parent_uic) then
-        local id = parent_uic:Id()
-        canvas = UIComponent(list_box:Find(id.."_canvas"))
-
-        if is_uicomponent(canvas) then
-            ui_editor_lib:log("Canvas found!")
-
-            local lbox = find_uicomponent(canvas, "list_clip", "list_box")
-            
-            row_uic = UIComponent(lbox:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
-
-            -- TODO figure this out?
-            -- resize canvas automatically, use Layout(), what?
-        else
-            ui_editor_lib:log("Canvas not found!!!! "..id)
-            return false
-        end
-    else
-        row_uic = UIComponent(list_box:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
-    end    
-
+    local row_uic = UIComponent(list_box:CreateComponent("ui_field_"..self.row_index, "ui/campaign ui/script_dummy"))
 
     self.rows_to_objs[tostring(self.row_index)] = obj
     self.row_index = self.row_index + 1
@@ -978,11 +967,12 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
                 return UIComponent(context.component) == ok_button
             end,
             function(context)
+                uied:log("button_clicked ok_button")
                 local state_text = right_text_uic:GetStateText()
-                ui_editor_lib:log("Checking text: "..tostring(state_text))
+                uied:log("Checking text: "..tostring(state_text))
 
                 local ok, err = pcall(obj:change_val(state_text))
-                if not ok then ui_editor_lib:log(err) end
+                if not ok then uied:log(err) end
             end,
             true
         )
@@ -1018,21 +1008,22 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
                 return UIComponent(context.component) == right_text_uic
             end,
             function(context)
+                uied:log("checkbox_clicked")
                 -- local state_text = right_text_uic:GetStateText()
                 local my_state = obj:get_value()
 
                 local new_state = not my_state
                 -- local new_state = UIComponent(context.component):CurrentState()
                 -- local b = false
-                -- ui_editor_lib:log("My new state is: "..new_state)
+                uied:log("My new state for ["..obj:get_key().."] is: "..tostring(new_state))
                 -- if new_state == "selected" then
                 --     b = true
                 -- end
                 
-                -- ui_editor_lib:log("Checking text: "..tostring(state_text))
+                -- uied:log("Checking text: "..tostring(state_text))
 
                 local ok, err = pcall(obj:change_val(new_state))
-                if not ok then ui_editor_lib:log(err) end
+                if not ok then uied:log(err) end
             end,
             true
         )
@@ -1061,24 +1052,13 @@ function ui_obj:create_details_row_for_field(obj, parent_uic)
 
         right_text_uic:SetTooltipText(obj:get_hex(), true)
     end
-
-    if canvas then
-        local cw,ch = canvas:Width(), canvas:Height()
-        local _,rh = row_uic:Width(), row_uic:Height()
-
-        canvas:SetDockingPoint(0)
-        canvas:SetDockOffset(0, 0)
-        canvas:Resize(cw, ch+rh+5)
-
-        canvas:Layout()
-    end
 end
 
 
 function ui_obj:display(obj)
     -- if file too big, only create headers
-    -- if ui_editor_lib.is_large_file then
-    
+    -- if uied.is_large_file then
+
     if string.find(tostring(obj), "UIED_") or string.find(tostring(obj), "UI_Collection") then
         self:create_details_header_for_obj(obj)
     end
@@ -1089,7 +1069,7 @@ function ui_obj:display(obj)
     --     elseif string.find(tostring(obj), "UI_Field") then
     --         self:create_details_row_for_field(obj)
     --     else
-    --         ui_editor_lib:log("not a field or a class!")
+    --         uied:log("not a field or a class!")
     --     end
     -- end
 end
@@ -1098,9 +1078,9 @@ end
 function ui_obj:create_details_for_loaded_uic()
     local panel = self.panel
 
-    local root_uic = ui_editor_lib.copied_uic
+    local root_uic = uied.copied_uic
 
-    ui_editor_lib:log("bloop 1")
+    uied:log("bloop 1")
 
     -- TODO figure out the actual look of the text for each thing
     -- TODO figure out tables
@@ -1108,41 +1088,43 @@ function ui_obj:create_details_for_loaded_uic()
     local ok, err = pcall(function()
 
     local details_screen = UIComponent(panel:Find("details_screen"))
-    local list_box = find_uicomponent(details_screen, "list_view", "list_clip", "list_box")
+    local list_box = find_uicomponent(details_screen, "ui_obj_list_view", "list_clip", "list_box")
 
-    ui_editor_lib:log("The total amount of fields in this file is: "..tostring(ui_editor_lib.parser.field_count))
+    uied:log("The total amount of fields in this file is: "..tostring(uied.parser.field_count))
     
-    ui_editor_lib:log(tostring(list_box))
-    ui_editor_lib:log(tostring(is_uicomponent(list_box)))
+    uied:log(tostring(list_box))
+    uied:log(tostring(is_uicomponent(list_box)))
 
     -- destroy chil'un of list_box (clear previous shit)
     list_box:DestroyChildren()
 
     -- save the list_box and the x_margin to the ui_obj so it can be easily accessed through all the displays
-    self.details_data.list_box = list_box
-    self.details_data.x_margin = 0
-    self.details_data.default_h = 0
+    self.headers_data.list_box = list_box
+    self.headers_data.x_margin = 0
+    self.headers_data.default_h = 25
+
+    self.details_data.list_box = find_uicomponent(details_screen, "ui_details_list_view", "list_clip", "list_box")
 
     -- TODO this is a potentially very expensive operation, take a look how it feels with huge files (probably runs like shit (: )
-    ui_editor_lib:log("beginning")
+    uied:log("beginning")
 
     self:display(root_uic)
 
-    ui_editor_lib:log("end")
+    uied:log("end")
 
     -- layout the list_box to make sure everything refreshes propa
     list_box:Layout()
-    end) if not ok then ui_editor_lib:log(err) end
+    end) if not ok then uied:log(err) end
 end
 
 -- load the currently deciphered UIC
 -- opens the UIC in the testing grounds, and displays all the deciphered details
 function ui_obj:load_uic()
-    ui_editor_lib:log("load_uic() called")
+    uied:log("load_uic() called")
     local panel = self.panel
 
     if not is_uicomponent(panel) then
-        ui_editor_lib:log("load_uic() called, panel not found?")
+        uied:log("load_uic() called, panel not found?")
         return false
     end
 
@@ -1153,20 +1135,30 @@ core:add_listener(
     "header_pressed",
     "ComponentLClickUp",
     function(context)
+        uied:log("Testing press for header")
         local str = context.string
+        uied:log("Testing press: "..str)
         return string.find(str, "ui_header_")
     end,
     function(context)
+        uied:log("Header pressed!")
         local str = context.string
         local ind = string.gsub(str, "ui_header_", "")
 
         local obj = ui_obj.rows_to_objs[ind]
 
+        local lb = ui_obj.details_data.list_box
+        uied:log("Clearing details panel!")
+        lb:DestroyChildren()
+        uied:log("Switching state!")
         obj:switch_state()
-
-        local list_box = ui_obj.details_data.list_box
-        if is_uicomponent(list_box) then
-            list_box:Layout()
+        uied:log("Switching state completed!")
+        
+        -- local list_box = ui_obj.headers_data.list_box
+        if is_uicomponent(lb) then
+            uied:log("Doin the listbox layout!")
+            lb:Layout()
+            uied:log("Done the listbox layout!")
         end
     end,
     true
@@ -1180,7 +1172,8 @@ core:add_listener(
         return context.string == "ui_editor_save_button"
     end,
     function(context)
-        ui_editor_lib:print_copied_uic()
+        uied:log("ui editor save button")
+        uied:print_copied_uic()
     end,
     true
 )
@@ -1192,6 +1185,7 @@ core:add_listener(
         return context.string == "ui_editor_test_button"
     end,
     function(context)
+        uied:log("ui_editor_test_button")
         ui_obj:create_loaded_uic_in_testing_ground(true)
     end,
     true
@@ -1204,6 +1198,7 @@ core:add_listener(
         return context.string == "ui_editor_full_screen_button"
     end,
     function(context)
+        uied:log("ui_editor_full_screen_button")
         ui_obj:create_loaded_uic_in_testing_ground(true, true)
     end,
     true
@@ -1216,10 +1211,11 @@ core:add_listener(
         return context.string == "ui_editor_load_button"
     end,
     function(context)
+        uied:log("ui_editor_load_button")
         -- TODO make sure get_path is valid 
         local path = ui_obj:get_path()
 
-        ui_editor_lib:load_uic_with_path(path)
+        uied:load_uic_with_path(path)
 
         --ui_obj:
     end,
@@ -1233,8 +1229,8 @@ core:add_listener(
         return context.string == "do_filter"
     end,
     function(context)
-        ModLog("DO FILTER")
-        ui_obj:do_filter()
+        uied:log("DO FILTER")
+        -- ui_obj:do_filter()
     end,
     true
 )
@@ -1247,6 +1243,7 @@ core:add_listener(
         return context.string == "ui_editor_close"
     end,
     function(context)
+        uied:log("ui_editor_close")
         ui_obj:close_panel()
     end,
     true
@@ -1257,10 +1254,10 @@ core:add_listener(
     "UICreated",
     true,
     function()
-        ui_editor_lib:log("UI Created")
+        uied:log("UI Created")
         local ok, err = pcall(function()
         ui_obj:init()
-        end) if not ok then ui_editor_lib:log(err) end
+        end) if not ok then uied:log(err) end
     end,
     true
 )

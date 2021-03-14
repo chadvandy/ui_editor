@@ -5,7 +5,7 @@
 -- the layout_parser also is where all the internal versioning is, and if all goes well, is the only file that needs updating each CA patch (when a new UIC version is introduced).
 
 
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
+local uied = core:get_static_object("ui_editor_lib")
 
 local parser = {
     name = "blorp",
@@ -72,14 +72,14 @@ function parser:utf8_to_chunk(str)
 
     local len = str:len()
 
-    ui_editor_lib:log("Length of str: "..len)
+    uied:log("Length of str: "..len)
     local hex_len = string.format("%02X", len)-- ..  "00"
 
     for _ = 1, 4-hex_len:len() do
         hex_len = hex_len .. "0"
     end
 
-    ui_editor_lib:log("Hex len of str: "..hex_len)
+    uied:log("Hex len of str: "..hex_len)
 
     hex_str = hex_len
 
@@ -87,7 +87,7 @@ function parser:utf8_to_chunk(str)
     for i = 1, len do
         local c = str:sub(i, i)
         -- print(c)
-        ui_editor_lib:log(c)
+        uied:log(c)
 
         -- string.byte converts the character (ie. "r") to the binary data, and then string.format turns the binary byte into a hexadecimal value
         -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
@@ -109,7 +109,7 @@ function parser:utf8_to_chunk(str)
     --     bin_str = bin_str .. bin_byte
     -- end
 
-    -- ui_editor_lib:log(bin_str)
+    -- uied:log(bin_str)
 
     return hex_str
 end
@@ -123,14 +123,14 @@ function parser:str_to_chunk(str)
 
     local len = str:len()
 
-    ui_editor_lib:log("Length of str: "..len)
+    uied:log("Length of str: "..len)
     local hex_len = string.format("%02X", len)-- ..  "00"
 
     for _ = 1, 4-hex_len:len() do
         hex_len = hex_len .. "0"
     end
 
-    ui_editor_lib:log("Hex len of str: "..hex_len)
+    uied:log("Hex len of str: "..hex_len)
 
     hex_str = hex_len
 
@@ -138,7 +138,7 @@ function parser:str_to_chunk(str)
     for i = 1, len do
         local c = str:sub(i, i)
         -- print(c)
-        ui_editor_lib:log(c)
+        uied:log(c)
 
         -- string.byte converts the character (ie. "r") to the binary data, and then string.format turns the binary byte into a hexadecimal value
         -- it's done this way so it can be one long, consistent hex string, then turned completely into a bin string
@@ -158,7 +158,7 @@ function parser:str_to_chunk(str)
     --     bin_str = bin_str .. bin_byte
     -- end
 
-    -- ui_editor_lib:log(bin_str)
+    -- uied:log(bin_str)
 
     return hex_str
 end
@@ -334,7 +334,7 @@ function parser:chunk_to_float(j, k)
     end
 
     local str = "0x"..table.concat(flipped, "")
-    ui_editor_lib:log("Hex for float at ["..j.."] ["..k.."] is ["..str.."].")
+    uied:log("Hex for float at ["..j.."] ["..k.."] is ["..str.."].")
 
     local float = hex2float(str)
     local hex = self:chunk_to_hex(j, k)
@@ -345,7 +345,7 @@ end
 -- converts a series of hexadecimal bytes (between j and k) into a string
 -- takes an original 2 bytes *before* the string as the "len" identifier.
 function parser:chunk_to_str(j, k)
-    ui_editor_lib:log("chunk to str "..tostring(j) .. " & "..tostring(k))
+    uied:log("chunk to str "..tostring(j) .. " & "..tostring(k))
 
     local start_j = j
 
@@ -353,20 +353,20 @@ function parser:chunk_to_str(j, k)
     if k == -1 then
         -- first two bytes are the length identifier
         local len = self:chunk_to_int16(j, j+1)
-        ui_editor_lib:log("len is: "..len)
+        uied:log("len is: "..len)
 
         -- if the len is 0, then just return a string of "" (for optional strings)
-        if len == 0 then ui_editor_lib:log(tostring(j)) ui_editor_lib:log(tostring(j+1)) return "\"\"", self:chunk_to_hex(j, j+1), j+1 end
+        if len == 0 then uied:log(tostring(j)) uied:log(tostring(j+1)) return "\"\"", self:chunk_to_hex(j, j+1), j+1 end
 
 
         -- set k to the proper spot
         k = len + self.location -1
-        ui_editor_lib:log(tostring(j)) ui_editor_lib:log(tostring(k))
+        uied:log(tostring(j)) uied:log(tostring(k))
 
         -- move j and k up by 2 (for the length above)
         j = j + 2
         k = k + 2
-        ui_editor_lib:log(tostring(j)) ui_editor_lib:log(tostring(k))
+        uied:log(tostring(j)) uied:log(tostring(k))
     end
 
     -- adds each relevant hexadecimal byte into a table (only the string!)
@@ -378,7 +378,7 @@ function parser:chunk_to_str(j, k)
     -- run through that table and convert the hex into formatted strings (\x56 from 56, for instance)
     local str = ""
     for i = j, k do
-        str = str .. "\\x" .. block[i]
+        str = str .. "\\x" .. (block[i] or "")
     end
 
     -- for each pattern of formatted strings (`\x56`), convert it into its char'd form
@@ -444,7 +444,7 @@ end
 -- this is "little endian", which means the hex is actually read backwards. ie., 56 00 is actually read as 00 56, which is translated to 00 86 in base-16
 function parser:chunk_to_int16(j, k)
     -- TODO int16 should only take numbers 1 apart from each other, it can only be two bytes. error check that
-    ui_editor_lib:log("chunk to int16 between "..tostring(j).." and " ..tostring(k))
+    uied:log("chunk to int16 between "..tostring(j).." and " ..tostring(k))
 
     -- grab the relevant bytes
     local block = {}
@@ -529,10 +529,10 @@ function parser:decipher_chunk(format, j, k)
         boolean = parser.chunk_to_boolean,
     }
 
-    ui_editor_lib:log("deciphering chunk ["..tostring(j).." - "..tostring(k) .. "], with format ["..format.."]")
+    uied:log("deciphering chunk ["..tostring(j).." - "..tostring(k) .. "], with format ["..format.."]")
 
     local func = format_to_func[format]
-    if not func then ui_editor_lib:log("func not found") return end
+    if not func then uied:log("func not found") return end
 
     -- this returns the *value* searched for, the string'd hex of the chunk, and the start and end indices (needed for types such as strings or tables with unknown lengths before deciphering)
     local value,hex,end_k = func(self, j, k)
@@ -541,6 +541,8 @@ function parser:decipher_chunk(format, j, k)
     self.location = end_k+1
 
     -- increase the internal field count
+
+    uied:log("Deciphered hex is: \n\t" .. hex)
     self.field_count = self.field_count+1
 
     return value,hex
@@ -548,7 +550,7 @@ end
 
 -- shorthand to prevent typing the same thing a billions
 local function dec(key, format, k, obj)
-    -- ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
+    uied:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -589,7 +591,8 @@ end
 
 -- end
 
-function parser:decipher_collection(collected_type, obj_to_add)
+---- TODO remove "override"; it's to prevent the "templatecomponent" check within a template component. SUCKS.
+function parser:decipher_collection(collected_type, obj_to_add, override)
     if not is_string(collected_type) then
         -- errmsg
         return false
@@ -601,11 +604,13 @@ function parser:decipher_collection(collected_type, obj_to_add)
     -- TODO I can do better than this
     if collected_type == "ComponentProperty" then
         key = "ComponentProperties"
+    elseif collected_type == "ComponentTemplateChild" then
+        key = "ComponentTemplateChildren"
     end
 
     -- local hex = ""
 
-    ui_editor_lib:log("\ndeciphering "..collected_type)
+    uied:log("\ndeciphering "..key)
 
     -- local type_to_func = {
     --     Component =                 parser.decipher_component,
@@ -625,32 +630,65 @@ function parser:decipher_collection(collected_type, obj_to_add)
     local len,hex = self:decipher_chunk("int32", 1, 4) 
     --dec(collected_type.."len","int32", 4, obj_to_add):get_value()
 
-    ui_editor_lib:log("len of "..collected_type.." is "..len)
-
-    -- if none are found, just return 0 / "00 00 00 00"
-    -- if len == 0 then
-    --     return len,hex--,4
-    -- end
+    uied:log("len of "..key.." is "..len)
 
     local ret = {}
 
+    local collection = uied:new_obj("Collection", key)
+
     for i = 1, len do
-        local new_type = ui_editor_lib:new_obj(collected_type)
-        local val = new_type:decipher()
+        local val
 
-        --local val,new_hex,end_k = func(self)
+        
+        -- TODO templates and UIC's are really the same thing, don't treat them differently like this
+        if collected_type == "Component" then
+            local bits,bits_hex = self:decipher_chunk("hex", 1, 2)
 
-        -- set the key as, example, "ComponentMouse1" (if there's no ui-id or name set!)
-        val:set_key(collected_type..tostring(i), "index")
-        ui_editor_lib:log("created "..collected_type.." with key "..val:get_key())
+            -- local bits = deciph("bits", "hex", 2):get_value() --parser:decipher_chunk("hex", 1, 2)
+            if bits == "00 00" or override then
+                local child = uied:new_obj("Component")
+                if bits == "00 00" then
+                    local new_field = uied.classes.Field:new("bits", bits, bits_hex)
+                    child:add_data(new_field)
+                else
+                    self.location = self.location -2
+                end
+    
+                uied:log("deciphering new component within "..obj_to_add:get_key())
+                child:decipher()
+    
+                uied:log("component deciphered with key ["..child:get_key().."]")
+    
+                uied:log("adding them to the current obj, "..obj_to_add:get_key())
 
+                val = child
+            else
+                self.location = self.location -2
+    
+                -- TODO this shouldn't be separate
+                local template = uied:new_obj("ComponentTemplate")
+                template:decipher()
+
+                val = template
+            end
+        else
+
+            local new_type = uied:new_obj(collected_type)
+            val = new_type:decipher()
+
+            --local val,new_hex,end_k = func(self)
+
+            -- set the key as, example, "ComponentMouse1" (if there's no ui-id or name set!)
+            val:set_key(collected_type..tostring(i), "index")
+            uied:log("created "..collected_type.." with key "..val:get_key())
+        end
+
+        val:set_parent(collection)
         ret[#ret+1] = val
         --hex = hex .. new_hex
     end
 
-    -- collections don't take raw hex (only needed for individual lines!)
-    local collection = ui_editor_lib:new_obj("Collection", key, ret)
-    --ui_editor_lib.classes.Collection:new(key, ret)
+    collection.data = ret
 
     obj_to_add:add_data(collection)
 
@@ -680,13 +718,13 @@ function parser:dec(key, format, k, obj)
             hex_boi=hex_boi.." "..hex
         end
 
-        new_field = ui_editor_lib.classes.Field:new(key, val, hex_boi)
-        ui_editor_lib:log("chunk deciphered with key ["..key.."], the hex was ["..hex_boi.."]")
+        new_field = uied.classes.Field:new(key, val, hex_boi)
+        uied:log("chunk deciphered with key ["..key.."], the hex was ["..hex_boi.."]")
     else -- k is not a table, decipher normally
         local ret,hex = self:decipher_chunk(format, j, k)
 
-        new_field = ui_editor_lib.classes.Field:new(key, ret, hex)
-        ui_editor_lib:log("chunk deciphered with key ["..key.."], the hex was ["..hex.."]")
+        new_field = uied.classes.Field:new(key, ret, hex)
+        uied:log("chunk deciphered with key ["..key.."], the hex was ["..hex.."]")
     end
 
     new_field:set_native_type(format)
@@ -704,7 +742,7 @@ end
 --         return false
 --     end
 
---     ui_editor_lib:log("decipher name: "..self.name)
+--     uied:log("decipher name: "..self.name)
 
 --     local root_uic = self.root_uic
 
@@ -716,19 +754,19 @@ end
 setmetatable(parser, {
     __index = parser,
     __call = function(self, hex_table) -- called by using `parser(hex_table)`, where hex_table is an array with each hex byte set as a string in order ("t" here is a reference to the "parser" table itself)
-        -- ui_editor_lib:log("yay")
-        -- ui_editor_lib:log(self.name)
+        uied:log("yay")
+        uied:log(self.name)
 
         -- self.name = "new name"
 
-        -- ui_editor_lib:log(self.name)
+        uied:log(self.name)
 
         -- TODO verify the hex table first?
 
         self.data = {}
         self.root_uic = nil
 
-        local root_uic = ui_editor_lib.classes.Component:new()
+        local root_uic = uied.classes.Component:new()
         root_uic:set_is_root(true)
 
         self.data =       hex_table

@@ -1,5 +1,5 @@
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local parser = ui_editor_lib.parser
+local uied = core:get_static_object("ui_editor_lib")
+local parser = uied.parser
 
 local obj = {
     type = "UI_BaseClass",
@@ -49,6 +49,7 @@ end
 
 -- This is called whenever a header is pressed, which switches its state and triggers a change on all children fields and objects
 function obj:switch_state()
+    uied:log("Switching state for ["..self:get_key().."].")
     local state = self.state
     local new_state = ""
     local child_state = ""
@@ -74,39 +75,42 @@ function obj:switch_state()
         if string.find(tostring(datum), "UI_Field") then
             -- if state is open, create
             if new_state == "open" then
-                ui_editor_lib.ui:create_details_row_for_field(datum, self:get_uic())
+                uied.ui:create_details_row_for_field(datum, self:get_uic())
             else -- closed; destroy
-                ui_editor_lib.ui:delete_component(datum:get_uic())
+                -- uied:log("Trying to delete a field within obj ["..self:get_key().."].")
+                -- -- uied.ui:delete_component(datum:get_uic())
+                -- uied:log("Deleted field ["..datum:get_key().."]")
+                -- datum.uic = nil
             end
+        else
+            datum:set_state(child_state)
         end
-        
-        datum:set_state(child_state)
     end
 
     -- TODO error check
-    local uic = self:get_uic()
-    local parent = UIComponent(uic:Parent())
-    local id = uic:Id()
+    -- local uic = self:get_uic()
+    -- local parent = UIComponent(uic:Parent())
+    -- local id = uic:Id()
 
-    local canvas = UIComponent(parent:Find(id.."_canvas"))
+    -- local canvas = UIComponent(parent:Find(id.."_canvas"))
 
-    if new_state == "closed" then
-        -- hide the listbox!
-        -- resize it to puny so it fixes everything!
-        canvas:SetVisible(false)
-        canvas:Resize(canvas:Width(), 5)
-    else
-        canvas:SetVisible(true)
-    end
+    -- if new_state == "closed" then
+    --     -- hide the listbox!
+    --     -- resize it to puny so it fixes everything!
+    --     canvas:SetVisible(false)
+    --     canvas:Resize(canvas:Width(), 5)
+    -- else
+    --     canvas:SetVisible(true)
+    -- end
 
-end) if not ok then ui_editor_lib:log(err) end
+end) if not ok then uied:log(err) end
 end
 
 -- This is only called through switch_state(), which will trigger on self as well as on all children.
 function obj:set_state(state)
     self.state = state
 
-    ui_editor_lib:log("Setting state of ["..obj:get_key().."] to ["..state.."].")
+    uied:log("Setting state of ["..self:get_key().."] to ["..state.."].")
 
     -- set the state of the header (invisible if inner?)
     local uic = self:get_uic()
@@ -156,7 +160,7 @@ end
 -- then, assign the key through add_data if the field is "name" or "ui-id"
 -- if ui-id is added but name was already added, keep name.
 function obj:set_key(key, new_key_type)
-    ui_editor_lib:log("set_key() called on obj with type "..self:get_type())
+    uied:log("set_key() called on obj with type "..self:get_type())
     local key_type = self.key_type
     local current_key = self:get_key()
 
@@ -188,12 +192,12 @@ function obj:set_key(key, new_key_type)
         -- do nuffin?
     end
 
-    ui_editor_lib:log("old key ["..current_key.."], new key ["..self.key.."].")
+    uied:log("old key ["..current_key.."], new key ["..self.key.."].")
 end
 
 -- remove a field or object or collection from this object
 function obj:remove_data(datum)
-    ui_editor_lib:log("Remove data called! "..obj:get_key().." is deleted data ["..datum:get_key().."].")
+    uied:log("Remove data called! "..self:get_key().." is deleting data ["..datum:get_key().."].")
     local data = self:get_data()
 
     local new_table = {}
@@ -202,7 +206,7 @@ function obj:remove_data(datum)
         local inner = data[i]
 
         if inner == datum then
-            ui_editor_lib:log("Inner found!")
+            uied:log("Inner found!")
         else
             new_table[#new_table+1] = inner
         end
@@ -224,11 +228,11 @@ function obj:add_data(data)
         end
     end
 
-    ui_editor_lib:log("Add Data called, ["..self:get_key().."] is getting a fresh new ["..tostring(data).."] with key ["..data:get_key().."].")
+    uied:log("Add Data called, ["..self:get_key().."] is getting a fresh new ["..tostring(data).."] with key ["..data:get_key().."].")
 
     if self:get_key() == "dy_txt" then
-        ui_editor_lib:log("VANDY VANDY VANDY")
-        ui_editor_lib:log("Adding data to dy_txt, data is: "..tostring(data))
+        uied:log("VANDY VANDY VANDY")
+        uied:log("Adding data to dy_txt, data is: "..tostring(data))
     end
 
     self.data[#self.data+1] = data
@@ -245,12 +249,12 @@ function obj:add_data_table(fields)
 end
 
 function obj:decipher()
-    ui_editor_lib:log("decipher called on "..self:get_key().." but the decipher method has not been overriden!")
+    uied:log("decipher called on "..self:get_key().." but the decipher method has not been overriden!")
     return
 end
 
 function obj:create_default()
-    ui_editor_lib:log("create_default called on "..self:get_key().." but the create_default method has not been overriden!")
+    uied:log("create_default called on "..self:get_key().." but the create_default method has not been overriden!")
     return
 end
 

@@ -1,9 +1,9 @@
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib:get_class("BaseClass")
+local uied = core:get_static_object("ui_editor_lib")
+local BaseClass = uied:get_class("BaseClass")
 
-local parser = ui_editor_lib.parser
+local parser = uied.parser
 local function dec(key, format, k, obj)
-    -- ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
+    uied:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -109,6 +109,7 @@ function ComponentTemplateChild:decipher()
             break
         end
 
+        --- TODO this shouldn't be hard'd, somehow read the OG template file to know how many states are expected
         deciph("state_"..i, "str")
         deciph("state_b1"..i, "utf8")
         deciph("state_b2"..i, "utf8")
@@ -160,6 +161,8 @@ function ComponentTemplateChild:decipher()
             deciph("img_"..i.."_hex", "hex", 16)
         end
     end
+
+    -- local children = parser:decipher_collection("Component", self)
 
     return self
 end

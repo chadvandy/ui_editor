@@ -1,9 +1,9 @@
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib:get_class("BaseClass")
+local uied = core:get_static_object("ui_editor_lib")
+local BaseClass = uied:get_class("BaseClass")
 
-local parser = ui_editor_lib.parser
+local parser = uied.parser
 local function dec(key, format, k, obj)
-    -- ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
+    uied:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -37,7 +37,10 @@ function ComponentEvent:decipher()
     deciph("context_function_id", "str", -1)
 
     -- potential child - ComponentEventProperties, which is two strings
-    parser:decipher_collection("ComponentEventProperty", self)
+    --- TODO prove that this is accurate!
+    if v >= 120 then
+        parser:decipher_collection("ComponentEventProperty", self)
+    end
 
     return self
 end

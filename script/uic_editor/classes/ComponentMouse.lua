@@ -1,12 +1,12 @@
 -- TODO this is "transitionmap", I believe
 
 
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib:get_class("BaseClass")
+local uied = core:get_static_object("ui_editor_lib")
+local BaseClass = uied:get_class("BaseClass")
 
-local parser = ui_editor_lib.parser
+local parser = uied.parser
 local function dec(key, format, k, obj)
-    -- ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
+    uied:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 

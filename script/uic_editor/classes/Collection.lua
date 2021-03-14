@@ -1,8 +1,8 @@
 -- collection object is a special type of field that's just a full collection of smaller objects
 -- used for collections of objects, such as "States" or "ComponentImages".
 
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib:get_class("BaseClass")
+local uied = core:get_static_object("ui_editor_lib")
+local BaseClass = uied:get_class("BaseClass")
 
 local Collection = {
     type = "UI_Collection",
@@ -59,7 +59,7 @@ function Collection:get_hex()
     -- local data = self.data
     local len = #self.data
 
-    local hex = ui_editor_lib.parser:int32_to_chunk(len)
+    local hex = uied.parser:int32_to_chunk(len)
 
     return hex
 end
@@ -67,6 +67,30 @@ end
 -- disable :set_key() on collection
 function Collection:set_key()
     return
+end
+
+-- Prevent Component collections from being set invisible
+function Collection:set_state(state)
+    if self:get_key() == "Components" and state == "invisible" then state = "closed" end
+    self.state = state
+
+    uied:log("Setting state of ["..self:get_key().."] to ["..state.."].")
+
+    -- set the state of the header (invisible if inner?)
+    local uic = self:get_uic()
+    if is_uicomponent(uic) then
+        if state == "open" then
+            uic:SetVisible(true)
+            uic:SetState("selected")
+        elseif state == "closed" then
+            uic:SetVisible(true)
+            uic:SetState("active")
+        elseif state == "invisible" then
+            -- TODO hide all canvas and shit
+            uic:SetVisible(false)
+            uic:SetState("active")
+        end
+    end
 end
 
 -- function Collection:get_key()

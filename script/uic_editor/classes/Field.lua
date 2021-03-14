@@ -4,8 +4,8 @@
 
 -- TODO make this comparable to BaseClass - use data as a table instead of value as a changable type; use an array 
 
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local parser = ui_editor_lib.parser
+local uied = core:get_static_object("ui_editor_lib")
+local parser = uied.parser
 
 local uic_field = {}
 -- setmetatable(uic_field, uic_field)
@@ -18,14 +18,14 @@ end
 function uic_field:new(key, value, hex)
     local o = {}
     setmetatable(o, self)
-    -- ui_editor_lib:log("Testing new UIC Field: "..tostring(o))
+    uied:log("Testing new UIC Field: "..tostring(o))
     -- self.__index = self
 
     o.key = key
     o.value = value
     o.hex = hex
     o.uic = nil
-    o.editable = false
+    o.editable = true
 
     o.parent = nil
 
@@ -75,10 +75,10 @@ function uic_field:is_editable()
 end
 
 function uic_field:filter_fields(key_filter, value_filter)
-    ModLog("filter field: "..self:get_key())
+    uied:log("filter field: "..self:get_key())
     local uic = self.uic
     if not is_uicomponent(uic) then
-        ModLog("no uic wtf")
+        uied:log("no uic wtf")
         return false
     end
 
@@ -86,7 +86,7 @@ function uic_field:filter_fields(key_filter, value_filter)
         local key_uic = UIComponent(uic:Find("key"))
 
         if not is_uicomponent(key_uic) then
-            ModLog("no key uic wtf")
+            uied:log("no key uic wtf")
             return false
         end
 
@@ -102,7 +102,7 @@ function uic_field:filter_fields(key_filter, value_filter)
         local value_uic = UIComponent(uic:Find("value"))
 
         if not is_uicomponent(value_uic) then
-            ModLog("no value uic wtf")
+            uied:log("no value uic wtf")
             return false
         end
 
@@ -134,7 +134,7 @@ function uic_field:change_val(new_val)
             new_hex = parser:bool_to_chunk(new_val)
         end
 
-        ui_editor_lib:log("New hex: "..new_hex)
+        uied:log("New hex: "..new_hex)
 
         self.value = new_val
         self.hex = new_hex

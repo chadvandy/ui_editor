@@ -1,9 +1,9 @@
-local ui_editor_lib = core:get_static_object("ui_editor_lib")
-local BaseClass = ui_editor_lib:get_class("BaseClass")
+local uied = core:get_static_object("ui_editor_lib")
+local BaseClass = uied:get_class("BaseClass")
 
-local parser = ui_editor_lib.parser
+local parser = uied.parser
 local function dec(key, format, k, obj)
-    -- ui_editor_lib:log("decoding field with key ["..key.."] and format ["..format.."]")
+    uied:log("decoding field with key ["..key.."] and format ["..format.."]")
     return parser:dec(key, format, k, obj)
 end
 
@@ -26,7 +26,7 @@ end
 function ComponentProperty:decipher()
     local v = parser.root_uic:get_version()
 
-    -- local obj = ui_editor_lib:new_obj("ComponentProperty")
+    -- local obj = uied:new_obj("ComponentProperty")
 
     local function deciph(key, format, k)
         return dec(key, format, k, self)

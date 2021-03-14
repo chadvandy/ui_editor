@@ -23,10 +23,10 @@ end
 function ui_editor_lib:log(text)
     text = tostring(text) or ""
 
-
     self.logging[#self.logging+1] = text
+    self:print_log()
 
-    self:check_logging()
+    -- self:check_logging()
 end
 
 function ui_editor_lib:log_init()
@@ -57,7 +57,7 @@ end
 -- only print the log if A) logging has 5000 lines or B) it's been 5s since the last call to logging
 function ui_editor_lib:check_logging()
     if self.is_checking then
-        if #self.logging >= 5000 then
+        if #self.logging >= 10000 then
             self:print_log()
         else
             -- do nothing?
@@ -69,13 +69,13 @@ function ui_editor_lib:check_logging()
             function(context)
                 return context.string == "lib_check_logging"
             end,
-            function(context)
+            function()
                 self:print_log()
             end,
             false
         )
 
-        real_timer.register_singleshot("lib_check_logging", 5000)
+        real_timer.register_singleshot("lib_check_logging", 250)
 
         self.is_checking = true
     end
@@ -230,7 +230,7 @@ function ui_editor_lib:print_copied_uic()
 
     iter(uic)
 
-    -- ui_editor_lib:log(hex_str)
+    ui_editor_lib:log(hex_str)
 
     -- loops through every single hex byte (ie. everything with two hexa values, %x%x), then converts that byte into the relevant "char"
     for byte in hex_str:gmatch("%x%x") do
@@ -243,7 +243,7 @@ function ui_editor_lib:print_copied_uic()
         bin_str = bin_str .. bin_byte
     end
 
-    -- ui_editor_lib:log(bin_str)
+    ui_editor_lib:log(bin_str)
 
     self.testing_file_ind=self.testing_file_ind+1
     local new_file = io.open("data/UI/ui_editor/"..self:get_testing_file_string(), "w+b")
@@ -295,7 +295,6 @@ function ui_editor_lib:load_uic_with_path(path)
     self:log("file opened!")
 
     local ok, err = pcall(function()
-
     local uic,field_count = self.parser(data)
 
     self.loaded_uic = uic
@@ -314,7 +313,7 @@ function ui_editor_lib:load_uic_with_path(path)
 
 
     self.ui:load_uic()
-    end) if not ok then self:log(err) end
+    end) if not ok then self:log(err) self.ui:load_uic() end
 end
 
 core:add_static_object("ui_editor_lib", ui_editor_lib)
